@@ -81,3 +81,6 @@ export default function Home() {
     </div>
   );
 }
+git add app/page.js
+git commit -m "fix: simple homepage without build errors"
+git push
