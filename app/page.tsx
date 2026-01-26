@@ -6,3 +6,11 @@ export default function HomePage() {
     </main>
   );
 }
+export default function Home() {
+  return (
+    <div style={{ padding: 40, fontSize: 24 }}>
+      <h1>✅ Cotele Dunării LIVE!</h1>
+      <p>URL: cote-dunare.vercel.app</p>
+    </div>
+  );
+}
