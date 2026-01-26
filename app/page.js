@@ -15,7 +15,7 @@ export default function Home() {
         <div style={{
           textAlign: 'center',
           color: '#94a3b8',
-          fontSize: '14px',
+          fontSize: '14px', // ✅ păstrăm doar unul
           marginTop: '40px'
         }}>
           <p>© 2025 Aquatic Biodiversity Center | sturgeons.eu</p>
