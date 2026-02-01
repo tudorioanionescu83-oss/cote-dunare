@@ -1,83 +1,137 @@
-'use client';
+﻿// app/page.js
+"use client";
 
-export default function Home() {
+import React, { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+
+import StationPanel from "./components/StationPanel";
+import { STATIONS } from "./lib/stations";
+
+// IMPORTANT: evită "window is not defined" pentru leaflet
+const MapView = dynamic(() => import("./components/MapView"), { ssr: false });
+
+export default function Page() {
+  const [selectedStation, setSelectedStation] = useState("Tulcea");
+  const [latestByName, setLatestByName] = useState({});
+  const [chartRows, setChartRows] = useState([]);
+  const [periodDays, setPeriodDays] = useState(30);
+  const [loading, setLoading] = useState(false);
+
+  const stations = useMemo(() => STATIONS, []);
+
+  const selectedStationObj = useMemo(
+    () => stations.find((s) => s.name === selectedStation) || stations[0],
+    [stations, selectedStation]
+  );
+
+  // load latest
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadLatest() {
+      try {
+        const res = await fetch("/api/latest");
+        const j = await res.json();
+        if (!cancelled) {
+          setLatestByName(j.byName || {});
+        }
+      } catch (e) {
+        // silent fail
+      }
+    }
+
+    loadLatest();
+    const t = setInterval(loadLatest, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, []);
+
+  // load chart data
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadChart() {
+      if (!selectedStation) return;
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/measurements?station=${encodeURIComponent(selectedStation)}&days=${periodDays}`);
+        const j = await res.json();
+        if (!cancelled) setChartRows(j.rows || []);
+      } catch (e) {
+        if (!cancelled) setChartRows([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadChart();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedStation, periodDays]);
+
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(to bottom, #f9fafb, #e0f2fe)',
-      padding: '40px 20px',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto'
-      }}>
-        <header style={{
-          textAlign: 'center',
-          marginBottom: '60px'
-        }}>
-          <h1 style={{
-            fontSize: '48px',
-            fontWeight: 'bold',
-            color: '#1e293b',
-            marginBottom: '16px'
-          }}>
-            Cotele Dunării
-          </h1>
-          <p style={{
-            fontSize: '20px',
-            color: '#64748b'
-          }}>
-            Platformă Interactivă - Date în Timp Real
-          </p>
-        </header>
+    <div style={{ display: "grid", gridTemplateColumns: "360px 1fr", gap: 16, padding: 16 }}>
+      {/* Sidebar */}
+      <aside
+        style={{
+          background: "white",
+          borderRadius: 16,
+          border: "1px solid #e5e7eb",
+          padding: 14,
+          height: "fit-content",
+          position: "sticky",
+          top: 16,
+        }}
+      >
+        <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 6 }}>Cotele Dunării</div>
+        <div style={{ color: "#6b7280", fontSize: 12, marginBottom: 12 }}>Stații + hartă + grafice</div>
 
-        <div style={{
-          background: 'white',
-          borderRadius: '16px',
-          padding: '40px',
-          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-          marginBottom: '40px'
-        }}>
-          <h2 style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#1e293b',
-            marginBottom: '20px'
-          }}>
-            🚧 Site în Construcție
-          </h2>
-          <p style={{
-            fontSize: '16px',
-            color: '#64748b',
-            lineHeight: '1.6'
-          }}>
-            Platforma pentru monitorizarea cotelor Dunării este în curs de dezvoltare.
-            <br/><br/>
-            <strong>Funcționalități viitoare:</strong>
-          </p>
-          <ul style={{
-            marginTop: '20px',
-            marginLeft: '20px',
-            color: '#64748b',
-            lineHeight: '1.8'
-          }}>
-            <li>📊 Date în timp real de la toate stațiile AFDJ</li>
-            <li>🗺️ Hartă interactivă a Dunării</li>
-            <li>📈 Grafice istorice personalizabile</li>
-            <li>🌡️ Date meteo integrate</li>
-            <li>📱 Design responsive pentru mobil</li>
-          </ul>
-        </div>
+        <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>Caută stația</label>
+        <select
+          value={selectedStation}
+          onChange={(e) => setSelectedStation(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "10px 12px",
+            borderRadius: 12,
+            border: "1px solid #e5e7eb",
+            outline: "none",
+            fontWeight: 700,
+          }}
+        >
+          {stations.map((s) => (
+            <option key={s.name} value={s.name}>{s.name}</option>
+          ))}
+        </select>
 
-        <div style={{
-          textAlign: 'center',
-          color: '#94a3b8',
-          fontSize: '14px'
-        }}>
-          <p>© 2025 Aquatic Biodiversity Center | sturgeons.eu</p>
+        <div style={{ marginTop: 12, fontSize: 12, color: "#374151", lineHeight: 1.4 }}>
+          <div><span style={{ color: "#dc2626", fontWeight: 800 }}>●</span> roșu = variație negativă</div>
+          <div><span style={{ color: "#16a34a", fontWeight: 800 }}>●</span> verde = variație pozitivă</div>
+          <div><span style={{ color: "#111827", fontWeight: 800 }}>●</span> negru = variație 0</div>
+          <div><span style={{ color: "#9ca3af", fontWeight: 800 }}>●</span> gri = fără date</div>
         </div>
-      </div>
+      </aside>
+
+      {/* Main */}
+      <main style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <MapView
+          latestByName={latestByName}
+          selectedStation={selectedStation}
+          onPickStation={(name) => setSelectedStation(name)}
+        />
+
+        <StationPanel
+          station={selectedStationObj}
+          latest={latestByName[selectedStation]}
+          chartData={chartRows}
+          period={periodDays}
+          onPeriodChange={setPeriodDays}
+          loading={loading}
+        />
+      </main>
     </div>
   );
 }
