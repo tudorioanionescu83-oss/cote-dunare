@@ -32,9 +32,7 @@ export default function Page() {
       try {
         const res = await fetch("/api/latest");
         const j = await res.json();
-        if (!cancelled) {
-          setLatestByName(j.byName || {});
-        }
+        if (!cancelled) setLatestByName(j.byName || {});
       } catch (e) {
         // silent fail
       }
@@ -42,6 +40,7 @@ export default function Page() {
 
     loadLatest();
     const t = setInterval(loadLatest, 60_000);
+
     return () => {
       cancelled = true;
       clearInterval(t);
@@ -55,6 +54,7 @@ export default function Page() {
     async function loadChart() {
       if (!selectedStation) return;
       setLoading(true);
+
       try {
         const res = await fetch(
           `/api/measurements?station=${encodeURIComponent(selectedStation)}&days=${periodDays}`
@@ -78,8 +78,8 @@ export default function Page() {
     <div className="page-layout">
       {/* Sidebar */}
       <aside className="page-sidebar">
-        <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 6 }}>Cotele Dunării</div>
-        <div style={{ color: "#6b7280", fontSize: 12, marginBottom: 12 }}>Stații + hartă + grafice</div>
+        <div className="brand-title">Cotele Dunării</div>
+        <div className="brand-subtitle">Stații + hartă + grafice</div>
 
         <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>
           Caută stația
@@ -105,18 +105,10 @@ export default function Page() {
         </select>
 
         <div style={{ marginTop: 12, fontSize: 12, color: "#374151", lineHeight: 1.4 }}>
-          <div>
-            <span style={{ color: "#dc2626", fontWeight: 800 }}>●</span> roșu = variație negativă
-          </div>
-          <div>
-            <span style={{ color: "#16a34a", fontWeight: 800 }}>●</span> verde = variație pozitivă
-          </div>
-          <div>
-            <span style={{ color: "#111827", fontWeight: 800 }}>●</span> negru = variație 0
-          </div>
-          <div>
-            <span style={{ color: "#9ca3af", fontWeight: 800 }}>●</span> gri = fără date
-          </div>
+          <div><span style={{ color: "#dc2626", fontWeight: 800 }}>●</span> roșu = variație negativă</div>
+          <div><span style={{ color: "#16a34a", fontWeight: 800 }}>●</span> verde = variație pozitivă</div>
+          <div><span style={{ color: "#111827", fontWeight: 800 }}>●</span> negru = variație 0</div>
+          <div><span style={{ color: "#9ca3af", fontWeight: 800 }}>●</span> gri = fără date</div>
         </div>
       </aside>
 
