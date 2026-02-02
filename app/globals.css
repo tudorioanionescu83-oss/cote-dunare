@@ -51,10 +51,8 @@ input:focus, select:focus{
 }
 
 /* =========================================================
-   RESPONSIVE LAYOUT (NU afectează desktop, doar mobile)
+   LAYOUT DESKTOP (2 coloane)
    ========================================================= */
-
-/* containerul paginii (desktop: 2 coloane) */
 .page-layout{
   display: grid;
   grid-template-columns: 360px 1fr;
@@ -62,7 +60,6 @@ input:focus, select:focus{
   padding: 16px;
 }
 
-/* sidebar ca înainte, dar în clasă */
 .page-sidebar{
   background: white;
   border-radius: 16px;
@@ -72,53 +69,59 @@ input:focus, select:focus{
   position: sticky;
   top: 16px;
 
-  /* C) fundal discret (hero) */
-  overflow: hidden; /* ca pseudo-elementul să nu “iasă” */
-
-  /* FIX: stacking corect (altfel apare “ceață” pe text pe unele mobile) */
+  overflow: hidden;
   z-index: 0;
 }
 
-/* zona principală */
 .page-main{
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-/* MOBILE: o singură coloană + sidebar sus */
+/* =========================================================
+   MOBILE: SLIDE STÂNGA-DREAPTA (scroll-snap)
+   ========================================================= */
 @media (max-width: 768px){
+  /* IMPORTANT: NU blocăm overflow-x pe body, pentru că vrem slide */
+  html, body{
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  /* container devine “carusel” */
   .page-layout{
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    padding: 0;
+
+    width: 100vw;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* fiecare secțiune = un slide */
+  .page-sidebar,
+  .page-main{
+    min-width: 100vw;
+    max-width: 100vw;
+    scroll-snap-align: start;
     padding: 12px;
   }
 
+  /* sidebar nu mai sticky pe mobil */
   .page-sidebar{
-    position: static;
+    position: relative;
     top: auto;
   }
 }
 
 /* =========================================================
-   A) FIX: fără scroll stânga-dreapta pe mobil
+   A2) StationPanel responsive (rămâne ok)
    ========================================================= */
-
-html, body{
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-/* ajută flex/grid să nu forțeze lățime mai mare decât ecranul */
-.page-main,
-.page-sidebar{
-  min-width: 0;
-}
-
-/* =========================================================
-   A2) (pregătire) clase pt StationPanel responsive
-   Nu strică nimic dacă încă nu există className-urile.
-   ========================================================= */
-
 .panel-header{
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -144,10 +147,8 @@ html, body{
 }
 
 /* =========================================================
-   C) “Brand header” în sidebar: titlu mai mare pe mobil + fundal
+   HERO discret în sidebar
    ========================================================= */
-
-/* Fundal discret: pune o poză în public/hero.jpg */
 .page-sidebar::before{
   content: "";
   position: absolute;
@@ -155,13 +156,12 @@ html, body{
   background-image: url("/hero.jpg");
   background-size: cover;
   background-position: center;
-  opacity: 0.10;          /* transparență mare */
+  opacity: 0.10;
   pointer-events: none;
   filter: saturate(1.05) contrast(1.02);
-  z-index: 0;             /* SUB conținut */
+  z-index: 0;
 }
 
-/* strat de lizibilitate (mai light ca să nu “șteargă” textul) */
 .page-sidebar::after{
   content: "";
   position: absolute;
@@ -172,16 +172,14 @@ html, body{
     rgba(255,255,255,0.58)
   );
   pointer-events: none;
-  z-index: 0;             /* SUB conținut */
+  z-index: 0;
 }
 
-/* asigură că tot conținutul e deasupra fundalului */
 .page-sidebar > *{
   position: relative;
   z-index: 1;
 }
 
-/* dacă pui clase în page.js (recomandat) */
 .brand-title{
   font-weight: 950;
   font-size: 18px;
@@ -194,7 +192,6 @@ html, body{
   margin-bottom: 12px;
 }
 
-/* MOBILE: titlu mai mare + uppercase + text un pic mai mare */
 @media (max-width: 768px){
   .brand-title{
     font-size: 22px;
@@ -206,11 +203,6 @@ html, body{
     font-size: 13px;
   }
 
-  /* mic boost general de lizibilitate în sidebar pe mobil */
-  .page-sidebar{
-    padding: 16px;
-  }
-
   .page-sidebar label{
     font-size: 13px;
   }
@@ -220,34 +212,7 @@ html, body{
   }
 }
 
-/* =========================================================
-   FIX EXTRA: Leaflet poate forța lățimi > 100% pe mobil
-   (scapă de scroll-ul stânga-dreapta)
-   ========================================================= */
-
-.page-layout,
-.page-sidebar,
-.page-main{
-  max-width: 100%;
-}
-
-/* Leaflet uneori face pane-urile mai late decât containerul */
-.leaflet-container,
-.leaflet-pane,
-.leaflet-map-pane,
-.leaflet-tile-pane,
-.leaflet-overlay-pane,
-.leaflet-marker-pane,
-.leaflet-shadow-pane{
-  max-width: 100%;
-}
-
-/* pe mobil: pan în hartă fără să “rupă” pagina */
-.leaflet-container{
-  touch-action: pan-x pan-y;
-}
-
-/* FIX general: orice media să nu depășească ecranul */
+/* fix general media */
 img, video, canvas{
   max-width: 100%;
   height: auto;
