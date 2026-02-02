@@ -1,10 +1,10 @@
+// app/lib/supabaseClient.js
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Lipsesc NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local");
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Client “public” (safe pentru read, dacă ai RLS ok).
+export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "", {
+  auth: { persistSession: false },
+});

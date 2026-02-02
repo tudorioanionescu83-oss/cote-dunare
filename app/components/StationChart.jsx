@@ -1,105 +1,104 @@
-﻿"use client";
+﻿// app/components/StationChart.jsx
+"use client";
 
+import React, { useMemo } from "react";
 import {
-  LineChart,
-  Line,
+  ResponsiveContainer,
+  ComposedChart,
+  CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid,
-  ResponsiveContainer,
+  Area,
+  Line,
   Legend,
 } from "recharts";
 
-export default function StationChart({ data = [] }) {
+function fmtDate(d) {
+  try {
+    const [y, m, day] = String(d).split("-").map(Number);
+    const dt = new Date(y, (m || 1) - 1, day || 1);
+    return dt.toLocaleDateString("ro-RO", { day: "2-digit", month: "2-digit" });
+  } catch {
+    return String(d);
+  }
+}
+
+export default function StationChart({ rows }) {
+  const data = useMemo(() => {
+    return (rows || []).map((r) => ({
+      data: r.data,
+      nivel_cm: r.nivel_cm == null ? null : Number(r.nivel_cm),
+      temperatura_c: r.temperatura_c == null ? null : Number(r.temperatura_c),
+    }));
+  }, [rows]);
+
   if (!data || data.length === 0) {
     return (
-      <div className="h-64 flex items-center justify-center text-slate-400">
-        Nu există date pentru intervalul selectat.
+      <div style={{ padding: 14, color: "#6b7280", fontSize: 13 }}>
+        Nu există date în intervalul ales pentru stația selectată.
       </div>
     );
   }
 
   return (
-    <div className="w-full h-[360px] rounded-xl bg-gradient-to-b from-sky-50 to-white border border-sky-100 shadow-sm p-3">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart
-          data={data}
-          margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
-        >
-          {/* Grid – discret, “apă” */}
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke="#e0f2fe"
-          />
-
-          {/* AXA X */}
+    <div style={{ width: "100%", height: 260 }}>
+      <ResponsiveContainer>
+        <ComposedChart data={data} margin={{ top: 10, right: 16, left: 8, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="data"
-            tick={{ fontSize: 12, fill: "#475569" }}
+            tickFormatter={fmtDate}
+            minTickGap={20}
+            tick={{ fontSize: 12 }}
           />
 
-          {/* AXA Y – Nivel */}
           <YAxis
             yAxisId="nivel"
-            tick={{ fontSize: 12, fill: "#1e3a8a" }}
-            label={{
-              value: "Nivel (cm)",
-              angle: -90,
-              position: "insideLeft",
-              style: { fill: "#1e3a8a", fontSize: 12 },
-            }}
+            label={{ value: "Nivel (cm)", angle: -90, position: "insideLeft" }}
+            tick={{ fontSize: 12 }}
+            width={52}
           />
 
-          {/* AXA Y – Temperatură */}
           <YAxis
             yAxisId="temp"
             orientation="right"
-            tick={{ fontSize: 12, fill: "#991b1b" }}
-            label={{
-              value: "Temperatură (°C)",
-              angle: -90,
-              position: "insideRight",
-              style: { fill: "#991b1b", fontSize: 12 },
-            }}
+            label={{ value: "Temperatura (°C)", angle: 90, position: "insideRight" }}
+            tick={{ fontSize: 12 }}
+            width={60}
           />
 
           <Tooltip
-            contentStyle={{
-              background: "rgba(255,255,255,0.95)",
-              borderRadius: "8px",
-              border: "1px solid #bae6fd",
-              fontSize: "13px",
+            formatter={(value, name) => {
+              if (name === "nivel_cm") return [`${value ?? "—"} cm`, "Nivel"];
+              if (name === "temperatura_c") return [`${value ?? "—"} °C`, "Temperatura"];
+              return [value, name];
             }}
+            labelFormatter={(label) => `Data: ${label}`}
           />
 
           <Legend />
 
-          {/* NIVEL – ALBASTRU CONTINUU */}
-          <Line
+          <Area
             yAxisId="nivel"
             type="monotone"
             dataKey="nivel_cm"
             name="Nivel (cm)"
-            stroke="#2563eb"
-            strokeWidth={2.5}
-            dot={{ r: 3 }}
-            activeDot={{ r: 6 }}
+            fillOpacity={0.18}
+            strokeWidth={2}
+            dot={false}
           />
 
-          {/* TEMPERATURĂ – ROȘU ÎNTRERUPT */}
           <Line
             yAxisId="temp"
             type="monotone"
             dataKey="temperatura_c"
-            name="Temperatură (°C)"
-            stroke="#dc2626"
+            name="Temperatura (°C)"
             strokeWidth={2}
-            strokeDasharray="6 4"
-            dot={{ r: 3 }}
-            activeDot={{ r: 6 }}
+            dot={false}
+            connectNulls={false}
           />
-        </LineChart>
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );

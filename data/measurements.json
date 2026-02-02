@@ -1,0 +1,6 @@
+[
+  { "station": "Tulcea", "date": "2026-02-01", "level": 123, "temp": 2.1, "km": 0 },
+  { "station": "Tulcea", "date": "2026-02-02", "level": 128, "temp": 2.4, "km": 0 },
+  { "station": "Galati", "date": "2026-02-01", "level": 205, "temp": 1.9, "km": 250 },
+  { "station": "Galati", "date": "2026-02-02", "level": 210, "temp": 3.0, "km": 250 }
+]
