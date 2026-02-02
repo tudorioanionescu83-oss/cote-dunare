@@ -4,30 +4,35 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const STATIONS = [
-  // COMPLETEAZĂ/VERIFICĂ coordonatele dacă ai altele – astea sunt exemple
-  { name: "Bazias", km: 1072, lat: 44.8167, lng: 21.3833, wikiTitle: "Baziaș" },
-  { name: "Moldova Veche", km: 1048, lat: 44.723, lng: 21.666, wikiTitle: "Moldova Veche" },
-  { name: "Drencova", km: 1015, lat: 44.637771, lng: 21.972336, wikiTitle: "Drencova" },
-  { name: "Orsova", km: 954, lat: 44.725, lng: 22.396, wikiTitle: "Orșova" },
-  { name: "Drobeta Turnu Severin", km: 931, lat: 44.636, lng: 22.659, wikiTitle: "Drobeta-Turnu Severin" },
-  { name: "Gruia", km: 851, lat: 44.267, lng: 22.708, wikiTitle: "Gruia, Mehedinți" },
-  { name: "Cetate", km: 811, lat: 44.1, lng: 23.05, wikiTitle: "Cetate, Dolj" },
-  { name: "Calafat", km: 795, lat: 43.99, lng: 22.93, wikiTitle: "Calafat" },
-  { name: "Rast", km: 738, lat: 43.88, lng: 23.27, wikiTitle: "Rast" },
-  { name: "Bechet", km: 679, lat: 43.78, lng: 23.96, wikiTitle: "Bechet" },
-  { name: "Corabia", km: 630, lat: 43.78, lng: 24.5, wikiTitle: "Corabia" },
-  { name: "Turnu Magurele", km: 597, lat: 43.75, lng: 24.87, wikiTitle: "Turnu Măgurele" },
-  { name: "Zimnicea", km: 554, lat: 43.66, lng: 25.37, wikiTitle: "Zimnicea" },
-  { name: "Giurgiu", km: 493, lat: 43.9, lng: 25.97, wikiTitle: "Giurgiu" },
-  { name: "Oltenita", km: 430, lat: 44.08, lng: 26.63, wikiTitle: "Oltenița" },
-  { name: "Calarasi", km: 370, lat: 44.2, lng: 27.33, wikiTitle: "Călărași" },
-  { name: "Cernavoda", km: 300, lat: 44.34, lng: 28.03, wikiTitle: "Cernavodă" },
-  { name: "Harsova", km: 253, lat: 44.68, lng: 27.95, wikiTitle: "Hârșova" },
-  { name: "Braila", km: 170, lat: 45.27, lng: 27.97, wikiTitle: "Brăila" },
-  { name: "Galati", km: 150, lat: 45.43, lng: 28.05, wikiTitle: "Galați" },
-  { name: "Isaccea", km: 103, lat: 45.27, lng: 28.46, wikiTitle: "Isaccea" },
-  { name: "Tulcea", km: 71, lat: 45.18, lng: 28.8, wikiTitle: "Tulcea" },
-  { name: "Sulina", km: 0, lat: 45.16, lng: 29.65, wikiTitle: "Sulina" },
+  { name: "Bazias", km: 1072, lat: 44.8166, lng: 21.3899, wikiTitle: "Baziaș", photoUrl: "/stations/placeholder.jpg" },
+  { name: "Moldova Veche", km: 1048, lat: 44.7342, lng: 21.6201, wikiTitle: "Moldova Veche", photoUrl: "/stations/placeholder.jpg" },
+  { name: "Drencova", km: 1015, lat: 44.6383, lng: 21.9739, wikiTitle: "Drencova", photoUrl: "/stations/placeholder.jpg" },
+  { name: "Orsova", km: 954, lat: 44.7253, lng: 22.3961, wikiTitle: "Orșova", photoUrl: "/stations/placeholder.jpg", icao: "LROM" },
+  { name: "Drobeta Turnu Severin", km: 931, lat: 44.6319, lng: 22.6561, wikiTitle: "Drobeta-Turnu Severin", photoUrl: "/stations/placeholder.jpg", icao: "LROM" },
+
+  { name: "Gruia", km: 851, lat: 44.2675, lng: 22.7047, wikiTitle: "Gruia, Mehedinți", photoUrl: "/stations/placeholder.jpg" },
+  { name: "Cetate", km: 811, lat: 44.1053, lng: 23.0512, wikiTitle: "Cetate, Dolj", photoUrl: "/stations/placeholder.jpg" },
+  { name: "Calafat", km: 795, lat: 43.9907, lng: 22.9333, wikiTitle: "Calafat", photoUrl: "/stations/placeholder.jpg" },
+  { name: "Rast", km: 738, lat: 43.8830, lng: 23.2830, wikiTitle: "Rast", photoUrl: "/stations/placeholder.jpg" },
+  { name: "Bechet", km: 679, lat: 43.7843, lng: 23.9597, wikiTitle: "Bechet", photoUrl: "/stations/placeholder.jpg" },
+  { name: "Corabia", km: 630, lat: 43.7736, lng: 24.5033, wikiTitle: "Corabia", photoUrl: "/stations/placeholder.jpg" },
+
+  { name: "Turnu Magurele", km: 597, lat: 43.7469, lng: 24.8685, wikiTitle: "Turnu Măgurele", photoUrl: "/stations/placeholder.jpg" },
+  { name: "Zimnicea", km: 554, lat: 43.6566, lng: 25.3660, wikiTitle: "Zimnicea", photoUrl: "/stations/placeholder.jpg" },
+  { name: "Giurgiu", km: 493, lat: 43.8833, lng: 25.9667, wikiTitle: "Giurgiu", photoUrl: "/stations/placeholder.jpg", icao: "LROP" },
+
+  { name: "Oltenita", km: 430, lat: 44.0833, lng: 26.6333, wikiTitle: "Oltenița", photoUrl: "/stations/placeholder.jpg" },
+  { name: "Calarasi", km: 370, lat: 44.2051, lng: 27.3136, wikiTitle: "Călărași", photoUrl: "/stations/placeholder.jpg" },
+
+  { name: "Cernavoda", km: 300, lat: 44.3396, lng: 28.0327, wikiTitle: "Cernavodă", photoUrl: "/stations/placeholder.jpg", icao: "LRCK" },
+  { name: "Harsova", km: 253, lat: 44.6831, lng: 27.9482, wikiTitle: "Hârșova", photoUrl: "/stations/placeholder.jpg" },
+
+  { name: "Braila", km: 170, lat: 45.2715, lng: 27.9743, wikiTitle: "Brăila", photoUrl: "/stations/placeholder.jpg" },
+  { name: "Galati", km: 150, lat: 45.4500, lng: 28.0500, wikiTitle: "Galați", photoUrl: "/stations/placeholder.jpg" },
+
+  { name: "Isaccea", km: 103, lat: 45.2697, lng: 28.4597, wikiTitle: "Isaccea", photoUrl: "/stations/placeholder.jpg" },
+  { name: "Tulcea", km: 71, lat: 45.1787, lng: 28.8050, wikiTitle: "Tulcea", photoUrl: "/stations/placeholder.jpg", icao: "LRTC" },
+  { name: "Sulina", km: 0, lat: 45.1567, lng: 29.6596, wikiTitle: "Sulina", photoUrl: "/stations/placeholder.jpg" }
 ];
 
 export async function GET() {
@@ -37,8 +42,8 @@ export async function GET() {
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
         Pragma: "no-cache",
-        Expires: "0",
-      },
+        Expires: "0"
+      }
     }
   );
 }
