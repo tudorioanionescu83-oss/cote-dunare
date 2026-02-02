@@ -71,6 +71,12 @@ input:focus, select:focus{
   height: fit-content;
   position: sticky;
   top: 16px;
+
+  /* C) fundal discret (hero) */
+  overflow: hidden; /* ca pseudo-elementul să nu “iasă” */
+
+  /* FIX: stacking corect (altfel apare “ceață” pe text pe unele mobile) */
+  z-index: 0;
 }
 
 /* zona principală */
@@ -90,5 +96,126 @@ input:focus, select:focus{
   .page-sidebar{
     position: static;
     top: auto;
+  }
+}
+
+/* =========================================================
+   A) FIX: fără scroll stânga-dreapta pe mobil
+   ========================================================= */
+
+html, body{
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* ajută flex/grid să nu forțeze lățime mai mare decât ecranul */
+.page-main,
+.page-sidebar{
+  min-width: 0;
+}
+
+/* =========================================================
+   A2) (pregătire) clase pt StationPanel responsive
+   Nu strică nimic dacă încă nu există className-urile.
+   ========================================================= */
+
+.panel-header{
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 16px;
+}
+
+.panel-info{
+  min-width: 0;
+}
+
+@media (max-width: 768px){
+  .panel-header{
+    grid-template-columns: 1fr;
+  }
+
+  .panel-image{
+    height: 180px !important;
+  }
+
+  .panel-cards{
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* =========================================================
+   C) “Brand header” în sidebar: titlu mai mare pe mobil + fundal
+   ========================================================= */
+
+/* Fundal discret: pune o poză în public/hero.jpg */
+.page-sidebar::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("/hero.jpg");
+  background-size: cover;
+  background-position: center;
+  opacity: 0.10;          /* transparență mare */
+  pointer-events: none;
+  filter: saturate(1.05) contrast(1.02);
+  z-index: 0;             /* SUB conținut */
+}
+
+/* strat de lizibilitate (mai light ca să nu “șteargă” textul) */
+.page-sidebar::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.72),
+    rgba(255,255,255,0.58)
+  );
+  pointer-events: none;
+  z-index: 0;             /* SUB conținut */
+}
+
+/* asigură că tot conținutul e deasupra fundalului */
+.page-sidebar > *{
+  position: relative;
+  z-index: 1;
+}
+
+/* dacă pui clase în page.js (recomandat) */
+.brand-title{
+  font-weight: 950;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.brand-subtitle{
+  color: #6b7280;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+/* MOBILE: titlu mai mare + uppercase + text un pic mai mare */
+@media (max-width: 768px){
+  .brand-title{
+    font-size: 22px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .brand-subtitle{
+    font-size: 13px;
+  }
+
+  /* mic boost general de lizibilitate în sidebar pe mobil */
+  .page-sidebar{
+    padding: 16px;
+  }
+
+  .page-sidebar label{
+    font-size: 13px;
+  }
+
+  .page-sidebar select{
+    font-size: 15px;
   }
 }
