@@ -46,6 +46,7 @@ export default function StationChart({ rows }) {
       <ResponsiveContainer>
         <ComposedChart data={data} margin={{ top: 10, right: 16, left: 8, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" />
+
           <XAxis
             dataKey="data"
             tickFormatter={fmtDate}
@@ -89,12 +90,15 @@ export default function StationChart({ rows }) {
             dot={false}
           />
 
+          {/* 🔴 Temperatura: roșu + linie întreruptă */}
           <Line
             yAxisId="temp"
             type="monotone"
             dataKey="temperatura_c"
             name="Temperatura (°C)"
+            stroke="#dc2626"
             strokeWidth={2}
+            strokeDasharray="6 4"
             dot={false}
             connectNulls={false}
           />
