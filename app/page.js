@@ -1,42 +1,57 @@
-﻿// app/page.js
-"use client";
+﻿"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-
 import StationPanel from "./components/StationPanel";
-import { STATIONS } from "./lib/stations";
 
-// IMPORTANT: evită "window is not defined" pentru leaflet
 const MapView = dynamic(() => import("./components/MapView"), { ssr: false });
 
 export default function Page() {
+  const [stations, setStations] = useState([]); // din /api/stations
   const [selectedStation, setSelectedStation] = useState("Tulcea");
+
   const [latestByName, setLatestByName] = useState({});
-  const [chartRows, setChartRows] = useState([]);
-  const [periodDays, setPeriodDays] = useState(30);
-  const [loading, setLoading] = useState(false);
+  const [chartByStation, setChartByStation] = useState({});
 
-  const stations = useMemo(() => STATIONS, []);
+  // 1) Stații (cu coordonate) din /api/stations
+  useEffect(() => {
+    let cancelled = false;
 
-  const selectedStationObj = useMemo(
-    () => stations.find((s) => s.name === selectedStation) || stations[0],
-    [stations, selectedStation]
-  );
+    async function loadStations() {
+      try {
+        const res = await fetch("/api/stations", { cache: "no-store" });
+        const j = await res.json();
+        const list = j?.stations || [];
+        if (!cancelled) {
+          setStations(list);
 
-  // load latest
+          if (list.length && !list.some((s) => s.name === selectedStation)) {
+            setSelectedStation(list[0].name);
+          }
+        }
+      } catch (e) {
+        // silent
+      }
+    }
+
+    loadStations();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 2) Latest (pt culori + carduri)
   useEffect(() => {
     let cancelled = false;
 
     async function loadLatest() {
       try {
-        const res = await fetch("/api/latest");
+        const res = await fetch("/api/latest", { cache: "no-store" });
         const j = await res.json();
-        if (!cancelled) {
-          setLatestByName(j.byName || {});
-        }
+        if (!cancelled) setLatestByName(j.byName || {});
       } catch (e) {
-        // silent fail
+        // silent
       }
     }
 
@@ -48,23 +63,26 @@ export default function Page() {
     };
   }, []);
 
-  // load chart data
+  // 3) Chart (pentru stația selectată)
   useEffect(() => {
     let cancelled = false;
 
     async function loadChart() {
       if (!selectedStation) return;
-      setLoading(true);
       try {
         const res = await fetch(
-          `/api/measurements?station=${encodeURIComponent(selectedStation)}&days=${periodDays}`
+          `/api/measurements?station=${encodeURIComponent(selectedStation)}&days=30`,
+          { cache: "no-store" }
         );
         const j = await res.json();
-        if (!cancelled) setChartRows(j.rows || []);
+        if (!cancelled) {
+          setChartByStation((prev) => ({
+            ...prev,
+            [selectedStation]: j.rows || [],
+          }));
+        }
       } catch (e) {
-        if (!cancelled) setChartRows([]);
-      } finally {
-        if (!cancelled) setLoading(false);
+        // silent
       }
     }
 
@@ -72,30 +90,24 @@ export default function Page() {
     return () => {
       cancelled = true;
     };
-  }, [selectedStation, periodDays]);
+  }, [selectedStation]);
+
+  const selectedStationObj = useMemo(
+    () => stations.find((s) => s.name === selectedStation) || null,
+    [stations, selectedStation]
+  );
 
   return (
     <div className="page-layout">
-      {/* Sidebar */}
       <aside className="page-sidebar">
-        <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 6 }}>Cotele Dunării</div>
-        <div style={{ color: "#6b7280", fontSize: 12, marginBottom: 12 }}>Stații + hartă + grafice</div>
+        <div className="brand-title">Cotele Dunării</div>
+        <div className="brand-subtitle">Stații • hartă • grafice</div>
 
-        <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>
-          Caută stația
-        </label>
-
+        <label className="sidebar-label">Caută stația</label>
         <select
+          className="sidebar-select"
           value={selectedStation}
           onChange={(e) => setSelectedStation(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "10px 12px",
-            borderRadius: 12,
-            border: "1px solid #e5e7eb",
-            outline: "none",
-            fontWeight: 700,
-          }}
         >
           {stations.map((s) => (
             <option key={s.name} value={s.name}>
@@ -104,37 +116,39 @@ export default function Page() {
           ))}
         </select>
 
-        <div style={{ marginTop: 12, fontSize: 12, color: "#374151", lineHeight: 1.4 }}>
+        <div className="legend" style={{ marginTop: 12 }}>
           <div>
-            <span style={{ color: "#dc2626", fontWeight: 800 }}>●</span> roșu = variație negativă
+            <span className="dot dot-red" /> roșu = variație negativă
           </div>
           <div>
-            <span style={{ color: "#16a34a", fontWeight: 800 }}>●</span> verde = variație pozitivă
+            <span className="dot dot-green" /> verde = variație pozitivă
           </div>
           <div>
-            <span style={{ color: "#111827", fontWeight: 800 }}>●</span> negru = variație 0
+            <span className="dot dot-black" /> negru = variație 0
           </div>
           <div>
-            <span style={{ color: "#9ca3af", fontWeight: 800 }}>●</span> gri = fără date
+            <span className="dot dot-gray" /> gri = fără date
           </div>
+        </div>
+
+        <div style={{ marginTop: 10, fontSize: 12, color: "rgba(0,45,70,0.65)" }}>
+          Range: 1 m • ok
         </div>
       </aside>
 
-      {/* Main */}
       <main className="page-main">
         <MapView
+          stations={stations}
           latestByName={latestByName}
           selectedStation={selectedStation}
-          onPickStation={(name) => setSelectedStation(name)}
+          onSelectStation={setSelectedStation}
         />
 
         <StationPanel
+          stationName={selectedStation}
           station={selectedStationObj}
-          latest={latestByName[selectedStation]}
-          chartData={chartRows}
-          period={periodDays}
-          onPeriodChange={setPeriodDays}
-          loading={loading}
+          latest={latestByName?.[selectedStation]}
+          chartData={chartByStation?.[selectedStation] || []}
         />
       </main>
     </div>

@@ -1,75 +1,177 @@
-// app/components/LeafletMapInner.jsx
 "use client";
 
+import React, { useMemo } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  CircleMarker,
+  Popup,
+  Tooltip,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 
-function colorForDelta(delta) {
-  if (delta === null || delta === undefined) return "#9CA3AF"; // gri
-  const v = Number(delta);
-  if (Number.isNaN(v)) return "#9CA3AF";
-  if (v > 0) return "#16A34A"; // verde
-  if (v < 0) return "#DC2626"; // rosu
-  return "#111827"; // negru
+function pick(obj, keys, fallback = null) {
+  if (!obj) return fallback;
+  for (const k of keys) {
+    const v = obj?.[k];
+    if (v !== undefined && v !== null && v !== "") return v;
+  }
+  return fallback;
 }
 
-export default function LeafletMapInner({ stations = [], latestByStation = {}, onSelectStation }) {
-  const safeSelect = typeof onSelectStation === "function" ? onSelectStation : () => {};
+function toNum(v) {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
 
-  const center = [45.2, 28.7];
-  const zoom = 5;
+  // prinde si stringuri gen "+12 cm", "0", "-3", "2.5 °C"
+  const s = String(v)
+    .replace(",", ".")
+    .replace(/[^0-9.\-+]/g, "");
+  if (!s) return null;
+
+  const x = Number(s);
+  return Number.isFinite(x) ? x : null;
+}
+
+function fmtAt(value) {
+  if (!value) return "—";
+  const d = new Date(String(value));
+  if (Number.isNaN(d.getTime())) return String(value);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+}
+
+// legenda: verde >0, rosu <0, negru =0, gri = fara date
+function colorByDelta(delta) {
+  if (delta === null) return { fill: "#94a3b8", stroke: "#64748b" }; // gri
+  if (delta > 0) return { fill: "#22c55e", stroke: "#166534" };      // verde
+  if (delta < 0) return { fill: "#ef4444", stroke: "#7f1d1d" };      // rosu
+  return { fill: "#111827", stroke: "#111827" };                     // negru
+}
+
+export default function LeafletMapInner({
+  stations = [],
+  latestByName = {},
+  selectedStation,
+  onSelectStation,
+}) {
+  // normalizeaza statia: API stations are lat/lng + name
+  const pts = useMemo(() => {
+    return (stations || [])
+      .map((s) => {
+        const name = pick(s, ["name", "localitatea", "station"], null);
+        const lat = toNum(pick(s, ["lat", "latitude", "Latitude"], null));
+        const lng = toNum(pick(s, ["lng", "lon", "longitude", "Longitudine"], null));
+        const km = toNum(pick(s, ["km"], null));
+        const wikiTitle = pick(s, ["wikiTitle", "wiki"], null);
+
+        if (!name || lat === null || lng === null) return null;
+        return { name, lat, lng, km, wikiTitle };
+      })
+      .filter(Boolean);
+  }, [stations]);
+
+  // centru: pe statia selectata daca exista
+  const center = useMemo(() => {
+    const sel = pts.find((p) => p.name === selectedStation);
+    if (sel) return [sel.lat, sel.lng];
+
+    if (pts.length) {
+      const latAvg = pts.reduce((a, p) => a + p.lat, 0) / pts.length;
+      const lngAvg = pts.reduce((a, p) => a + p.lng, 0) / pts.length;
+      return [latAvg, lngAvg];
+    }
+    return [45.9, 27.9];
+  }, [pts, selectedStation]);
 
   return (
-    <div className="w-full h-[420px] rounded-xl overflow-hidden shadow-sm">
-      <MapContainer center={center} zoom={zoom} style={{ height: "420px", width: "100%" }}>
+    <div style={{ width: "100%" }}>
+      <MapContainer
+        center={center}
+        zoom={6}
+        scrollWheelZoom
+        style={{ height: 420, width: "100%" }}
+      >
         <TileLayer
-          attribution='&copy; OpenStreetMap contributors'
+          attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {stations.map((s) => {
-          const name = s.name || s.statie || s.station;
-          const lat = Number(s.lat);
-          const lng = Number(s.lng);
+        {pts.map((s) => {
+          // IMPORTANT: latest object keys in your DB/API are:
+          // nivel_cm, variatie_cm, temperatura_c, data, created_at, km
+          const latest = latestByName?.[s.name] || null;
 
-          if (!name || Number.isNaN(lat) || Number.isNaN(lng)) return null;
+          const nivel = toNum(
+            pick(latest, ["nivel_cm", "level_cm", "levelCm", "nivel", "level"], null)
+          );
+          const delta = toNum(
+            pick(latest, ["variatie_cm", "delta_cm", "deltaCm", "delta", "diff_cm", "diffCm"], null)
+          );
+          const temp = toNum(
+            pick(latest, ["temperatura_c", "temp_c", "tempC", "temp", "temperatura"], null)
+          );
+          const at = pick(latest, ["data", "created_at", "at", "time", "timestamp", "updatedAt"], null);
+          const kmLatest = toNum(pick(latest, ["km"], null));
 
-          const latest = latestByStation?.[name] || null;
-
-          const nivel = latest?.nivel_cm ?? null;
-          const delta = latest?.variatie_cm ?? null;
-          const temp = latest?.temperatura_c ?? null;
-          const km = latest?.km ?? s.km ?? null;
-          const dateStr = latest?.data ?? null;
-
-          const col = colorForDelta(delta);
+          const { fill, stroke } = colorByDelta(delta);
+          const isSel = selectedStation === s.name;
 
           return (
             <CircleMarker
-              key={name}
-              center={[lat, lng]}
-              radius={7}
-              pathOptions={{ color: col, fillColor: col, fillOpacity: 0.85 }}
+              key={s.name}
+              center={[s.lat, s.lng]}
+              radius={isSel ? 10 : 7}
+              pathOptions={{
+                color: stroke,
+                weight: isSel ? 3 : 2,
+                fillColor: fill,
+                fillOpacity: 0.9,
+              }}
               eventHandlers={{
-                click: () => safeSelect(name),
+                click: () => onSelectStation?.(s.name),
               }}
             >
+              <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
+                <div style={{ fontWeight: 900 }}>{s.name}</div>
+              </Tooltip>
+
               <Popup>
-                <div className="text-sm">
-                  <div className="font-semibold">{name}</div>
-                  <div>Km: {km ?? "—"}</div>
-                  <div>Nivel: {nivel ?? "—"} cm</div>
-                  <div>Δ: {delta ?? "—"} cm</div>
-                  <div>Temp: {temp ?? "—"} °C</div>
-                  <div>Data: {dateStr ?? "—"}</div>
-                  <button
-                    className="mt-2 px-3 py-1 rounded bg-slate-900 text-white text-xs"
-                    onClick={() => safeSelect(name)}
-                    type="button"
-                  >
-                    Deschide grafic
-                  </button>
+                <div style={{ fontWeight: 950, fontSize: 14, marginBottom: 6 }}>
+                  {s.name}
                 </div>
+
+                <div style={{ fontSize: 12, lineHeight: 1.5 }}>
+                  <div><b>Nivel:</b> {nivel === null ? "—" : nivel} cm</div>
+                  <div><b>Δ:</b> {delta === null ? "—" : delta} cm</div>
+                  <div><b>Temp:</b> {temp === null ? "—" : temp} °C</div>
+                  <div style={{ marginTop: 6, opacity: 0.75 }}>
+                    <b>Ultima citire:</b> {fmtAt(at)}
+                  </div>
+                  <div style={{ marginTop: 6, opacity: 0.75 }}>
+                    <b>Km:</b>{" "}
+                    {kmLatest !== null ? kmLatest : (s.km !== null ? s.km : "—")}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => onSelectStation?.(s.name)}
+                  style={{
+                    marginTop: 10,
+                    borderRadius: 10,
+                    border: "1px solid rgba(0,119,182,0.18)",
+                    padding: "8px 10px",
+                    fontWeight: 900,
+                    cursor: "pointer",
+                    background: "rgba(0,119,182,0.10)",
+                  }}
+                >
+                  Selectează stația
+                </button>
               </Popup>
             </CircleMarker>
           );

@@ -7,7 +7,7 @@ const STATIONS = [
   // COMPLETEAZĂ/VERIFICĂ coordonatele dacă ai altele – astea sunt exemple
   { name: "Bazias", km: 1072, lat: 44.8167, lng: 21.3833, wikiTitle: "Baziaș" },
   { name: "Moldova Veche", km: 1048, lat: 44.723, lng: 21.666, wikiTitle: "Moldova Veche" },
-  { name: "Drencova", km: 1015, lat: 44.687, lng: 22.262, wikiTitle: "Drencova" },
+  { name: "Drencova", km: 1015, lat: 44.637771, lng: 21.972336, wikiTitle: "Drencova" },
   { name: "Orsova", km: 954, lat: 44.725, lng: 22.396, wikiTitle: "Orșova" },
   { name: "Drobeta Turnu Severin", km: 931, lat: 44.636, lng: 22.659, wikiTitle: "Drobeta-Turnu Severin" },
   { name: "Gruia", km: 851, lat: 44.267, lng: 22.708, wikiTitle: "Gruia, Mehedinți" },
