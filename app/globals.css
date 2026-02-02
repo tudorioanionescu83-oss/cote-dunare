@@ -27,10 +27,8 @@ a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 button{ font: inherit; }
-
 ::selection{ background: rgba(0, 180, 216, 0.20); }
 
-/* Leaflet */
 .leaflet-container{
   border-radius: 16px;
   overflow: hidden;
@@ -38,7 +36,6 @@ button{ font: inherit; }
   border: 1px solid var(--border);
 }
 
-/* input/select */
 input, select{
   border-radius: 12px;
   border: 1px solid var(--border);
@@ -52,7 +49,7 @@ input:focus, select:focus{
 }
 
 /* =========================================================
-   DESKTOP: 2 coloane
+   DESKTOP: 2 coloane (stabil)
    ========================================================= */
 .page-layout{
   display: grid;
@@ -83,7 +80,7 @@ input:focus, select:focus{
   max-width: 100%;
 }
 
-/* HERO discret în sidebar */
+/* HERO discret (ai deja public/hero.jpg) */
 .page-sidebar::before{
   content: "";
   position: absolute;
@@ -96,7 +93,6 @@ input:focus, select:focus{
   filter: saturate(1.05) contrast(1.02);
   z-index: 0;
 }
-
 .page-sidebar::after{
   content: "";
   position: absolute;
@@ -105,26 +101,63 @@ input:focus, select:focus{
   pointer-events: none;
   z-index: 0;
 }
-
 .page-sidebar > *{
   position: relative;
   z-index: 1;
 }
 
-/* StationPanel responsive hooks (dacă ai className-uri) */
-.panel-header{
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 16px;
+/* mici stiluri pt sidebar */
+.brand-title{
+  font-weight: 950;
+  font-size: 18px;
+  margin-bottom: 6px;
+  letter-spacing: 0.4px;
 }
-.panel-info{ min-width: 0; }
+.brand-subtitle{
+  color: #6b7280;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.sidebar-label{
+  font-size: 12px;
+  font-weight: 800;
+  display: block;
+  margin-bottom: 6px;
+}
+.sidebar-select{
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  outline: none;
+  font-weight: 700;
+  background: rgba(255,255,255,0.92);
+}
+
+.legend{
+  margin-top: 12px;
+  font-size: 12px;
+  color: #374151;
+  line-height: 1.4;
+}
+.dot{ font-weight: 900; }
+.dot-red{ color: #dc2626; }
+.dot-green{ color: #16a34a; }
+.dot-black{ color: #111827; }
+.dot-gray{ color: #9ca3af; }
+
+.mobile-hint{
+  display: none;
+  margin-top: 10px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 800;
+}
 
 /* =========================================================
-   MOBILE: SLIDE stânga-dreapta (snap) — asta vrei tu
+   MOBILE: SLIDE STÂNGA–DREAPTA (snap) — corect
    ========================================================= */
 @media (max-width: 768px){
-  /* IMPORTANT: NU pune overflow-x:hidden pe html/body pe mobil,
-     altfel omori slide-ul */
+  /* Nu blocăm overflow-x pe html/body pe mobil */
   html, body{
     max-width: 100%;
     overflow-x: visible;
@@ -144,12 +177,15 @@ input:focus, select:focus{
     -webkit-overflow-scrolling: touch;
   }
 
+  /* IMPORTANT: fix pentru iOS/Safari să nu “calculeze” greșit lățimi */
   .page-sidebar,
   .page-main{
-    min-width: 100vw;
+    flex: 0 0 100vw;
+    width: 100vw;
     max-width: 100vw;
     scroll-snap-align: start;
     padding: 12px;
+    min-width: 0;
   }
 
   .page-sidebar{
@@ -157,9 +193,18 @@ input:focus, select:focus{
     top: auto;
   }
 
-  .panel-header{ grid-template-columns: 1fr; }
-  .panel-image{ height: 180px !important; }
-  .panel-cards{ grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .brand-title{
+    font-size: 22px;
+    text-transform: uppercase;
+  }
+
+  .brand-subtitle{ font-size: 13px; }
+  .sidebar-label{ font-size: 13px; }
+  .sidebar-select{ font-size: 15px; }
+
+  .mobile-hint{
+    display: block;
+  }
 }
 
 /* media safe */

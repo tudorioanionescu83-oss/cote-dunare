@@ -22,6 +22,7 @@ export default function Page() {
     [stations, selectedStation]
   );
 
+  // load latest
   useEffect(() => {
     let cancelled = false;
 
@@ -42,6 +43,7 @@ export default function Page() {
     };
   }, []);
 
+  // load chart data
   useEffect(() => {
     let cancelled = false;
 
@@ -70,25 +72,17 @@ export default function Page() {
 
   return (
     <div className="page-layout">
+      {/* Slide 1: Sidebar */}
       <aside className="page-sidebar">
-        <div className="brand-title">Cotele Dunării</div>
-        <div className="brand-subtitle">Stații + hartă + grafice</div>
+        <div className="brand-title">COTELE DUNĂRII</div>
+        <div className="brand-subtitle">Stații · Hartă · Grafice</div>
 
-        <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>
-          Caută stația
-        </label>
+        <label className="sidebar-label">Caută stația</label>
 
         <select
           value={selectedStation}
           onChange={(e) => setSelectedStation(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "10px 12px",
-            borderRadius: 12,
-            border: "1px solid #e5e7eb",
-            outline: "none",
-            fontWeight: 700,
-          }}
+          className="sidebar-select"
         >
           {stations.map((s) => (
             <option key={s.name} value={s.name}>
@@ -97,14 +91,19 @@ export default function Page() {
           ))}
         </select>
 
-        <div style={{ marginTop: 12, fontSize: 12, color: "#374151", lineHeight: 1.4 }}>
-          <div><span style={{ color: "#dc2626", fontWeight: 800 }}>●</span> roșu = variație negativă</div>
-          <div><span style={{ color: "#16a34a", fontWeight: 800 }}>●</span> verde = variație pozitivă</div>
-          <div><span style={{ color: "#111827", fontWeight: 800 }}>●</span> negru = variație 0</div>
-          <div><span style={{ color: "#9ca3af", fontWeight: 800 }}>●</span> gri = fără date</div>
+        <div className="legend">
+          <div><span className="dot dot-red">●</span> roșu = variație negativă</div>
+          <div><span className="dot dot-green">●</span> verde = variație pozitivă</div>
+          <div><span className="dot dot-black">●</span> negru = variație 0</div>
+          <div><span className="dot dot-gray">●</span> gri = fără date</div>
+        </div>
+
+        <div className="mobile-hint">
+          ← glisează pentru hartă & grafic →
         </div>
       </aside>
 
+      {/* Slide 2: Main */}
       <main className="page-main">
         <MapView
           latestByName={latestByName}
