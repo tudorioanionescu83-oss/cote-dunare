@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import StationChart from "./StationChart";
+import WeatherWidget from "./WeatherWidget";
 import { stationSlug } from "../lib/stations";
 
 const PERIODS = [
@@ -18,95 +19,6 @@ function badgeStyle(kind) {
   return { background: "#f3f4f6", color: "#6b7280", border: "1px solid #e5e7eb" };
 }
 
-function fmtDayShort(iso) {
-  try {
-    const [y, m, d] = String(iso).split("-").map(Number);
-    const dt = new Date(y, (m || 1) - 1, d || 1);
-    return dt.toLocaleDateString("ro-RO", { weekday: "short" });
-  } catch {
-    return iso;
-  }
-}
-
-function WeatherWidget({ weather }) {
-  if (!weather?.ok) {
-    return (
-      <div style={{ padding: 12, color: "#6b7280", fontSize: 13 }}>
-        Meteo: indisponibil momentan.
-      </div>
-    );
-  }
-
-  const cur = weather.current;
-
-  return (
-    <div
-      style={{
-        border: "1px solid #e5e7eb",
-        borderRadius: 16,
-        background: "linear-gradient(180deg, rgba(240,251,255,0.95), rgba(255,255,255,0.95))",
-        padding: 12,
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
-        <div>
-          <div style={{ fontWeight: 950, fontSize: 14, display: "flex", gap: 8, alignItems: "center" }}>
-            <span style={{ fontSize: 18 }}>{cur?.icon ?? "🌡️"}</span>
-            Meteo (azi)
-          </div>
-          <div style={{ color: "#6b7280", fontSize: 12, marginTop: 2 }}>
-            {cur?.label ?? "—"} · sursă: {weather.source}
-          </div>
-        </div>
-
-        <div style={{ textAlign: "right" }}>
-          <div style={{ fontWeight: 950, fontSize: 18 }}>
-            {cur?.temp_c ?? "—"}°C
-          </div>
-          <div style={{ color: "#6b7280", fontSize: 12 }}>
-            vânt {cur?.wind_kmh ?? "—"} km/h
-          </div>
-        </div>
-      </div>
-
-      {/* forecast 3 zile */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, marginTop: 10 }}>
-        {(weather.daily || []).slice(1, 4).map((d) => (
-          <div
-            key={d.date}
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: 14,
-              padding: 10,
-              background: "rgba(255,255,255,0.9)",
-              minWidth: 0,
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-              <div style={{ fontWeight: 900, fontSize: 12, textTransform: "capitalize" }}>
-                {fmtDayShort(d.date)}
-              </div>
-              <div style={{ fontSize: 18 }}>{d.icon}</div>
-            </div>
-
-            <div style={{ color: "#6b7280", fontSize: 12, marginTop: 4, lineHeight: 1.25 }}>
-              {d.label}
-            </div>
-
-            <div style={{ marginTop: 8, fontWeight: 950, fontSize: 13 }}>
-              {d.tmin ?? "—"}° / {d.tmax ?? "—"}°
-            </div>
-
-            <div style={{ color: "#6b7280", fontSize: 12, marginTop: 2 }}>
-              {d.precip_mm ?? "—"} mm · vânt max {d.windmax_kmh ?? "—"} km/h
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function StationPanel({
   station,
   latest,
@@ -120,10 +32,13 @@ export default function StationPanel({
   const imgUrl = `/stations/${slug}.jpg`;
 
   const [wiki, setWiki] = useState({ loading: true, found: false, extract: "", url: null });
+
+  // meteo
   const [weather, setWeather] = useState({ loading: true, ok: false });
 
   useEffect(() => {
     let cancelled = false;
+
     async function loadWiki() {
       setWiki({ loading: true, found: false, extract: "", url: null });
       try {
@@ -134,28 +49,28 @@ export default function StationPanel({
         if (!cancelled) setWiki({ loading: false, found: false, extract: "", url: null });
       }
     }
+
     if (name) loadWiki();
     return () => {
       cancelled = true;
     };
   }, [name]);
 
-  // meteo (după coordonate)
   useEffect(() => {
     let cancelled = false;
 
     async function loadWeather() {
-      const lat = station?.lat;
-      const lng = station?.lng;
-
-      if (typeof lat !== "number" || typeof lng !== "number") {
-        setWeather({ loading: false, ok: false });
+      // avem nevoie de coordonate
+      const lat = station?.lat ?? station?.latitude ?? station?.Latitude;
+      const lon = station?.lon ?? station?.lng ?? station?.longitudine ?? station?.Longitudine;
+      if (lat == null || lon == null) {
+        setWeather({ loading: false, ok: false, reason: "missing_coords" });
         return;
       }
 
       setWeather({ loading: true, ok: false });
       try {
-        const r = await fetch(`/api/weather?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`);
+        const r = await fetch(`/api/weather?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`);
         const j = await r.json();
         if (!cancelled) setWeather({ loading: false, ...j });
       } catch {
@@ -164,43 +79,53 @@ export default function StationPanel({
     }
 
     loadWeather();
+    const t = setInterval(loadWeather, 6 * 60 * 60 * 1000); // refresh la 6h (ok pt free)
     return () => {
       cancelled = true;
+      clearInterval(t);
     };
-  }, [station?.lat, station?.lng]);
+  }, [station?.lat, station?.latitude, station?.Latitude, station?.lon, station?.lng, station?.longitudine, station?.Longitudine]);
 
   const delta = latest?.variatie_cm;
   const deltaNum = delta === null || delta === undefined ? null : Number(delta);
   const badgeKind = deltaNum === null ? "na" : deltaNum > 0 ? "pos" : deltaNum < 0 ? "neg" : "zero";
 
   return (
-    <div
+    <section
       style={{
         background: "white",
         borderRadius: 18,
         border: "1px solid #e5e7eb",
         overflow: "hidden",
         boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
+        minWidth: 0, // IMPORTANT pt mobile
       }}
     >
       {/* Header */}
-      <div style={{ padding: 16, display: "grid", gridTemplateColumns: "260px 1fr", gap: 16 }}>
+      <div className="panel-header" style={{ padding: 16, minWidth: 0 }}>
         {/* imagine mare */}
         <div
+          className="panel-image"
           style={{
             width: "100%",
             height: 160,
             borderRadius: 16,
             overflow: "hidden",
-            background: "#f3f4f6",
+            background: "linear-gradient(180deg,#f3f4f6,#eef2f7)",
             border: "1px solid #e5e7eb",
+            minWidth: 0,
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imgUrl}
             alt={name}
-            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}
@@ -208,20 +133,58 @@ export default function StationPanel({
         </div>
 
         {/* titlu + mini stats */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+        <div className="panel-info" style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              gap: 12,
+              minWidth: 0,
+              flexWrap: "wrap", // IMPORTANT: fără overflow
+            }}
+          >
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: 900, fontSize: 20, lineHeight: 1.1 }}>{name}</div>
-              <div style={{ color: "#6b7280", fontSize: 12, marginTop: 6 }}>
+              <div
+                style={{
+                  fontWeight: 900,
+                  fontSize: 20,
+                  lineHeight: 1.1,
+                  wordBreak: "break-word",
+                }}
+              >
+                {name}
+              </div>
+
+              <div
+                style={{
+                  color: "#6b7280",
+                  fontSize: 12,
+                  marginTop: 6,
+                  lineHeight: 1.35,
+                  wordBreak: "break-word",
+                }}
+              >
                 Ultima citire: <b>{latest?.data ?? "—"}</b> · Nivel: <b>{latest?.nivel_cm ?? "—"} cm</b> · Δ:{" "}
                 <b>{latest?.variatie_cm ?? "—"} cm</b> · T: <b>{latest?.temperatura_c ?? "—"} °C</b>
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <span style={{ padding: "6px 10px", borderRadius: 999, fontWeight: 900, fontSize: 12, ...badgeStyle(badgeKind) }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <span
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 999,
+                  fontWeight: 900,
+                  fontSize: 12,
+                  whiteSpace: "nowrap",
+                  ...badgeStyle(badgeKind),
+                }}
+              >
                 Δ {deltaNum === null ? "—" : deltaNum > 0 ? `+${deltaNum}` : `${deltaNum}`} cm
               </span>
+
+              {/* select “dummy” doar ca să arate ca UI consistent */}
               <select
                 value={name}
                 onChange={() => {}}
@@ -233,6 +196,7 @@ export default function StationPanel({
                   background: "#f9fafb",
                   fontWeight: 800,
                   color: "#111827",
+                  maxWidth: "100%",
                 }}
               >
                 <option>{name}</option>
@@ -241,7 +205,7 @@ export default function StationPanel({
           </div>
 
           {/* cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 10 }}>
+          <div className="panel-cards" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 10, minWidth: 0 }}>
             {[
               { label: "Nivel", value: latest?.nivel_cm ?? "—", unit: "cm" },
               { label: "Δ", value: latest?.variatie_cm ?? "—", unit: "cm" },
@@ -259,15 +223,16 @@ export default function StationPanel({
                 }}
               >
                 <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 800 }}>{c.label}</div>
-                <div style={{ fontSize: 18, fontWeight: 950, marginTop: 4 }}>
-                  {c.value} <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 800 }}>{c.unit}</span>
+                <div style={{ fontSize: 18, fontWeight: 950, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {c.value}{" "}
+                  <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 800 }}>{c.unit}</span>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* text wiki */}
-          <div style={{ marginTop: 4, fontSize: 13, color: "#374151", lineHeight: 1.45 }}>
+          {/* wiki */}
+          <div style={{ marginTop: 4, fontSize: 13, color: "#374151", lineHeight: 1.45, minWidth: 0 }}>
             {wiki.loading ? (
               <div style={{ color: "#9ca3af" }}>Se încarcă rezumatul Wikipedia…</div>
             ) : wiki.found ? (
@@ -278,6 +243,7 @@ export default function StationPanel({
                     WebkitLineClamp: 4,
                     WebkitBoxOrient: "vertical",
                     overflow: "hidden",
+                    minWidth: 0,
                   }}
                 >
                   {wiki.extract}
@@ -310,6 +276,7 @@ export default function StationPanel({
                   fontWeight: 900,
                   cursor: "pointer",
                   fontSize: 12,
+                  whiteSpace: "nowrap",
                 }}
               >
                 {p.label}
@@ -320,7 +287,7 @@ export default function StationPanel({
       </div>
 
       {/* Chart */}
-      <div style={{ padding: "0 16px 12px 16px" }}>
+      <div style={{ padding: "0 16px 16px 16px", minWidth: 0 }}>
         {loading ? (
           <div style={{ padding: 14, color: "#6b7280", fontSize: 13 }}>Se încarcă graficul…</div>
         ) : (
@@ -328,14 +295,14 @@ export default function StationPanel({
         )}
       </div>
 
-      {/* METEO SUB GRAFIC */}
-      <div style={{ padding: "0 16px 16px 16px" }}>
+      {/* Meteo SUB grafice */}
+      <div style={{ padding: "0 16px 16px 16px", minWidth: 0 }}>
         {weather.loading ? (
           <div style={{ padding: 12, color: "#9ca3af", fontSize: 13 }}>Se încarcă meteo…</div>
         ) : (
           <WeatherWidget weather={weather} />
         )}
       </div>
-    </div>
+    </section>
   );
 }
