@@ -18,6 +18,95 @@ function badgeStyle(kind) {
   return { background: "#f3f4f6", color: "#6b7280", border: "1px solid #e5e7eb" };
 }
 
+function fmtDayShort(iso) {
+  try {
+    const [y, m, d] = String(iso).split("-").map(Number);
+    const dt = new Date(y, (m || 1) - 1, d || 1);
+    return dt.toLocaleDateString("ro-RO", { weekday: "short" });
+  } catch {
+    return iso;
+  }
+}
+
+function WeatherWidget({ weather }) {
+  if (!weather?.ok) {
+    return (
+      <div style={{ padding: 12, color: "#6b7280", fontSize: 13 }}>
+        Meteo: indisponibil momentan.
+      </div>
+    );
+  }
+
+  const cur = weather.current;
+
+  return (
+    <div
+      style={{
+        border: "1px solid #e5e7eb",
+        borderRadius: 16,
+        background: "linear-gradient(180deg, rgba(240,251,255,0.95), rgba(255,255,255,0.95))",
+        padding: 12,
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
+        <div>
+          <div style={{ fontWeight: 950, fontSize: 14, display: "flex", gap: 8, alignItems: "center" }}>
+            <span style={{ fontSize: 18 }}>{cur?.icon ?? "🌡️"}</span>
+            Meteo (azi)
+          </div>
+          <div style={{ color: "#6b7280", fontSize: 12, marginTop: 2 }}>
+            {cur?.label ?? "—"} · sursă: {weather.source}
+          </div>
+        </div>
+
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontWeight: 950, fontSize: 18 }}>
+            {cur?.temp_c ?? "—"}°C
+          </div>
+          <div style={{ color: "#6b7280", fontSize: 12 }}>
+            vânt {cur?.wind_kmh ?? "—"} km/h
+          </div>
+        </div>
+      </div>
+
+      {/* forecast 3 zile */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, marginTop: 10 }}>
+        {(weather.daily || []).slice(1, 4).map((d) => (
+          <div
+            key={d.date}
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 14,
+              padding: 10,
+              background: "rgba(255,255,255,0.9)",
+              minWidth: 0,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+              <div style={{ fontWeight: 900, fontSize: 12, textTransform: "capitalize" }}>
+                {fmtDayShort(d.date)}
+              </div>
+              <div style={{ fontSize: 18 }}>{d.icon}</div>
+            </div>
+
+            <div style={{ color: "#6b7280", fontSize: 12, marginTop: 4, lineHeight: 1.25 }}>
+              {d.label}
+            </div>
+
+            <div style={{ marginTop: 8, fontWeight: 950, fontSize: 13 }}>
+              {d.tmin ?? "—"}° / {d.tmax ?? "—"}°
+            </div>
+
+            <div style={{ color: "#6b7280", fontSize: 12, marginTop: 2 }}>
+              {d.precip_mm ?? "—"} mm · vânt max {d.windmax_kmh ?? "—"} km/h
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function StationPanel({
   station,
   latest,
@@ -31,6 +120,7 @@ export default function StationPanel({
   const imgUrl = `/stations/${slug}.jpg`;
 
   const [wiki, setWiki] = useState({ loading: true, found: false, extract: "", url: null });
+  const [weather, setWeather] = useState({ loading: true, ok: false });
 
   useEffect(() => {
     let cancelled = false;
@@ -49,6 +139,35 @@ export default function StationPanel({
       cancelled = true;
     };
   }, [name]);
+
+  // meteo (după coordonate)
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadWeather() {
+      const lat = station?.lat;
+      const lng = station?.lng;
+
+      if (typeof lat !== "number" || typeof lng !== "number") {
+        setWeather({ loading: false, ok: false });
+        return;
+      }
+
+      setWeather({ loading: true, ok: false });
+      try {
+        const r = await fetch(`/api/weather?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`);
+        const j = await r.json();
+        if (!cancelled) setWeather({ loading: false, ...j });
+      } catch {
+        if (!cancelled) setWeather({ loading: false, ok: false });
+      }
+    }
+
+    loadWeather();
+    return () => {
+      cancelled = true;
+    };
+  }, [station?.lat, station?.lng]);
 
   const delta = latest?.variatie_cm;
   const deltaNum = delta === null || delta === undefined ? null : Number(delta);
@@ -81,7 +200,7 @@ export default function StationPanel({
           <img
             src={imgUrl}
             alt={name}
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}
@@ -89,9 +208,9 @@ export default function StationPanel({
         </div>
 
         {/* titlu + mini stats */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div style={{ fontWeight: 900, fontSize: 20, lineHeight: 1.1 }}>{name}</div>
               <div style={{ color: "#6b7280", fontSize: 12, marginTop: 6 }}>
                 Ultima citire: <b>{latest?.data ?? "—"}</b> · Nivel: <b>{latest?.nivel_cm ?? "—"} cm</b> · Δ:{" "}
@@ -136,6 +255,7 @@ export default function StationPanel({
                   borderRadius: 14,
                   padding: 12,
                   background: "linear-gradient(180deg, #ffffff, #fafafa)",
+                  minWidth: 0,
                 }}
               >
                 <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 800 }}>{c.label}</div>
@@ -146,7 +266,7 @@ export default function StationPanel({
             ))}
           </div>
 
-          {/* text wiki (max 4 rânduri vizual) */}
+          {/* text wiki */}
           <div style={{ marginTop: 4, fontSize: 13, color: "#374151", lineHeight: 1.45 }}>
             {wiki.loading ? (
               <div style={{ color: "#9ca3af" }}>Se încarcă rezumatul Wikipedia…</div>
@@ -176,7 +296,7 @@ export default function StationPanel({
           </div>
 
           {/* perioade */}
-          <div style={{ display: "flex", gap: 8, marginTop: 2 }}>
+          <div style={{ display: "flex", gap: 8, marginTop: 2, flexWrap: "wrap" }}>
             {PERIODS.map((p) => (
               <button
                 key={p.days}
@@ -200,11 +320,20 @@ export default function StationPanel({
       </div>
 
       {/* Chart */}
-      <div style={{ padding: "0 16px 16px 16px" }}>
+      <div style={{ padding: "0 16px 12px 16px" }}>
         {loading ? (
           <div style={{ padding: 14, color: "#6b7280", fontSize: 13 }}>Se încarcă graficul…</div>
         ) : (
           <StationChart rows={chartData} />
+        )}
+      </div>
+
+      {/* METEO SUB GRAFIC */}
+      <div style={{ padding: "0 16px 16px 16px" }}>
+        {weather.loading ? (
+          <div style={{ padding: 12, color: "#9ca3af", fontSize: 13 }}>Se încarcă meteo…</div>
+        ) : (
+          <WeatherWidget weather={weather} />
         )}
       </div>
     </div>
