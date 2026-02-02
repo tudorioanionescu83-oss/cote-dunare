@@ -6,7 +6,6 @@ export const metadata = {
   description: "Platformă Interactivă - Date în timp real",
 };
 
-/* Viewport: blochează zoom-ul paginii, NU al hărții */
 export const viewport = {
   width: "device-width",
   initialScale: 1,
