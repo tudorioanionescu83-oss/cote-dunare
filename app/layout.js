@@ -6,6 +6,7 @@ export const metadata = {
   description: "Platformă Interactivă - Date în timp real",
 };
 
+// IMPORTANT: oprește pinch-zoom pe toată pagina (mobile)
 export const viewport = {
   width: "device-width",
   initialScale: 1,

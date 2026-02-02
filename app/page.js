@@ -1,4 +1,5 @@
-﻿"use client";
+﻿// app/page.js
+"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
@@ -6,6 +7,7 @@ import dynamic from "next/dynamic";
 import StationPanel from "./components/StationPanel";
 import { STATIONS } from "./lib/stations";
 
+// IMPORTANT: evită "window is not defined" pentru leaflet
 const MapView = dynamic(() => import("./components/MapView"), { ssr: false });
 
 export default function Page() {
@@ -30,13 +32,16 @@ export default function Page() {
       try {
         const res = await fetch("/api/latest");
         const j = await res.json();
-        if (!cancelled) setLatestByName(j.byName || {});
-      } catch (e) {}
+        if (!cancelled) {
+          setLatestByName(j.byName || {});
+        }
+      } catch (e) {
+        // silent fail
+      }
     }
 
     loadLatest();
     const t = setInterval(loadLatest, 60_000);
-
     return () => {
       cancelled = true;
       clearInterval(t);
@@ -50,7 +55,6 @@ export default function Page() {
     async function loadChart() {
       if (!selectedStation) return;
       setLoading(true);
-
       try {
         const res = await fetch(
           `/api/measurements?station=${encodeURIComponent(selectedStation)}&days=${periodDays}`
@@ -72,17 +76,26 @@ export default function Page() {
 
   return (
     <div className="page-layout">
-      {/* Slide 1: Sidebar */}
+      {/* Sidebar */}
       <aside className="page-sidebar">
-        <div className="brand-title">COTELE DUNĂRII</div>
-        <div className="brand-subtitle">Stații · Hartă · Grafice</div>
+        <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 6 }}>Cotele Dunării</div>
+        <div style={{ color: "#6b7280", fontSize: 12, marginBottom: 12 }}>Stații + hartă + grafice</div>
 
-        <label className="sidebar-label">Caută stația</label>
+        <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>
+          Caută stația
+        </label>
 
         <select
           value={selectedStation}
           onChange={(e) => setSelectedStation(e.target.value)}
-          className="sidebar-select"
+          style={{
+            width: "100%",
+            padding: "10px 12px",
+            borderRadius: 12,
+            border: "1px solid #e5e7eb",
+            outline: "none",
+            fontWeight: 700,
+          }}
         >
           {stations.map((s) => (
             <option key={s.name} value={s.name}>
@@ -91,19 +104,23 @@ export default function Page() {
           ))}
         </select>
 
-        <div className="legend">
-          <div><span className="dot dot-red">●</span> roșu = variație negativă</div>
-          <div><span className="dot dot-green">●</span> verde = variație pozitivă</div>
-          <div><span className="dot dot-black">●</span> negru = variație 0</div>
-          <div><span className="dot dot-gray">●</span> gri = fără date</div>
-        </div>
-
-        <div className="mobile-hint">
-          ← glisează pentru hartă & grafic →
+        <div style={{ marginTop: 12, fontSize: 12, color: "#374151", lineHeight: 1.4 }}>
+          <div>
+            <span style={{ color: "#dc2626", fontWeight: 800 }}>●</span> roșu = variație negativă
+          </div>
+          <div>
+            <span style={{ color: "#16a34a", fontWeight: 800 }}>●</span> verde = variație pozitivă
+          </div>
+          <div>
+            <span style={{ color: "#111827", fontWeight: 800 }}>●</span> negru = variație 0
+          </div>
+          <div>
+            <span style={{ color: "#9ca3af", fontWeight: 800 }}>●</span> gri = fără date
+          </div>
         </div>
       </aside>
 
-      {/* Slide 2: Main */}
+      {/* Main */}
       <main className="page-main">
         <MapView
           latestByName={latestByName}
