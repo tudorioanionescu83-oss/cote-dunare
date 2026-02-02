@@ -56,7 +56,9 @@ export default function Page() {
       if (!selectedStation) return;
       setLoading(true);
       try {
-        const res = await fetch(`/api/measurements?station=${encodeURIComponent(selectedStation)}&days=${periodDays}`);
+        const res = await fetch(
+          `/api/measurements?station=${encodeURIComponent(selectedStation)}&days=${periodDays}`
+        );
         const j = await res.json();
         if (!cancelled) setChartRows(j.rows || []);
       } catch (e) {
@@ -73,23 +75,16 @@ export default function Page() {
   }, [selectedStation, periodDays]);
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "360px 1fr", gap: 16, padding: 16 }}>
+    <div className="page-layout">
       {/* Sidebar */}
-      <aside
-        style={{
-          background: "white",
-          borderRadius: 16,
-          border: "1px solid #e5e7eb",
-          padding: 14,
-          height: "fit-content",
-          position: "sticky",
-          top: 16,
-        }}
-      >
+      <aside className="page-sidebar">
         <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 6 }}>Cotele Dunării</div>
         <div style={{ color: "#6b7280", fontSize: 12, marginBottom: 12 }}>Stații + hartă + grafice</div>
 
-        <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>Caută stația</label>
+        <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>
+          Caută stația
+        </label>
+
         <select
           value={selectedStation}
           onChange={(e) => setSelectedStation(e.target.value)}
@@ -103,20 +98,30 @@ export default function Page() {
           }}
         >
           {stations.map((s) => (
-            <option key={s.name} value={s.name}>{s.name}</option>
+            <option key={s.name} value={s.name}>
+              {s.name}
+            </option>
           ))}
         </select>
 
         <div style={{ marginTop: 12, fontSize: 12, color: "#374151", lineHeight: 1.4 }}>
-          <div><span style={{ color: "#dc2626", fontWeight: 800 }}>●</span> roșu = variație negativă</div>
-          <div><span style={{ color: "#16a34a", fontWeight: 800 }}>●</span> verde = variație pozitivă</div>
-          <div><span style={{ color: "#111827", fontWeight: 800 }}>●</span> negru = variație 0</div>
-          <div><span style={{ color: "#9ca3af", fontWeight: 800 }}>●</span> gri = fără date</div>
+          <div>
+            <span style={{ color: "#dc2626", fontWeight: 800 }}>●</span> roșu = variație negativă
+          </div>
+          <div>
+            <span style={{ color: "#16a34a", fontWeight: 800 }}>●</span> verde = variație pozitivă
+          </div>
+          <div>
+            <span style={{ color: "#111827", fontWeight: 800 }}>●</span> negru = variație 0
+          </div>
+          <div>
+            <span style={{ color: "#9ca3af", fontWeight: 800 }}>●</span> gri = fără date
+          </div>
         </div>
       </aside>
 
       {/* Main */}
-      <main style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <main className="page-main">
         <MapView
           latestByName={latestByName}
           selectedStation={selectedStation}

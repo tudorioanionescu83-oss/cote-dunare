@@ -26,13 +26,9 @@ body{
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-button{
-  font: inherit;
-}
+button{ font: inherit; }
 
-::selection{
-  background: rgba(0, 180, 216, 0.20);
-}
+::selection{ background: rgba(0, 180, 216, 0.20); }
 
 .leaflet-container{
   border-radius: 16px;
@@ -52,4 +48,47 @@ input, select{
 input:focus, select:focus{
   border-color: rgba(0, 119, 182, 0.35);
   box-shadow: 0 0 0 4px rgba(0, 119, 182, 0.12);
+}
+
+/* =========================================================
+   RESPONSIVE LAYOUT (NU afectează desktop, doar mobile)
+   ========================================================= */
+
+/* containerul paginii (desktop: 2 coloane) */
+.page-layout{
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 16px;
+  padding: 16px;
+}
+
+/* sidebar ca înainte, dar în clasă */
+.page-sidebar{
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  padding: 14px;
+  height: fit-content;
+  position: sticky;
+  top: 16px;
+}
+
+/* zona principală */
+.page-main{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* MOBILE: o singură coloană + sidebar sus */
+@media (max-width: 768px){
+  .page-layout{
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .page-sidebar{
+    position: static;
+    top: auto;
+  }
 }
