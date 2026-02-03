@@ -2,6 +2,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+// IMPORTANT: fără cache (mai ales pe Vercel)
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   // în server route folosim cheia SERVICE dacă există, altfel anon (merge și cu RLS public read)
@@ -23,5 +27,15 @@ export async function GET() {
     byName[row.localitatea] = row;
   }
 
-  return NextResponse.json({ byName });
+  // răspuns fără cache
+  return NextResponse.json(
+    { byName },
+    {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    }
+  );
 }
