@@ -101,12 +101,25 @@ export default function Page() {
   return (
     <div className="page-layout">
       <aside className="page-sidebar">
-        <div className="brand-title">Cotele Dunării</div>
-        <div className="brand-subtitle">Stații • hartă • grafice</div>
+        {/* TITLU UPPERCASE (fără să schimb restul) */}
+        <div className="brand-title" style={{ textTransform: "uppercase" }}>
+          Cotele Dunării
+        </div>
 
-        <label className="sidebar-label">Caută stația</label>
+        {/* +3 unități */}
+        <div className="brand-subtitle" style={{ fontSize: 15 }}>
+          Stații • hartă • grafice
+        </div>
+
+        {/* +2 unități */}
+        <label className="sidebar-label" style={{ fontSize: 14 }}>
+          Caută stația
+        </label>
+
+        {/* +2 unități */}
         <select
           className="sidebar-select"
+          style={{ fontSize: 14 }}
           value={selectedStation}
           onChange={(e) => setSelectedStation(e.target.value)}
         >
@@ -117,18 +130,35 @@ export default function Page() {
           ))}
         </select>
 
-        <div className="legend" style={{ marginTop: 12 }}>
-          <div>
-            <span className="dot dot-red" /> roșu = variație negativă
+        {/* LEGENDA: scos "–", text bold */}
+        <div
+          className="legend"
+          style={{
+            marginTop: 12,
+            fontSize: 14,
+            textTransform: "uppercase",
+            display: "grid",
+            rowGap: 6,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 900 }}>
+            <span className="dot dot-red" style={{ width: 11, height: 11 }} />
+            <span>VARIAȚIE NEGATIVĂ</span>
           </div>
-          <div>
-            <span className="dot dot-green" /> verde = variație pozitivă
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 900 }}>
+            <span className="dot dot-green" style={{ width: 11, height: 11 }} />
+            <span>VARIAȚIE POZITIVĂ</span>
           </div>
-          <div>
-            <span className="dot dot-black" /> negru = variație 0
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 900 }}>
+            <span className="dot dot-black" style={{ width: 11, height: 11 }} />
+            <span>VARIAȚIE 0</span>
           </div>
-          <div>
-            <span className="dot dot-gray" /> gri = fără date
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 900 }}>
+            <span className="dot dot-gray" style={{ width: 11, height: 11 }} />
+            <span>FĂRĂ DATE</span>
           </div>
         </div>
 
@@ -161,13 +191,13 @@ export default function Page() {
   );
 }
 
-// ⭐ Component widget optimizat pentru sidebar
+// ⭐ Component widget optimizat pentru sidebar (texte +3)
 function TulceaFlowWidgetSidebar({ latestData }) {
   const flowInfo = useMemo(() => {
     if (!latestData?.nivel_cm) return null;
 
     // Import funcție de calcul
-    const { getFlowInfo } = require('./lib/flowCalculator');
+    const { getFlowInfo } = require("./lib/flowCalculator");
     return getFlowInfo(latestData.nivel_cm);
   }, [latestData]);
 
@@ -178,48 +208,70 @@ function TulceaFlowWidgetSidebar({ latestData }) {
   return (
     <div
       style={{
-        background: 'rgba(255, 255, 255, 0.95)',
+        background: "rgba(255, 255, 255, 0.95)",
         borderRadius: 16,
-        border: '1px solid rgba(0, 0, 0, 0.08)',
-        overflow: 'hidden',
-        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
+        border: "1px solid rgba(0, 0, 0, 0.08)",
+        overflow: "hidden",
+        boxShadow: "0 8px 24px rgba(0, 0, 0, 0.1)",
       }}
     >
       {/* Header */}
       <div
         style={{
           background: `linear-gradient(135deg, ${flowInfo.color}22, ${flowInfo.color}44)`,
-          padding: '12px 14px',
+          padding: "15px 16px", // puțin mai mare ca să încapă textul +3
           borderBottom: `2px solid ${flowInfo.color}`,
         }}
       >
-        <div style={{ fontSize: 12, fontWeight: 900, color: '#111827' }}>
+        <div style={{ fontSize: 15, fontWeight: 900, color: "#111827" }}>
           🌊 TULCEA
         </div>
-        <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>
+        <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>
           Debit Dunăre
         </div>
       </div>
 
       {/* Content */}
-      <div style={{ padding: '12px 14px' }}>
+      <div style={{ padding: "15px 16px" }}>
         {/* Nivel + Debit în 2 coloane */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 10,
+            marginBottom: 12,
+          }}
+        >
           <div>
-            <div style={{ fontSize: 9, color: '#9ca3af', fontWeight: 700, marginBottom: 3 }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: "#9ca3af",
+                fontWeight: 700,
+                marginBottom: 3,
+              }}
+            >
               Nivel
             </div>
-            <div style={{ fontSize: 16, fontWeight: 950, color: '#111827' }}>
+            <div style={{ fontSize: 19, fontWeight: 950, color: "#111827" }}>
               {flowInfo.nivel_cm} cm
             </div>
           </div>
 
           <div>
-            <div style={{ fontSize: 9, color: '#9ca3af', fontWeight: 700, marginBottom: 3 }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: "#9ca3af",
+                fontWeight: 700,
+                marginBottom: 3,
+              }}
+            >
               Debit
             </div>
-            <div style={{ fontSize: 14, fontWeight: 950, color: '#111827' }}>
-              {flowInfo.debit_m3s?.toLocaleString()} <span style={{ fontSize: 10 }}>m³/s</span>
+            <div style={{ fontSize: 17, fontWeight: 950, color: "#111827" }}>
+              {flowInfo.debit_m3s?.toLocaleString()}{" "}
+              <span style={{ fontSize: 13 }}>m³/s</span>
             </div>
           </div>
         </div>
@@ -227,12 +279,12 @@ function TulceaFlowWidgetSidebar({ latestData }) {
         {/* Status badge */}
         <div
           style={{
-            display: 'inline-block',
-            padding: '4px 10px',
+            display: "inline-block",
+            padding: "5px 12px",
             borderRadius: 999,
             background: `${flowInfo.color}22`,
             border: `1.5px solid ${flowInfo.color}`,
-            fontSize: 10,
+            fontSize: 13,
             fontWeight: 900,
             color: flowInfo.color,
           }}
@@ -243,31 +295,31 @@ function TulceaFlowWidgetSidebar({ latestData }) {
         {/* Bară mini progres */}
         <div
           style={{
-            marginTop: 10,
-            height: 6,
-            background: '#f3f4f6',
-            borderRadius: 3,
-            overflow: 'hidden',
+            marginTop: 12,
+            height: 7,
+            background: "#f3f4f6",
+            borderRadius: 4,
+            overflow: "hidden",
           }}
         >
           <div
             style={{
-              height: '100%',
+              height: "100%",
               width: `${barHeight}%`,
               background: `linear-gradient(90deg, ${flowInfo.color}, ${flowInfo.color}dd)`,
-              transition: 'width 0.5s ease',
+              transition: "width 0.5s ease",
             }}
           />
         </div>
 
         {/* Note + link INHGA */}
-        <div style={{ fontSize: 8, color: '#9ca3af', marginTop: 8, lineHeight: 1.3 }}>
-          ⚠️ Debit estimat. Date oficiale:{' '}
+        <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 10, lineHeight: 1.3 }}>
+          ⚠️ Debit estimat. Date oficiale:{" "}
           <a
             href="https://www.hidro.ro/"
             target="_blank"
             rel="noreferrer"
-            style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 700 }}
+            style={{ color: "#3b82f6", textDecoration: "none", fontWeight: 700 }}
           >
             INHGA
           </a>

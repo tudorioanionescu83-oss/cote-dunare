@@ -22,6 +22,40 @@ function badgeStyle(kind) {
   return { background: "#f3f4f6", color: "#6b7280", border: "1px solid #e5e7eb" };
 }
 
+/* =========================
+   FUNDAL CARDURI (ajustat)
+   - Nivel: NU se colorează
+   - Δ: verde/roșu + (0 => gri deschis)
+   - Temp: pe intervale
+   - transparență +5% (0.50)
+   ========================= */
+const CARD_ALPHA = 0.5; // +5% față de 0.45
+const rgba = (r, g, b, a = CARD_ALPHA) => `rgba(${r}, ${g}, ${b}, ${a})`;
+
+function deltaCardBg(deltaNum) {
+  const d = typeof deltaNum === "number" && Number.isFinite(deltaNum) ? deltaNum : null;
+  if (d === null) return "linear-gradient(180deg, #ffffff, #fafafa)";
+
+  if (d > 0) return rgba(34, 197, 94); // verde
+  if (d < 0) return rgba(239, 68, 68); // roșu
+
+  // Δ = 0 => gri deschis
+  return rgba(229, 231, 235); // #e5e7eb cu transparență
+}
+
+function tempCardBg(tempNum) {
+  const t = typeof tempNum === "number" && Number.isFinite(tempNum) ? tempNum : null;
+  if (t === null) return "linear-gradient(180deg, #ffffff, #fafafa)";
+
+  if (t < 0) return rgba(30, 58, 138); // albastru inchis
+  if (t < 5) return rgba(56, 189, 248); // albastru deschis
+  if (t < 10) return rgba(253, 224, 71); // galben deschis
+  if (t < 15) return rgba(234, 179, 8); // galben mai inchis
+  if (t < 20) return rgba(249, 115, 22); // portocaliu
+  if (t < 25) return rgba(248, 113, 113); // rosu deschis
+  return rgba(185, 28, 28); // rosu mai inchis
+}
+
 export default function StationPanel({
   station,
   latest,
@@ -123,6 +157,10 @@ export default function StationPanel({
   const deltaNum = delta === null || delta === undefined ? null : Number(delta);
   const badgeKind = deltaNum === null ? "na" : deltaNum > 0 ? "pos" : deltaNum < 0 ? "neg" : "zero";
 
+  const tempRaw = latest?.temperatura_c;
+  const tempNum =
+    tempRaw === null || tempRaw === undefined || tempRaw === "—" ? null : Number(tempRaw);
+
   return (
     <>
       <section
@@ -167,7 +205,7 @@ export default function StationPanel({
                 style={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "cover", // rămâne cover (frumos pe desktop și mobil)
+                  objectFit: "cover",
                   display: "block",
                 }}
                 onError={() => {
@@ -178,7 +216,10 @@ export default function StationPanel({
           </div>
 
           {/* titlu + mini stats */}
-          <div className="panel-info" style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
+          <div
+            className="panel-info"
+            style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}
+          >
             <div
               style={{
                 display: "flex",
@@ -264,28 +305,50 @@ export default function StationPanel({
                 { label: "Δ", value: latest?.variatie_cm ?? "—", unit: "cm" },
                 { label: "Temp", value: latest?.temperatura_c ?? "—", unit: "°C" },
                 { label: "Km", value: latest?.km ?? "—", unit: "" },
-              ].map((c) => (
-                <div
-                  key={c.label}
-                  style={{
-                    border: "1px solid #e5e7eb",
-                    borderRadius: 14,
-                    padding: 12,
-                    background: "linear-gradient(180deg, #ffffff, #fafafa)",
-                    minWidth: 0,
-                  }}
-                >
-                  <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 800 }}>{c.label}</div>
-                  <div style={{ fontSize: 18, fontWeight: 950, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {c.value}{" "}
-                    <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 800 }}>{c.unit}</span>
+              ].map((c) => {
+                // default (ca înainte)
+                let bg = "linear-gradient(180deg, #ffffff, #fafafa)";
+
+                // ✅ Nivel: rămâne default (fără culoare)
+                if (c.label === "Δ") bg = deltaCardBg(deltaNum);
+                if (c.label === "Temp") bg = tempCardBg(tempNum);
+                // Km: rămâne default
+
+                return (
+                  <div
+                    key={c.label}
+                    style={{
+                      border: "1px solid #e5e7eb",
+                      borderRadius: 14,
+                      padding: 12,
+                      background: bg,
+                      minWidth: 0,
+                    }}
+                  >
+                    <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 800 }}>
+                      {c.label}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 18,
+                        fontWeight: 950,
+                        marginTop: 4,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {c.value}{" "}
+                      <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 800 }}>
+                        {c.unit}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            {/* wiki */}
-            <div style={{ marginTop: 4, fontSize: 13, color: "#374151", lineHeight: 1.45, minWidth: 0 }}>
+            {/* wiki (Solicitarea 3: +2 fonturi) */}
+            <div style={{ marginTop: 4, fontSize: 15, color: "#374151", lineHeight: 1.45, minWidth: 0 }}>
               {wiki.loading ? (
                 <div style={{ color: "#9ca3af" }}>Se încarcă rezumatul Wikipedia…</div>
               ) : wiki.found ? (
@@ -303,7 +366,12 @@ export default function StationPanel({
                   </div>
                   {wiki.url && (
                     <div style={{ marginTop: 6 }}>
-                      <a href={wiki.url} target="_blank" rel="noreferrer" style={{ color: "#111827", fontWeight: 900 }}>
+                      <a
+                        href={wiki.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: "#111827", fontWeight: 900 }}
+                      >
                         Deschide Wikipedia →
                       </a>
                     </div>

@@ -53,6 +53,29 @@ function colorByDelta(delta) {
   return { fill: "#111827", stroke: "#111827" };                     // negru
 }
 
+/* =========================
+   Popup text colors (Solicitarea 4)
+   DOAR pentru Δ si Temp
+   ========================= */
+function popupDeltaTextStyle(delta) {
+  if (delta === null) return {}; // nu coloram daca nu avem date
+  if (delta > 0) return { color: "#166534" }; // verde inchis
+  if (delta < 0) return { color: "#7f1d1d" }; // rosu inchis
+  return { color: "#374151" }; // 0 => gri inchis (text)
+}
+
+function popupTempTextStyle(temp) {
+  if (temp === null) return {}; // nu coloram daca nu avem date
+
+  if (temp < 0) return { color: "#1e3a8a" };  // albastru inchis
+  if (temp < 5) return { color: "#0284c7" };  // albastru deschis (mai lizibil decat sky foarte pal)
+  if (temp < 10) return { color: "#a16207" }; // galben deschis (text) -> ocru pt lizibilitate
+  if (temp < 15) return { color: "#854d0e" }; // galben mai inchis (text)
+  if (temp < 20) return { color: "#c2410c" }; // portocaliu
+  if (temp < 25) return { color: "#dc2626" }; // rosu deschis (text)
+  return { color: "#991b1b" };                // rosu inchis (text)
+}
+
 export default function LeafletMapInner({
   stations = [],
   latestByName = {},
@@ -147,8 +170,25 @@ export default function LeafletMapInner({
 
                 <div style={{ fontSize: 12, lineHeight: 1.5 }}>
                   <div><b>Nivel:</b> {nivel === null ? "—" : nivel} cm</div>
-                  <div><b>Δ:</b> {delta === null ? "—" : delta} cm</div>
-                  <div><b>Temp:</b> {temp === null ? "—" : temp} °C</div>
+
+                  {/* Δ: text color + font +1 (doar aici) */}
+                  <div style={{ fontSize: 13 }}>
+                    <b>Δ:</b>{" "}
+                    <span style={popupDeltaTextStyle(delta)}>
+                      {delta === null ? "—" : delta}
+                    </span>{" "}
+                    cm
+                  </div>
+
+                  {/* Temp: text color + font +1 (doar aici) */}
+                  <div style={{ fontSize: 13 }}>
+                    <b>Temp:</b>{" "}
+                    <span style={popupTempTextStyle(temp)}>
+                      {temp === null ? "—" : temp}
+                    </span>{" "}
+                    °C
+                  </div>
+
                   <div style={{ marginTop: 6, opacity: 0.75 }}>
                     <b>Ultima citire:</b> {fmtAt(at)}
                   </div>
