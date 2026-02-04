@@ -18,20 +18,17 @@ function diffDaysUTC(fromYmd, toYmd) {
 }
 
 export default function Page() {
-  const [stations, setStations] = useState([]); // din /api/stations
+  const [stations, setStations] = useState([]);
   const [selectedStation, setSelectedStation] = useState("Tulcea");
 
   const [latestByName, setLatestByName] = useState({});
   const [chartByStation, setChartByStation] = useState({});
   const [chartLoading, setChartLoading] = useState(false);
 
-  // ✅ NOU: perioadă preset (default 1 lună)
   const [periodDays, setPeriodDays] = useState(30);
-
-  // ✅ NOU: custom range
   const [useCustomRange, setUseCustomRange] = useState(false);
-  const [customFrom, setCustomFrom] = useState(""); // YYYY-MM-DD
-  const [customTo, setCustomTo] = useState(""); // YYYY-MM-DD
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
 
   // 1) Stații (cu coordonate) din /api/stations
   useEffect(() => {
@@ -44,7 +41,6 @@ export default function Page() {
         const list = j?.stations || [];
         if (!cancelled) {
           setStations(list);
-
           if (list.length && !list.some((s) => s.name === selectedStation)) {
             setSelectedStation(list[0].name);
           }
@@ -55,9 +51,7 @@ export default function Page() {
     }
 
     loadStations();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -77,43 +71,32 @@ export default function Page() {
 
     loadLatest();
     const t = setInterval(loadLatest, 60_000);
-    return () => {
-      cancelled = true;
-      clearInterval(t);
-    };
+    return () => { cancelled = true; clearInterval(t); };
   }, []);
 
-  // ✅ NOU: handler preset (7/30/365 etc)
   const onPeriodChange = useCallback((days) => {
-    // când alegi preset, dezactivezi custom
     setUseCustomRange(false);
     setCustomFrom("");
     setCustomTo("");
     setPeriodDays(days);
   }, []);
 
-  // ✅ NOU: handler pentru "Altă perioadă" (buton Aplică)
-  // StationPanel va apela cu (from,to) în format YYYY-MM-DD
   const onPeriodRangeChange = useCallback((from, to) => {
     const dd = diffDaysUTC(from, to);
-    if (!(dd >= 1)) {
-      // minim 2 zile consecutive (diferență >= 1 zi)
-      return false;
-    }
+    if (!(dd >= 1)) return false;
     setCustomFrom(from);
     setCustomTo(to);
     setUseCustomRange(true);
-    setPeriodDays(null); // resetează perioada preset pentru a nu interfera
+    setPeriodDays(null);
     return true;
   }, []);
 
-  // 3) Chart (pentru stația selectată) — ✅ acum ia în calcul days SAU from/to
+  // 3) Chart
   useEffect(() => {
     let cancelled = false;
 
     async function loadChart() {
       if (!selectedStation) return;
-
       setChartLoading(true);
 
       try {
@@ -121,15 +104,11 @@ export default function Page() {
 
         if (useCustomRange && customFrom && customTo) {
           url += `&from=${encodeURIComponent(customFrom)}&to=${encodeURIComponent(customTo)}`;
-          console.log('🔍 Loading custom range:', customFrom, 'to', customTo);
         } else {
           url += `&days=${encodeURIComponent(periodDays)}`;
-          console.log('🔍 Loading preset days:', periodDays);
         }
 
-        // Cache busting mai agresiv
         url += `&_t=${Date.now()}`;
-        console.log('📡 Fetching URL:', url);
 
         const res = await fetch(url, { 
           cache: "no-store",
@@ -141,10 +120,6 @@ export default function Page() {
         });
         const j = await res.json();
 
-        console.log('📊 Received data points:', (j.rows || j.series || []).length);
-        console.log('📊 First date:', (j.rows || j.series || [])[0]?.data || (j.rows || j.series || [])[0]?.date);
-        console.log('📊 Last date:', (j.rows || j.series || [])[(j.rows || j.series || []).length - 1]?.data || (j.rows || j.series || [])[(j.rows || j.series || []).length - 1]?.date);
-
         if (!cancelled) {
           setChartByStation((prev) => ({
             ...prev,
@@ -152,16 +127,14 @@ export default function Page() {
           }));
         }
       } catch (e) {
-        console.error('❌ Error loading chart:', e);
+        console.error('Error loading chart:', e);
       } finally {
         if (!cancelled) setChartLoading(false);
       }
     }
 
     loadChart();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [selectedStation, periodDays, useCustomRange, customFrom, customTo]);
 
   const selectedStationObj = useMemo(
@@ -171,23 +144,163 @@ export default function Page() {
 
   return (
     <div className="page-layout">
+      {/* ⭐ CSS GLOBAL - Layout mobil nou */}
+      <style jsx global>{`
+        /* ===== DESKTOP - rămâne la fel ===== */
+        .tulcea-widget-desktop {
+          display: block;
+        }
+        
+        .mobile-header {
+          display: none;
+        }
+        
+        .mobile-search {
+          display: none;
+        }
+        
+        .map-container-mobile {
+          position: relative;
+        }
+        
+        .legend-overlay-mobile {
+          display: none;
+        }
+
+        /* ===== MOBILE STYLES ===== */
+        @media (max-width: 768px) {
+          /* Ascunde sidebar-ul complet pe mobil */
+          .page-sidebar {
+            display: none !important;
+          }
+          
+          /* Afișează header-ul mobil */
+          .mobile-header {
+            display: block;
+            text-align: center;
+            padding: 16px 16px 8px 16px;
+            background: #fff;
+          }
+          
+          .mobile-header .brand-title {
+            font-size: 22px;
+            font-weight: 900;
+            color: #0d3d5c;
+            text-transform: uppercase;
+            margin: 0;
+          }
+          
+          .mobile-header .brand-subtitle {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 2px;
+          }
+          
+          /* Container hartă cu legendă suprapusă */
+          .map-container-mobile {
+            position: relative;
+          }
+          
+          /* Legenda suprapusă pe hartă - colț dreapta */
+          .legend-overlay-mobile {
+            display: block;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: rgba(224, 242, 254, 0.85);
+            backdrop-filter: blur(4px);
+            border-radius: 12px;
+            padding: 10px 12px;
+            border: 1px solid rgba(14, 165, 233, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          }
+          
+          .legend-overlay-mobile .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #1e3a5f;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+          }
+          
+          .legend-overlay-mobile .legend-item:last-child {
+            margin-bottom: 0;
+          }
+          
+          .legend-overlay-mobile .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+          }
+          
+          .legend-overlay-mobile .dot-red { background: #ef4444; }
+          .legend-overlay-mobile .dot-green { background: #22c55e; }
+          .legend-overlay-mobile .dot-black { background: #111827; }
+          .legend-overlay-mobile .dot-gray { background: #9ca3af; }
+          
+          /* Search sub hartă */
+          .mobile-search {
+            display: block;
+            padding: 12px 16px;
+            background: #fff;
+          }
+          
+          .mobile-search label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 6px;
+          }
+          
+          .mobile-search select {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 15px;
+            font-weight: 600;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            background: #fff;
+            color: #111827;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 20px;
+          }
+          
+          /* Widget Tulcea ascuns din sidebar pe mobil */
+          .tulcea-widget-desktop {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      {/* ⭐ HEADER MOBIL - Titlu centrat (vizibil doar pe mobil) */}
+      <div className="mobile-header">
+        <div className="brand-title">Cotele Dunării</div>
+        <div className="brand-subtitle">Stații • hartă • grafice</div>
+      </div>
+
+      {/* SIDEBAR DESKTOP (ascuns pe mobil via CSS) */}
       <aside className="page-sidebar">
-        {/* TITLU UPPERCASE (fără să schimb restul) */}
         <div className="brand-title" style={{ textTransform: "uppercase" }}>
           Cotele Dunării
         </div>
 
-        {/* +3 unități */}
         <div className="brand-subtitle" style={{ fontSize: 15 }}>
           Stații • hartă • grafice
         </div>
 
-        {/* +2 unități */}
         <label className="sidebar-label" style={{ fontSize: 14 }}>
           Caută stația
         </label>
 
-        {/* +2 unități */}
         <select
           className="sidebar-select"
           style={{ fontSize: 14 }}
@@ -201,7 +314,7 @@ export default function Page() {
           ))}
         </select>
 
-        {/* LEGENDA: scos "—", text bold */}
+        {/* LEGENDA DESKTOP */}
         <div
           className="legend"
           style={{
@@ -233,65 +346,84 @@ export default function Page() {
           </div>
         </div>
 
+        {/* Range - DOAR DESKTOP */}
         <div style={{ marginTop: 10, fontSize: 12, color: "rgba(0,45,70,0.65)" }}>
           Range: 1 m • ok
         </div>
 
-        {/* ⭐ WIDGET TULCEA - SUB LEGENDĂ (DOAR DESKTOP - ascuns pe mobil) */}
+        {/* WIDGET TULCEA - DOAR DESKTOP */}
         <div className="tulcea-widget-desktop" style={{ marginTop: 16 }}>
           <TulceaFlowWidgetSidebar latestData={latestByName["Tulcea"]} />
         </div>
       </aside>
 
       <main className="page-main">
-        <MapView
-          stations={stations}
-          latestByName={latestByName}
-          selectedStation={selectedStation}
-          onSelectStation={setSelectedStation}
-        />
+        {/* Container hartă cu legendă suprapusă pe mobil */}
+        <div className="map-container-mobile">
+          <MapView
+            stations={stations}
+            latestByName={latestByName}
+            selectedStation={selectedStation}
+            onSelectStation={setSelectedStation}
+          />
+          
+          {/* ⭐ LEGENDA MOBIL - Suprapusă pe hartă, colț dreapta, fundal bleu transparent */}
+          <div className="legend-overlay-mobile">
+            <div className="legend-item">
+              <span className="legend-dot dot-red"></span>
+              <span>VARIAȚIE NEGATIVĂ</span>
+            </div>
+            <div className="legend-item">
+              <span className="legend-dot dot-green"></span>
+              <span>VARIAȚIE POZITIVĂ</span>
+            </div>
+            <div className="legend-item">
+              <span className="legend-dot dot-black"></span>
+              <span>VARIAȚIE 0</span>
+            </div>
+            <div className="legend-item">
+              <span className="legend-dot dot-gray"></span>
+              <span>FĂRĂ DATE</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ⭐ SEARCH MOBIL - Sub hartă (vizibil doar pe mobil) */}
+        <div className="mobile-search">
+          <label>Caută stația</label>
+          <select
+            value={selectedStation}
+            onChange={(e) => setSelectedStation(e.target.value)}
+          >
+            {stations.map((s) => (
+              <option key={s.name} value={s.name}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <StationPanel
           stationName={selectedStation}
           station={selectedStationObj}
           latest={latestByName?.[selectedStation]}
           chartData={chartByStation?.[selectedStation] || []}
-          // ✅ NOU: leagă butoanele din StationPanel
           period={periodDays}
           onPeriodChange={onPeriodChange}
-          // ✅ NOU: "Altă perioadă / Aplică"
           onPeriodRangeChange={onPeriodRangeChange}
-          // ✅ optional: dacă StationPanel știe să arate loader
           loading={chartLoading}
-          // ⭐ NOU: transmitem datele Tulcea pentru widget-ul mobil
           tulceaLatest={latestByName["Tulcea"]}
         />
       </main>
-
-      {/* ⭐ CSS pentru a ascunde widget-ul Tulcea din sidebar pe mobil */}
-      <style jsx global>{`
-        /* Pe desktop: widget-ul din sidebar e vizibil */
-        .tulcea-widget-desktop {
-          display: block;
-        }
-        
-        /* Pe mobil: ascundem widget-ul din sidebar */
-        @media (max-width: 768px) {
-          .tulcea-widget-desktop {
-            display: none !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }
 
-// ⭐ Component widget optimizat pentru sidebar (texte +3)
+// ⭐ Component widget optimizat pentru sidebar
 function TulceaFlowWidgetSidebar({ latestData }) {
   const flowInfo = useMemo(() => {
     if (!latestData?.nivel_cm) return null;
 
-    // Import funcție de calcul
     const { getFlowInfo } = require("./lib/flowCalculator");
     return getFlowInfo(latestData.nivel_cm);
   }, [latestData]);
@@ -310,11 +442,10 @@ function TulceaFlowWidgetSidebar({ latestData }) {
         boxShadow: "0 8px 24px rgba(0, 0, 0, 0.1)",
       }}
     >
-      {/* Header */}
       <div
         style={{
           background: `linear-gradient(135deg, ${flowInfo.color}22, ${flowInfo.color}44)`,
-          padding: "15px 16px", // puțin mai mare ca să încapă textul +3
+          padding: "15px 16px",
           borderBottom: `2px solid ${flowInfo.color}`,
         }}
       >
@@ -322,9 +453,7 @@ function TulceaFlowWidgetSidebar({ latestData }) {
         <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>Debit Dunăre</div>
       </div>
 
-      {/* Content */}
       <div style={{ padding: "15px 16px" }}>
-        {/* Nivel + Debit în 2 coloane */}
         <div
           style={{
             display: "grid",
@@ -352,7 +481,6 @@ function TulceaFlowWidgetSidebar({ latestData }) {
           </div>
         </div>
 
-        {/* Status badge */}
         <div
           style={{
             display: "inline-block",
@@ -368,7 +496,6 @@ function TulceaFlowWidgetSidebar({ latestData }) {
           {flowInfo.emoji} {flowInfo.label}
         </div>
 
-        {/* Bară mini progres */}
         <div
           style={{
             marginTop: 12,
@@ -388,7 +515,6 @@ function TulceaFlowWidgetSidebar({ latestData }) {
           />
         </div>
 
-        {/* Note + link INHGA */}
         <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 10, lineHeight: 1.3 }}>
           ⚠️ Debit estimat. Date oficiale:{" "}
           <a
