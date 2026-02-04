@@ -13,6 +13,9 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 
+/* ✅ safety net global: dacă ceva împinge în dreapta */
+html, body { overflow-x: hidden; }
+
 body{
   margin: 0;
   color: var(--ink);
@@ -122,6 +125,10 @@ input:focus, select:focus{
   display: flex;
   flex-direction: column;
   gap: 14px;
+
+  /* ✅ nu lăsa nimic să împingă în lateral */
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 /* =========================================================
@@ -260,6 +267,7 @@ input:focus, select:focus{
    RESPONSIVE
    ========================================================= */
 @media (max-width: 768px){
+  /* ✅ layout: 1 col */
   .page-layout{
     grid-template-columns: 1fr;
     padding: 12px;
@@ -267,5 +275,60 @@ input:focus, select:focus{
 
   .page-sidebar{
     position: static;
+  }
+
+  /* ✅ oprește orice overflow care împinge în dreapta */
+  html, body { overflow-x: hidden !important; }
+  .page-main { overflow-x: hidden !important; }
+
+  /* ✅ StationPanel header (are inline styles, deci forțăm) */
+  .panel-header{
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    min-width: 0 !important;
+  }
+
+  .panel-image{
+    height: 180px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* ✅ panel-info: nu lăsa text/elemente să iasă */
+  .panel-info{
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* ✅ cardurile: 2 coloane pe mobil
+     (în JSX ai gridTemplateColumns inline => trebuie !important)
+  */
+  .panel-cards{
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* ✅ dacă ai butoane de perioadă într-un container flex */
+  .panel-periods{
+    flex-wrap: wrap !important;
+  }
+
+  /* ✅ Recharts: nu împinge în lateral */
+  .recharts-responsive-container,
+  .recharts-wrapper,
+  .recharts-surface{
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* ✅ orice svg/canvas să nu depășească */
+  svg, canvas{
+    max-width: 100% !important;
   }
 }
