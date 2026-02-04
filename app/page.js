@@ -201,7 +201,7 @@ export default function Page() {
           ))}
         </select>
 
-        {/* LEGENDA: scos "–", text bold */}
+        {/* LEGENDA: scos "—", text bold */}
         <div
           className="legend"
           style={{
@@ -237,8 +237,8 @@ export default function Page() {
           Range: 1 m • ok
         </div>
 
-        {/* ⭐ WIDGET TULCEA - SUB LEGENDĂ */}
-        <div style={{ marginTop: 16 }}>
+        {/* ⭐ WIDGET TULCEA - SUB LEGENDĂ (DOAR DESKTOP - ascuns pe mobil) */}
+        <div className="tulcea-widget-desktop" style={{ marginTop: 16 }}>
           <TulceaFlowWidgetSidebar latestData={latestByName["Tulcea"]} />
         </div>
       </aside>
@@ -263,8 +263,25 @@ export default function Page() {
           onPeriodRangeChange={onPeriodRangeChange}
           // ✅ optional: dacă StationPanel știe să arate loader
           loading={chartLoading}
+          // ⭐ NOU: transmitem datele Tulcea pentru widget-ul mobil
+          tulceaLatest={latestByName["Tulcea"]}
         />
       </main>
+
+      {/* ⭐ CSS pentru a ascunde widget-ul Tulcea din sidebar pe mobil */}
+      <style jsx global>{`
+        /* Pe desktop: widget-ul din sidebar e vizibil */
+        .tulcea-widget-desktop {
+          display: block;
+        }
+        
+        /* Pe mobil: ascundem widget-ul din sidebar */
+        @media (max-width: 768px) {
+          .tulcea-widget-desktop {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
