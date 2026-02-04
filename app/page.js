@@ -1,11 +1,21 @@
-﻿"use client";
+"use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import StationPanel from "./components/StationPanel";
 import TulceaFlowWidget from "./components/TulceaFlowWidget";
 
 const MapView = dynamic(() => import("./components/MapView"), { ssr: false });
+
+// UTC-safe diff days (pentru validare minim 2 zile consecutive)
+function diffDaysUTC(fromYmd, toYmd) {
+  if (!fromYmd || !toYmd) return NaN;
+  const [fy, fm, fd] = fromYmd.split("-").map(Number);
+  const [ty, tm, td] = toYmd.split("-").map(Number);
+  const fromUTC = Date.UTC(fy, fm - 1, fd);
+  const toUTC = Date.UTC(ty, tm - 1, td);
+  return (toUTC - fromUTC) / (1000 * 60 * 60 * 24);
+}
 
 export default function Page() {
   const [stations, setStations] = useState([]); // din /api/stations
@@ -13,6 +23,15 @@ export default function Page() {
 
   const [latestByName, setLatestByName] = useState({});
   const [chartByStation, setChartByStation] = useState({});
+  const [chartLoading, setChartLoading] = useState(false);
+
+  // ✅ NOU: perioadă preset (default 1 lună)
+  const [periodDays, setPeriodDays] = useState(30);
+
+  // ✅ NOU: custom range
+  const [useCustomRange, setUseCustomRange] = useState(false);
+  const [customFrom, setCustomFrom] = useState(""); // YYYY-MM-DD
+  const [customTo, setCustomTo] = useState(""); // YYYY-MM-DD
 
   // 1) Stații (cu coordonate) din /api/stations
   useEffect(() => {
@@ -64,26 +83,78 @@ export default function Page() {
     };
   }, []);
 
-  // 3) Chart (pentru stația selectată)
+  // ✅ NOU: handler preset (7/30/365 etc)
+  const onPeriodChange = useCallback((days) => {
+    // când alegi preset, dezactivezi custom
+    setUseCustomRange(false);
+    setCustomFrom("");
+    setCustomTo("");
+    setPeriodDays(days);
+  }, []);
+
+  // ✅ NOU: handler pentru "Altă perioadă" (buton Aplică)
+  // StationPanel va apela cu (from,to) în format YYYY-MM-DD
+  const onPeriodRangeChange = useCallback((from, to) => {
+    const dd = diffDaysUTC(from, to);
+    if (!(dd >= 1)) {
+      // minim 2 zile consecutive (diferență >= 1 zi)
+      return false;
+    }
+    setCustomFrom(from);
+    setCustomTo(to);
+    setUseCustomRange(true);
+    setPeriodDays(null); // resetează perioada preset pentru a nu interfera
+    return true;
+  }, []);
+
+  // 3) Chart (pentru stația selectată) — ✅ acum ia în calcul days SAU from/to
   useEffect(() => {
     let cancelled = false;
 
     async function loadChart() {
       if (!selectedStation) return;
+
+      setChartLoading(true);
+
       try {
-        const res = await fetch(
-          `/api/measurements?station=${encodeURIComponent(selectedStation)}&days=30`,
-          { cache: "no-store" }
-        );
+        let url = `/api/measurements?station=${encodeURIComponent(selectedStation)}`;
+
+        if (useCustomRange && customFrom && customTo) {
+          url += `&from=${encodeURIComponent(customFrom)}&to=${encodeURIComponent(customTo)}`;
+          console.log('🔍 Loading custom range:', customFrom, 'to', customTo);
+        } else {
+          url += `&days=${encodeURIComponent(periodDays)}`;
+          console.log('🔍 Loading preset days:', periodDays);
+        }
+
+        // Cache busting mai agresiv
+        url += `&_t=${Date.now()}`;
+        console.log('📡 Fetching URL:', url);
+
+        const res = await fetch(url, { 
+          cache: "no-store",
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
         const j = await res.json();
+
+        console.log('📊 Received data points:', (j.rows || j.series || []).length);
+        console.log('📊 First date:', (j.rows || j.series || [])[0]?.data || (j.rows || j.series || [])[0]?.date);
+        console.log('📊 Last date:', (j.rows || j.series || [])[(j.rows || j.series || []).length - 1]?.data || (j.rows || j.series || [])[(j.rows || j.series || []).length - 1]?.date);
+
         if (!cancelled) {
           setChartByStation((prev) => ({
             ...prev,
-            [selectedStation]: j.rows || [],
+            [selectedStation]: j.rows || j.series || [],
           }));
         }
       } catch (e) {
-        // silent
+        console.error('❌ Error loading chart:', e);
+      } finally {
+        if (!cancelled) setChartLoading(false);
       }
     }
 
@@ -91,7 +162,7 @@ export default function Page() {
     return () => {
       cancelled = true;
     };
-  }, [selectedStation]);
+  }, [selectedStation, periodDays, useCustomRange, customFrom, customTo]);
 
   const selectedStationObj = useMemo(
     () => stations.find((s) => s.name === selectedStation) || null,
@@ -185,6 +256,13 @@ export default function Page() {
           station={selectedStationObj}
           latest={latestByName?.[selectedStation]}
           chartData={chartByStation?.[selectedStation] || []}
+          // ✅ NOU: leagă butoanele din StationPanel
+          period={periodDays}
+          onPeriodChange={onPeriodChange}
+          // ✅ NOU: "Altă perioadă / Aplică"
+          onPeriodRangeChange={onPeriodRangeChange}
+          // ✅ optional: dacă StationPanel știe să arate loader
+          loading={chartLoading}
         />
       </main>
     </div>
@@ -223,12 +301,8 @@ function TulceaFlowWidgetSidebar({ latestData }) {
           borderBottom: `2px solid ${flowInfo.color}`,
         }}
       >
-        <div style={{ fontSize: 15, fontWeight: 900, color: "#111827" }}>
-          🌊 TULCEA
-        </div>
-        <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>
-          Debit Dunăre
-        </div>
+        <div style={{ fontSize: 15, fontWeight: 900, color: "#111827" }}>🌊 TULCEA</div>
+        <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>Debit Dunăre</div>
       </div>
 
       {/* Content */}
@@ -243,14 +317,7 @@ function TulceaFlowWidgetSidebar({ latestData }) {
           }}
         >
           <div>
-            <div
-              style={{
-                fontSize: 12,
-                color: "#9ca3af",
-                fontWeight: 700,
-                marginBottom: 3,
-              }}
-            >
+            <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 700, marginBottom: 3 }}>
               Nivel
             </div>
             <div style={{ fontSize: 19, fontWeight: 950, color: "#111827" }}>
@@ -259,19 +326,11 @@ function TulceaFlowWidgetSidebar({ latestData }) {
           </div>
 
           <div>
-            <div
-              style={{
-                fontSize: 12,
-                color: "#9ca3af",
-                fontWeight: 700,
-                marginBottom: 3,
-              }}
-            >
+            <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 700, marginBottom: 3 }}>
               Debit
             </div>
             <div style={{ fontSize: 17, fontWeight: 950, color: "#111827" }}>
-              {flowInfo.debit_m3s?.toLocaleString()}{" "}
-              <span style={{ fontSize: 13 }}>m³/s</span>
+              {flowInfo.debit_m3s?.toLocaleString()} <span style={{ fontSize: 13 }}>m³/s</span>
             </div>
           </div>
         </div>

@@ -6,10 +6,9 @@ import WeatherWidget from "./WeatherWidget";
 import { stationSlug } from "../lib/stations";
 
 const PERIODS = [
-  { days: 1, label: "1 zi" },
-  { days: 30, label: "1 lună" },
-  { days: 90, label: "3 luni" },
-  { days: 365, label: "1 an" },
+  { days: 7, label: "Ultimele 7 zile" },
+  { days: 30, label: "Ultima lună" },
+  { days: 365, label: "Ultimul an" },
 ];
 
 function badgeStyle(kind) {
@@ -56,13 +55,35 @@ function tempCardBg(tempNum) {
   return rgba(185, 28, 28); // rosu mai inchis
 }
 
+function toYMD(d) {
+  if (!d) return "";
+  const s = String(d);
+  return s.length >= 10 ? s.slice(0, 10) : s;
+}
+
+function diffDaysUTC(fromYmd, toYmd) {
+  if (!fromYmd || !toYmd) return NaN;
+  const [fy, fm, fd] = fromYmd.split("-").map(Number);
+  const [ty, tm, td] = toYMD(toYmd).split("-").map(Number);
+  const fromUTC = Date.UTC(fy, fm - 1, fd);
+  const toUTC = Date.UTC(ty, tm - 1, td);
+  return (toUTC - fromUTC) / (1000 * 60 * 60 * 24);
+}
+
 export default function StationPanel({
+  // vechi
   station,
   latest,
   chartData,
   period,
   onPeriodChange,
   loading = false,
+
+  // nou (din DashboardClient-ul tău)
+  series,
+  days,
+  setDays,
+  onPeriodRangeChange,
 }) {
   const name = station?.name || station?.localitatea || "Stație";
   const slug = useMemo(() => stationSlug(name), [name]);
@@ -76,6 +97,21 @@ export default function StationPanel({
   // lightbox (popup imagine) – doar desktop
   const [imgOk, setImgOk] = useState(true);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  // ✅ custom range UI
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+  const [customErr, setCustomErr] = useState("");
+
+  // ✅ NOU: tracking dacă suntem în custom mode
+  const [isCustomActive, setIsCustomActive] = useState(false);
+
+  // datele pentru chart (merge și cu vechiul și cu noul)
+  const rows = chartData ?? series ?? [];
+
+  // starea perioadei (vechi: period, nou: days)
+  const activePeriod = isCustomActive ? null : (period ?? days ?? 30);
 
   const openLightbox = useCallback(() => {
     // doar desktop (nu pe mobil/tablet)
@@ -153,6 +189,19 @@ export default function StationPanel({
     station?.Longitudine,
   ]);
 
+  // auto-fill date inputs din datele existente (UX)
+  useEffect(() => {
+    if (!Array.isArray(rows) || rows.length === 0) return;
+    const dates = rows
+      .map((p) => toYMD(p.date || p.time || p.ts || p.data))
+      .filter(Boolean)
+      .sort();
+    if (!dates.length) return;
+
+    setCustomTo((prev) => prev || dates[dates.length - 1]);
+    setCustomFrom((prev) => prev || dates[Math.max(0, dates.length - 2)]);
+  }, [rows]);
+
   const delta = latest?.variatie_cm;
   const deltaNum = delta === null || delta === undefined ? null : Number(delta);
   const badgeKind = deltaNum === null ? "na" : deltaNum > 0 ? "pos" : deltaNum < 0 ? "neg" : "zero";
@@ -161,158 +210,136 @@ export default function StationPanel({
   const tempNum =
     tempRaw === null || tempRaw === undefined || tempRaw === "—" ? null : Number(tempRaw);
 
+  // ✅ click preset: folosește vechiul handler dacă există, altfel setDays
+  const handlePreset = useCallback(
+    (d) => {
+      setCustomOpen(false);
+      setCustomErr("");
+      setIsCustomActive(false); // dezactivează custom mode
+
+      if (typeof onPeriodChange === "function") onPeriodChange(d);
+      else if (typeof setDays === "function") setDays(d);
+    },
+    [onPeriodChange, setDays]
+  );
+
+  const applyDisabled = typeof onPeriodRangeChange !== "function";
+
+  const applyCustom = useCallback(() => {
+    setCustomErr("");
+
+    if (!customFrom || !customTo) {
+      setCustomErr("Alege ambele date.");
+      return;
+    }
+
+    const dd = diffDaysUTC(customFrom, customTo);
+    if (!(dd >= 1)) {
+      setCustomErr("Selectează minim 2 zile consecutive.");
+      return;
+    }
+
+    const success = onPeriodRangeChange(customFrom, customTo);
+    if (!success) {
+      setCustomErr("Intervalul selectat nu este valid.");
+      return;
+    }
+
+    setIsCustomActive(true); // activează custom mode
+    setCustomOpen(false);
+  }, [customFrom, customTo, onPeriodRangeChange]);
+
   return (
     <>
       <section
         style={{
-          background: "white",
-          borderRadius: 18,
           border: "1px solid #e5e7eb",
-          overflow: "hidden",
-          boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
+          borderRadius: 20,
+          background: "#ffffff",
+          width: "100%",
           minWidth: 0,
+          overflow: "hidden",
         }}
       >
-        {/* Header */}
-        <div className="panel-header" style={{ padding: 16, minWidth: 0 }}>
-          {/* imagine mare */}
-          <div
-            className="panel-image"
-            role="button"
-            tabIndex={0}
-            onClick={openLightbox}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") openLightbox();
-            }}
-            style={{
-              width: "100%",
-              height: 160,
-              borderRadius: 16,
-              overflow: "hidden",
-              background: "linear-gradient(180deg,#f3f4f6,#eef2f7)",
-              border: "1px solid #e5e7eb",
-              minWidth: 0,
-              cursor: imgOk ? "zoom-in" : "default",
-              outline: "none",
-            }}
-            title={imgOk ? "Click pentru a mări (desktop)" : ""}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            {imgOk && (
+        {/* Desktop: imagine + descriere side by side */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "300px 1fr",
+            gap: 16,
+            padding: 16,
+            minWidth: 0,
+          }}
+          className="desktop-layout"
+        >
+          {/* coloana stânga = imagine + nume */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+            <div
+              style={{
+                borderRadius: 14,
+                overflow: "hidden",
+                border: "1px solid #e5e7eb",
+                backgroundColor: "#f9fafb",
+                position: "relative",
+                minWidth: 0,
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imgUrl}
                 alt={name}
+                onError={() => setImgOk(false)}
+                onClick={openLightbox}
                 style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
                   display: "block",
-                }}
-                onError={() => {
-                  setImgOk(false);
+                  width: "100%",
+                  height: "auto",
+                  cursor: imgOk ? "pointer" : "default",
+                  objectFit: "cover",
                 }}
               />
+            </div>
+
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: 20,
+                fontWeight: 950,
+                color: "#111827",
+                marginTop: 2,
+              }}
+            >
+              {name}
+            </div>
+
+            {latest?.data && (
+              <div
+                style={{
+                  textAlign: "center",
+                  fontSize: 10,
+                  color: "#6b7280",
+                  fontWeight: 900,
+                  marginTop: 0,
+                }}
+              >
+                Ultima măsurătoare: {latest.data}
+              </div>
             )}
           </div>
 
-          {/* titlu + mini stats */}
-          <div
-            className="panel-info"
-            style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                gap: 12,
-                minWidth: 0,
-                flexWrap: "wrap",
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <div
-                  style={{
-                    fontWeight: 900,
-                    fontSize: 20,
-                    lineHeight: 1.1,
-                    wordBreak: "break-word",
-                  }}
-                >
-                  {name}
-                </div>
-
-                <div
-                  style={{
-                    color: "#6b7280",
-                    fontSize: 12,
-                    marginTop: 6,
-                    lineHeight: 1.35,
-                    wordBreak: "break-word",
-                  }}
-                >
-                  Ultima citire: <b>{latest?.data ?? "—"}</b> · Nivel:{" "}
-                  <b>{latest?.nivel_cm ?? "—"} cm</b> · Δ: <b>{latest?.variatie_cm ?? "—"} cm</b> · T:{" "}
-                  <b>{latest?.temperatura_c ?? "—"} °C</b>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                <span
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: 999,
-                    fontWeight: 900,
-                    fontSize: 12,
-                    whiteSpace: "nowrap",
-                    ...badgeStyle(badgeKind),
-                  }}
-                >
-                  Δ {deltaNum === null ? "—" : deltaNum > 0 ? `+${deltaNum}` : `${deltaNum}`} cm
-                </span>
-
-                <select
-                  value={name}
-                  onChange={() => {}}
-                  disabled
-                  style={{
-                    padding: "8px 10px",
-                    borderRadius: 12,
-                    border: "1px solid #e5e7eb",
-                    background: "#f9fafb",
-                    fontWeight: 800,
-                    color: "#111827",
-                    maxWidth: "100%",
-                  }}
-                >
-                  <option>{name}</option>
-                </select>
-              </div>
-            </div>
-
-            {/* cards */}
-            <div
-              className="panel-cards"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                gap: 10,
-                minWidth: 0,
-              }}
-            >
+          {/* coloana dreapta = carduri + wiki + perioade */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+            {/* carduri 1-line */}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {[
                 { label: "Nivel", value: latest?.nivel_cm ?? "—", unit: "cm" },
                 { label: "Δ", value: latest?.variatie_cm ?? "—", unit: "cm" },
                 { label: "Temp", value: latest?.temperatura_c ?? "—", unit: "°C" },
                 { label: "Km", value: latest?.km ?? "—", unit: "" },
               ].map((c) => {
-                // default (ca înainte)
                 let bg = "linear-gradient(180deg, #ffffff, #fafafa)";
-
-                // ✅ Nivel: rămâne default (fără culoare)
                 if (c.label === "Δ") bg = deltaCardBg(deltaNum);
                 if (c.label === "Temp") bg = tempCardBg(tempNum);
-                // Km: rămâne default
 
                 return (
                   <div
@@ -347,7 +374,7 @@ export default function StationPanel({
               })}
             </div>
 
-            {/* wiki (Solicitarea 3: +2 fonturi) */}
+            {/* wiki */}
             <div style={{ marginTop: 4, fontSize: 15, color: "#374151", lineHeight: 1.45, minWidth: 0 }}>
               {wiki.loading ? (
                 <div style={{ color: "#9ca3af" }}>Se încarcă rezumatul Wikipedia…</div>
@@ -378,7 +405,7 @@ export default function StationPanel({
                   )}
                 </>
               ) : (
-                <div style={{ color: "#9ca3af" }}>Nu am găsit rezumat Wikipedia pentru „{name}”.</div>
+                <div style={{ color: "#9ca3af" }}>Nu am găsit rezumat Wikipedia pentru „{name}".</div>
               )}
             </div>
 
@@ -387,13 +414,13 @@ export default function StationPanel({
               {PERIODS.map((p) => (
                 <button
                   key={p.days}
-                  onClick={() => onPeriodChange?.(p.days)}
+                  onClick={() => handlePreset(p.days)}
                   style={{
                     padding: "8px 10px",
                     borderRadius: 999,
                     border: "1px solid #e5e7eb",
-                    background: period === p.days ? "#111827" : "#ffffff",
-                    color: period === p.days ? "white" : "#111827",
+                    background: activePeriod === p.days ? "#111827" : "#ffffff",
+                    color: activePeriod === p.days ? "white" : "#111827",
                     fontWeight: 900,
                     cursor: "pointer",
                     fontSize: 12,
@@ -403,7 +430,99 @@ export default function StationPanel({
                   {p.label}
                 </button>
               ))}
+
+              <button
+                onClick={() => {
+                  setCustomOpen((v) => !v);
+                  setCustomErr("");
+                }}
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: 999,
+                  border: "1px solid #e5e7eb",
+                  background: customOpen ? "#111827" : "#ffffff",
+                  color: customOpen ? "white" : "#111827",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                  fontSize: 12,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Altă perioadă
+              </button>
             </div>
+
+            {customOpen && (
+              <div
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  marginTop: 10,
+                  flexWrap: "wrap",
+                  alignItems: "flex-end",
+                }}
+              >
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 800 }}>De la</div>
+                  <input
+                    type="date"
+                    value={customFrom}
+                    onChange={(e) => setCustomFrom(e.target.value)}
+                    style={{
+                      padding: "8px 10px",
+                      borderRadius: 12,
+                      border: "1px solid #e5e7eb",
+                      background: "#fff",
+                      fontWeight: 800,
+                      color: "#111827",
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 800 }}>Până la</div>
+                  <input
+                    type="date"
+                    value={customTo}
+                    onChange={(e) => setCustomTo(e.target.value)}
+                    style={{
+                      padding: "8px 10px",
+                      borderRadius: 12,
+                      border: "1px solid #e5e7eb",
+                      background: "#fff",
+                      fontWeight: 800,
+                      color: "#111827",
+                    }}
+                  />
+                </div>
+
+                <button
+                  onClick={applyCustom}
+                  disabled={applyDisabled}
+                  style={{
+                    padding: "9px 12px",
+                    borderRadius: 12,
+                    border: "1px solid #e5e7eb",
+                    background: applyDisabled ? "#9ca3af" : "#111827",
+                    color: "white",
+                    fontWeight: 900,
+                    cursor: applyDisabled ? "not-allowed" : "pointer",
+                    fontSize: 12,
+                    whiteSpace: "nowrap",
+                    opacity: applyDisabled ? 0.85 : 1,
+                  }}
+                  title={applyDisabled ? "Lipsește onPeriodRangeChange în părinte" : "Aplică intervalul"}
+                >
+                  Aplică
+                </button>
+
+                {customErr && (
+                  <div style={{ width: "100%", color: "#991b1b", fontSize: 12, fontWeight: 800 }}>
+                    {customErr}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -412,7 +531,7 @@ export default function StationPanel({
           {loading ? (
             <div style={{ padding: 14, color: "#6b7280", fontSize: 13 }}>Se încarcă graficul…</div>
           ) : (
-            <StationChart rows={chartData} />
+            <StationChart rows={rows} />
           )}
         </div>
 

@@ -80,36 +80,6 @@ function parseMetarWindKmh(metar) {
   if (!m) return null;
   return knotsToKmh(m[1]);
 }
-function parseMetarWindDir(metar) {
-  const m = String(metar).match(/\b(\d{3}|VRB)(\d{2,3})(?:G(\d{2,3}))?KT\b/);
-  if (!m) return null;
-  if (m[1] === "VRB") return "Variabil";
-  const deg = Number(m[1]);
-  if (!Number.isFinite(deg)) return null;
-  
-  // Convertește grade în direcție cardinală
-  if (deg >= 337.5 || deg < 22.5) return "N";
-  if (deg >= 22.5 && deg < 67.5) return "NE";
-  if (deg >= 67.5 && deg < 112.5) return "E";
-  if (deg >= 112.5 && deg < 157.5) return "SE";
-  if (deg >= 157.5 && deg < 202.5) return "S";
-  if (deg >= 202.5 && deg < 247.5) return "SV";
-  if (deg >= 247.5 && deg < 292.5) return "V";
-  if (deg >= 292.5 && deg < 337.5) return "NV";
-  return null;
-}
-function parseMetarVisibility(metar) {
-  const m = String(metar).match(/\b(\d{4})\b/);
-  if (!m) return null;
-  const vis = Number(m[1]);
-  if (!Number.isFinite(vis)) return null;
-  return vis >= 9999 ? "10+ km" : `${(vis / 1000).toFixed(1)} km`;
-}
-function parseMetarPressure(metar) {
-  const m = String(metar).match(/\bQ(\d{4})\b/);
-  if (!m) return null;
-  return Number(m[1]);
-}
 function metarIcon(tempC) {
   if (!Number.isFinite(tempC)) return "🌡️";
   if (tempC <= -10) return "🥶";
@@ -144,9 +114,9 @@ async function fetchOpenMeteo(lat, lon) {
     `?latitude=${encodeURIComponent(lat)}` +
     `&longitude=${encodeURIComponent(lon)}` +
     `&timezone=Europe%2FBucharest` +
-    `&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,relative_humidity_2m,pressure_msl,precipitation` +
-    `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant` +
-    `&forecast_days=8`; // 1 zi curentă + 7 zile prognoza
+    `&current=temperature_2m,weather_code,wind_speed_10m` +
+    `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max` +
+    `&forecast_days=4`;
 
   const r = await fetch(url, { headers: { "User-Agent": "cote-dunare/1.0" } });
   if (!r.ok) throw new Error(`Open-Meteo HTTP ${r.status}`);
@@ -185,31 +155,15 @@ async function fetchOgimetLatestMetar(icao) {
 
   const tempC = parseMetarTempC(metarRaw);
   const windKmh = parseMetarWindKmh(metarRaw);
-  const windDir = parseMetarWindDir(metarRaw);
-  const visibility = parseMetarVisibility(metarRaw);
-  const pressure = parseMetarPressure(metarRaw);
 
-  return { icao: icaoInd, observedAtUTC, tempC, windKmh, windDir, visibility, pressure };
-}
-
-function degToCardinal(deg) {
-  if (!Number.isFinite(deg)) return null;
-  if (deg >= 337.5 || deg < 22.5) return "N";
-  if (deg >= 22.5 && deg < 67.5) return "NE";
-  if (deg >= 67.5 && deg < 112.5) return "E";
-  if (deg >= 112.5 && deg < 157.5) return "SE";
-  if (deg >= 157.5 && deg < 202.5) return "S";
-  if (deg >= 202.5 && deg < 247.5) return "SV";
-  if (deg >= 247.5 && deg < 292.5) return "V";
-  if (deg >= 292.5 && deg < 337.5) return "NV";
-  return null;
+  return { icao: icaoInd, observedAtUTC, tempC, windKmh };
 }
 
 // ---------- API ----------
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const lat = Number(searchParams.get("lat"));
-  const lon = Number(searchParams.get("lon"));
+  const lon = Number(searchParams.get("lon")); // exact cum trimiți tu
 
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
     return NextResponse.json({ ok: false, error: "Missing lat/lon" }, { status: 400 });
@@ -221,18 +175,16 @@ export async function GET(req) {
 
     const j = await fetchOpenMeteo(lat, lon);
 
-    // daily din model (8 zile = azi + 7 prognoza)
+    // daily din model
     const daily = [];
     const t = j?.daily?.time || [];
     const c = j?.daily?.weather_code || [];
     const tmax = j?.daily?.temperature_2m_max || [];
     const tmin = j?.daily?.temperature_2m_min || [];
     const pr = j?.daily?.precipitation_sum || [];
-    const prProb = j?.daily?.precipitation_probability_max || [];
     const wmax = j?.daily?.wind_speed_10m_max || [];
-    const wdir = j?.daily?.wind_direction_10m_dominant || [];
 
-    for (let i = 0; i < Math.min(8, t.length); i++) {
+    for (let i = 0; i < Math.min(4, t.length); i++) {
       daily.push({
         date: t[i],
         code: c[i] ?? null,
@@ -241,9 +193,7 @@ export async function GET(req) {
         tmax: tmax[i] ?? null,
         tmin: tmin[i] ?? null,
         precip_mm: pr[i] ?? null,
-        precip_prob: prProb[i] ?? null,
-        windmax_kmh: wmax[i] ?? null,
-        wind_dir: degToCardinal(wdir[i])
+        windmax_kmh: wmax[i] ?? null
       });
     }
 
@@ -257,11 +207,6 @@ export async function GET(req) {
         current = {
           temp_c: metar.tempC ?? null,
           wind_kmh: metar.windKmh ?? null,
-          wind_dir: metar.windDir ?? null,
-          visibility: metar.visibility ?? null,
-          pressure_hpa: metar.pressure ?? null,
-          humidity: null, // METAR nu are humidity direct
-          precipitation_mm: null,
           code: null,
           icon: metarIcon(metar.tempC),
           label:
@@ -275,17 +220,12 @@ export async function GET(req) {
           ? {
               temp_c: cur.temperature_2m ?? null,
               wind_kmh: cur.wind_speed_10m ?? null,
-              wind_dir: degToCardinal(cur.wind_direction_10m),
-              visibility: null, // modelul nu oferă
-              pressure_hpa: cur.pressure_msl ?? null,
-              humidity: cur.relative_humidity_2m ?? null,
-              precipitation_mm: cur.precipitation ?? null,
               code: cur.weather_code ?? null,
               label: `${codeToLabel(cur.weather_code)} (model)`,
               icon: codeToIcon(cur.weather_code)
             }
           : null;
-        source = `open-meteo.com (model) – OGIMET indisponibil · match: ${near?.name || "?"}`;
+        source = `open-meteo.com (model) — OGIMET indisponibil · match: ${near?.name || "?"}`;
       }
     } else {
       const cur = j?.current;
@@ -293,17 +233,12 @@ export async function GET(req) {
         ? {
             temp_c: cur.temperature_2m ?? null,
             wind_kmh: cur.wind_speed_10m ?? null,
-            wind_dir: degToCardinal(cur.wind_direction_10m),
-            visibility: null,
-            pressure_hpa: cur.pressure_msl ?? null,
-            humidity: cur.relative_humidity_2m ?? null,
-            precipitation_mm: cur.precipitation ?? null,
             code: cur.weather_code ?? null,
             label: `${codeToLabel(cur.weather_code)} (model)`,
             icon: codeToIcon(cur.weather_code)
           }
         : null;
-      source = `open-meteo.com (model) – fără ICAO · match: ${near?.name || "?"}`;
+      source = `open-meteo.com (model) — fără ICAO · match: ${near?.name || "?"}`;
     }
 
     return NextResponse.json({

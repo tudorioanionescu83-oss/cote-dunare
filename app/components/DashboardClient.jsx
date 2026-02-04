@@ -1,28 +1,67 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import MapView from "./MapView";
 import StationPanel from "./StationPanel";
 
 async function fetchJSON(url) {
-  // cache buster + no-store
   const u = url.includes("?") ? `${url}&t=${Date.now()}` : `${url}?t=${Date.now()}`;
   const r = await fetch(u, { cache: "no-store", headers: { "Cache-Control": "no-store" } });
   if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
   return r.json();
 }
 
+// UTC-safe diff days
+function diffDaysUTC(fromYmd, toYmd) {
+  if (!fromYmd || !toYmd) return NaN;
+  const [fy, fm, fd] = fromYmd.split("-").map(Number);
+  const [ty, tm, td] = toYmd.split("-").map(Number);
+  const fromUTC = Date.UTC(fy, fm - 1, fd);
+  const toUTC = Date.UTC(ty, tm - 1, td);
+  return (toUTC - fromUTC) / (1000 * 60 * 60 * 24);
+}
+
 export default function DashboardClient() {
   const [stations, setStations] = useState([]);
-  const [selectedStation, setSelectedStation] = useState(""); // STRING, NU obiect
+  const [selectedStation, setSelectedStation] = useState(""); // STRING
   const [latestByStation, setLatestByStation] = useState({});
   const [series, setSeries] = useState([]);
+
+  // preset
   const [days, setDays] = useState(30);
 
+  // custom range
+  const [useCustomRange, setUseCustomRange] = useState(false);
+  const [customFrom, setCustomFrom] = useState(""); // YYYY-MM-DD
+  const [customTo, setCustomTo] = useState(""); // YYYY-MM-DD
+
+  // wiki (optional, îl ții dacă vrei)
   const [wiki, setWiki] = useState(null);
-  const selectedMeta = useMemo(
+
+  const stationObj = useMemo(
     () => stations.find((s) => s.name === selectedStation) || null,
     [stations, selectedStation]
+  );
+
+  const latest = latestByStation?.[selectedStation] || null;
+
+  const fetchMeasurements = useCallback(
+    async ({ days: d, from, to } = {}) => {
+      if (!selectedStation) return;
+
+      let url = `/api/measurements?station=${encodeURIComponent(selectedStation)}`;
+
+      if (from && to) {
+        url += `&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+      } else {
+        const dd = Number.isFinite(d) ? d : days;
+        url += `&days=${encodeURIComponent(dd)}`;
+      }
+
+      const j = await fetchJSON(url);
+      setSeries(j.series || []);
+    },
+    [selectedStation, days]
   );
 
   // load stations + latest
@@ -30,7 +69,7 @@ export default function DashboardClient() {
     (async () => {
       const s = await fetchJSON("/api/stations");
       setStations(s.stations || []);
-      // default station
+
       const first = (s.stations || [])[0]?.name || "";
       setSelectedStation((prev) => prev || first);
 
@@ -39,39 +78,64 @@ export default function DashboardClient() {
     })().catch(console.error);
   }, []);
 
-  // refresh latest periodic (ca să se updateze și panoul + harta)
+  // refresh latest periodic
   useEffect(() => {
     const id = setInterval(() => {
       fetchJSON("/api/latest")
         .then((l) => setLatestByStation(l.latestByStation || {}))
         .catch(() => {});
-    }, 60_000); // 1 minut
+    }, 60_000);
     return () => clearInterval(id);
   }, []);
 
-  // load measurements when selected/days changes
+  // load measurements when station/days/range changes
   useEffect(() => {
     if (!selectedStation) return;
-    fetchJSON(`/api/measurements?station=${encodeURIComponent(selectedStation)}&days=${days}`)
-      .then((j) => setSeries(j.series || []))
-      .catch((e) => {
+
+    if (useCustomRange && customFrom && customTo) {
+      fetchMeasurements({ from: customFrom, to: customTo }).catch((e) => {
         console.error(e);
         setSeries([]);
       });
-  }, [selectedStation, days]);
+      return;
+    }
 
-  // load wiki for selected station
+    fetchMeasurements({ days }).catch((e) => {
+      console.error(e);
+      setSeries([]);
+    });
+  }, [selectedStation, days, useCustomRange, customFrom, customTo, fetchMeasurements]);
+
+  // load wiki for selected station (dacă ai wikiTitle în stations.json)
   useEffect(() => {
-    if (!selectedMeta?.wikiTitle) {
+    if (!stationObj?.wikiTitle) {
       setWiki(null);
       return;
     }
-    fetchJSON(`/api/wiki?title=${encodeURIComponent(selectedMeta.wikiTitle)}`)
+    fetchJSON(`/api/wiki?title=${encodeURIComponent(stationObj.wikiTitle)}`)
       .then(setWiki)
       .catch(() => setWiki(null));
-  }, [selectedMeta?.wikiTitle]);
+  }, [stationObj?.wikiTitle]);
 
-  const latest = latestByStation?.[selectedStation] || null;
+  // preset helper (7/30/365)
+  const setPresetDays = useCallback((d) => {
+    setUseCustomRange(false);
+    setCustomFrom("");
+    setCustomTo("");
+    setDays(d);
+  }, []);
+
+  // ✅ callback-ul necesar pentru "Altă perioadă"
+  const onPeriodRangeChange = useCallback((from, to) => {
+    const dd = diffDaysUTC(from, to);
+    if (!(dd >= 1)) return false; // minim 2 zile consecutive
+
+    setCustomFrom(from);
+    setCustomTo(to);
+    setUseCustomRange(true);
+    setDays(null); // resetează perioada preset
+    return true;
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white">
@@ -129,14 +193,13 @@ export default function DashboardClient() {
 
           <div className="lg:col-span-12">
             <StationPanel
-              stations={stations}
-              selectedStation={selectedStation}
-              latestByStation={latestByStation}
+              station={stationObj}
               latest={latest}
               series={series}
               days={days}
-              setDays={setDays}
+              setDays={setPresetDays}
               wiki={wiki}
+              onPeriodRangeChange={onPeriodRangeChange}
             />
           </div>
         </div>

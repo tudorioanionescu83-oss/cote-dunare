@@ -1,4 +1,4 @@
-﻿// app/components/StationChart.jsx
+// app/components/StationChart.jsx
 "use client";
 
 import React, { useMemo } from "react";
@@ -26,11 +26,17 @@ function fmtDate(d) {
 
 export default function StationChart({ rows }) {
   const data = useMemo(() => {
-    return (rows || []).map((r) => ({
-      data: r.data,
+    const processed = (rows || []).map((r) => ({
+      data: r.data || r.date || r.time || r.ts,
       nivel_cm: r.nivel_cm == null ? null : Number(r.nivel_cm),
       temperatura_c: r.temperatura_c == null ? null : Number(r.temperatura_c),
     }));
+    
+    console.log('📈 StationChart received rows:', rows?.length);
+    console.log('📈 First row:', rows?.[0]);
+    console.log('📈 Last row:', rows?.[rows.length - 1]);
+    
+    return processed;
   }, [rows]);
 
   if (!data || data.length === 0) {
@@ -44,29 +50,39 @@ export default function StationChart({ rows }) {
   return (
     <div style={{ width: "100%", height: 260 }}>
       <ResponsiveContainer>
-        <ComposedChart data={data} margin={{ top: 10, right: 16, left: 8, bottom: 0 }}>
+        <ComposedChart data={data} margin={{ top: 10, right: 20, left: 12, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" />
 
           <XAxis
             dataKey="data"
             tickFormatter={fmtDate}
             minTickGap={20}
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 14, fill: "#000000" }}
           />
 
           <YAxis
             yAxisId="nivel"
-            label={{ value: "Nivel (cm)", angle: -90, position: "insideLeft" }}
-            tick={{ fontSize: 12 }}
-            width={52}
+            label={{ 
+              value: "Nivel (cm)", 
+              angle: -90, 
+              position: "insideLeft",
+              style: { fontSize: 14, fill: "#000000", fontWeight: 600 }
+            }}
+            tick={{ fontSize: 14, fill: "#000000" }}
+            width={56}
           />
 
           <YAxis
             yAxisId="temp"
             orientation="right"
-            label={{ value: "Temperatura (°C)", angle: 90, position: "insideRight" }}
-            tick={{ fontSize: 12 }}
-            width={60}
+            label={{ 
+              value: "Temperatura (°C)", 
+              angle: 90, 
+              position: "insideRight",
+              style: { fontSize: 14, fill: "#000000", fontWeight: 600 }
+            }}
+            tick={{ fontSize: 14, fill: "#000000" }}
+            width={64}
           />
 
           <Tooltip
