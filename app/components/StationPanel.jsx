@@ -251,52 +251,71 @@ export default function StationPanel({
 
   return (
     <>
-      <section
-        style={{
-          border: "1px solid #e5e7eb",
-          borderRadius: 20,
-          background: "#ffffff",
-          width: "100%",
-          minWidth: 0,
-          overflow: "hidden",
-        }}
-      >
-        {/* Desktop: imagine + descriere side by side */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "300px 1fr",
-            gap: 16,
-            padding: 16,
-            minWidth: 0,
-          }}
-          className="desktop-layout"
-        >
+      <style jsx>{`
+        .station-panel-container {
+          border: 1px solid #e5e7eb;
+          borderRadius: 20px;
+          background: #ffffff;
+          width: 100%;
+          overflow: hidden;
+        }
+
+        .station-header {
+          display: grid;
+          grid-template-columns: 300px 1fr;
+          gap: 16px;
+          padding: 16px;
+        }
+
+        .station-image-wrapper {
+          border-radius: 14px;
+          overflow: hidden;
+          border: 1px solid #e5e7eb;
+          background-color: #f9fafb;
+          position: relative;
+          width: 100%;
+          height: 200px;
+        }
+
+        .station-image {
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          cursor: pointer;
+        }
+
+        .station-image.error {
+          cursor: default;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+          .station-header {
+            grid-template-columns: 1fr;
+            gap: 12px;
+            padding: 12px;
+          }
+
+          .station-image-wrapper {
+            height: 180px;
+          }
+        }
+      `}</style>
+
+      <section className="station-panel-container">
+        {/* Desktop: imagine + descriere side by side | Mobile: stack */}
+        <div className="station-header">
           {/* coloana stânga = imagine + nume */}
           <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-            <div
-              style={{
-                borderRadius: 14,
-                overflow: "hidden",
-                border: "1px solid #e5e7eb",
-                backgroundColor: "#f9fafb",
-                position: "relative",
-                minWidth: 0,
-              }}
-            >
+            <div className="station-image-wrapper">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imgUrl}
                 alt={name}
                 onError={() => setImgOk(false)}
                 onClick={openLightbox}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  height: "auto",
-                  cursor: imgOk ? "pointer" : "default",
-                  objectFit: "cover",
-                }}
+                className={`station-image${!imgOk ? ' error' : ''}`}
               />
             </div>
 
@@ -350,6 +369,7 @@ export default function StationPanel({
                       padding: 12,
                       background: bg,
                       minWidth: 0,
+                      flex: "1 1 auto",
                     }}
                   >
                     <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 800 }}>
