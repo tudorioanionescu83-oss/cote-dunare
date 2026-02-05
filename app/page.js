@@ -167,6 +167,93 @@ export default function Page() {
           display: none;
         }
 
+        /* ⭐ HEADER HERO - DESIGN NOU */
+        .hero-header {
+          background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0ea5e9 100%);
+          border-radius: 20px;
+          padding: 24px;
+          margin-bottom: 16px;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 10px 40px rgba(12, 74, 110, 0.3);
+        }
+        
+        .hero-header::before {
+          content: '';
+          position: absolute;
+          top: -50%;
+          right: -20%;
+          width: 300px;
+          height: 300px;
+          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+          border-radius: 50%;
+        }
+        
+        .hero-header::after {
+          content: '';
+          position: absolute;
+          bottom: -30%;
+          left: -10%;
+          width: 200px;
+          height: 200px;
+          background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+          border-radius: 50%;
+        }
+        
+        .hero-content {
+          position: relative;
+          z-index: 1;
+        }
+        
+        .hero-title-line1 {
+          font-size: 28px;
+          font-weight: 900;
+          color: #ffffff;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          margin: 0;
+          text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .hero-title-line2 {
+          font-size: 22px;
+          font-weight: 700;
+          color: rgba(255, 255, 255, 0.9);
+          margin: 4px 0 0 0;
+          letter-spacing: 1px;
+        }
+        
+        .hero-features {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 16px;
+        }
+        
+        .hero-feature {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(10px);
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.95);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          transition: all 0.2s ease;
+        }
+        
+        .hero-feature:hover {
+          background: rgba(255, 255, 255, 0.25);
+          transform: translateY(-1px);
+        }
+        
+        .hero-feature-icon {
+          font-size: 14px;
+        }
+
         /* ===== MOBILE STYLES ===== */
         @media (max-width: 768px) {
           /* Ascunde sidebar-ul complet pe mobil */
@@ -177,23 +264,37 @@ export default function Page() {
           /* Afișează header-ul mobil */
           .mobile-header {
             display: block;
-            text-align: center;
-            padding: 16px 16px 8px 16px;
+            padding: 12px;
             background: #fff;
           }
           
-          .mobile-header .brand-title {
-            font-size: 22px;
-            font-weight: 900;
-            color: #0d3d5c;
-            text-transform: uppercase;
+          .hero-header {
+            padding: 20px;
+            border-radius: 16px;
             margin: 0;
           }
           
-          .mobile-header .brand-subtitle {
-            font-size: 14px;
-            color: #6b7280;
-            margin-top: 2px;
+          .hero-title-line1 {
+            font-size: 20px;
+            letter-spacing: 1px;
+          }
+          
+          .hero-title-line2 {
+            font-size: 16px;
+          }
+          
+          .hero-features {
+            gap: 6px;
+            margin-top: 12px;
+          }
+          
+          .hero-feature {
+            padding: 5px 10px;
+            font-size: 10px;
+          }
+          
+          .hero-feature-icon {
+            font-size: 12px;
           }
           
           /* Container hartă cu legendă suprapusă */
@@ -281,20 +382,78 @@ export default function Page() {
         }
       `}</style>
 
-      {/* ⭐ HEADER MOBIL - Titlu centrat (vizibil doar pe mobil) */}
+      {/* ⭐ HEADER MOBIL NOU - Design modern cu gradient */}
       <div className="mobile-header">
-        <div className="brand-title">Cotele Dunării</div>
-        <div className="brand-subtitle">Stații • hartă • grafice</div>
+        <div className="hero-header">
+          <div className="hero-content">
+            <h1 className="hero-title-line1">INFORMAȚII HIDROGRAFICE</h1>
+            <h2 className="hero-title-line2">ale Dunării</h2>
+            
+            <div className="hero-features">
+              <span className="hero-feature">
+                <span className="hero-feature-icon">💧</span>
+                Nivelul apei
+              </span>
+              <span className="hero-feature">
+                <span className="hero-feature-icon">🌊</span>
+                Debitul
+              </span>
+              <span className="hero-feature">
+                <span className="hero-feature-icon">🌡️</span>
+                Temperatura apă
+              </span>
+              <span className="hero-feature">
+                <span className="hero-feature-icon">📊</span>
+                Indicatori statistici
+              </span>
+              <span className="hero-feature">
+                <span className="hero-feature-icon">☁️</span>
+                Condiții meteorologice
+              </span>
+              <span className="hero-feature">
+                <span className="hero-feature-icon">🗺️</span>
+                Hartă interactivă
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* SIDEBAR DESKTOP (ascuns pe mobil via CSS) */}
+      {/* SIDEBAR DESKTOP - Cu header nou */}
       <aside className="page-sidebar">
-        <div className="brand-title" style={{ textTransform: "uppercase" }}>
-          Cotele Dunării
-        </div>
-
-        <div className="brand-subtitle" style={{ fontSize: 15 }}>
-          Stații • hartă • grafice
+        {/* ⭐ HEADER DESKTOP NOU */}
+        <div className="hero-header" style={{ marginBottom: 16 }}>
+          <div className="hero-content">
+            <h1 className="hero-title-line1" style={{ fontSize: 18 }}>INFORMAȚII HIDROGRAFICE</h1>
+            <h2 className="hero-title-line2" style={{ fontSize: 14 }}>ale Dunării</h2>
+            
+            <div className="hero-features" style={{ marginTop: 12 }}>
+              <span className="hero-feature">
+                <span className="hero-feature-icon">💧</span>
+                Nivelul apei
+              </span>
+              <span className="hero-feature">
+                <span className="hero-feature-icon">🌊</span>
+                Debitul
+              </span>
+              <span className="hero-feature">
+                <span className="hero-feature-icon">🌡️</span>
+                Temperatura apă
+              </span>
+              <span className="hero-feature">
+                <span className="hero-feature-icon">📊</span>
+                Indicatori statistici
+              </span>
+              <span className="hero-feature">
+                <span className="hero-feature-icon">☁️</span>
+                Condiții meteo
+              </span>
+              <span className="hero-feature">
+                <span className="hero-feature-icon">🗺️</span>
+                Hartă interactivă
+              </span>
+            </div>
+          </div>
         </div>
 
         <label className="sidebar-label" style={{ fontSize: 14 }}>
@@ -344,11 +503,6 @@ export default function Page() {
             <span className="dot dot-gray" style={{ width: 11, height: 11 }} />
             <span>FĂRĂ DATE</span>
           </div>
-        </div>
-
-        {/* Range - DOAR DESKTOP */}
-        <div style={{ marginTop: 10, fontSize: 12, color: "rgba(0,45,70,0.65)" }}>
-          Range: 1 m • ok
         </div>
 
         {/* WIDGET TULCEA - DOAR DESKTOP */}
