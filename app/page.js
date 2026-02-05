@@ -144,8 +144,64 @@ export default function Page() {
 
   return (
     <div className="page-layout">
-      {/* ⭐ CSS GLOBAL - Layout mobil nou */}
+      {/* ⭐ CSS GLOBAL - Layout mobil nou + ANIMAȚII SPECTACULOASE */}
       <style jsx global>{`
+        /* ===== KEYFRAMES ANIMATIONS ===== */
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-5px); }
+        }
+        
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 5px rgba(255,255,255,0.3), 0 0 10px rgba(14,165,233,0.2); }
+          50% { box-shadow: 0 0 15px rgba(255,255,255,0.5), 0 0 25px rgba(14,165,233,0.4); }
+        }
+        
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        
+        @keyframes wave {
+          0% { transform: translateX(0) translateY(0); }
+          25% { transform: translateX(-2px) translateY(-2px); }
+          50% { transform: translateX(0) translateY(-3px); }
+          75% { transform: translateX(2px) translateY(-2px); }
+          100% { transform: translateX(0) translateY(0); }
+        }
+        
+        @keyframes ripple {
+          0% { transform: scale(1); opacity: 0.4; }
+          100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        @keyframes gradient-shift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes icon-bounce {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.2); }
+        }
+        
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(15px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes water-flow {
+          0% { background-position: 0% 0%; }
+          100% { background-position: 100% 100%; }
+        }
+
         /* ===== DESKTOP - rămâne la fel ===== */
         .tulcea-widget-desktop {
           display: block;
@@ -167,15 +223,18 @@ export default function Page() {
           display: none;
         }
 
-        /* ⭐ HEADER HERO - DESIGN NOU */
+        /* ⭐ HEADER HERO - DESIGN NOU CU ANIMAȚII */
         .hero-header {
-          background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0ea5e9 100%);
+          background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 30%, #0284c7 60%, #0ea5e9 100%);
+          background-size: 200% 200%;
+          animation: gradient-shift 8s ease infinite;
           border-radius: 20px;
           padding: 24px;
           margin-bottom: 16px;
           position: relative;
           overflow: hidden;
-          box-shadow: 0 10px 40px rgba(12, 74, 110, 0.3);
+          box-shadow: 0 10px 40px rgba(12, 74, 110, 0.4),
+                      0 0 60px rgba(14, 165, 233, 0.15);
         }
         
         .hero-header::before {
@@ -185,8 +244,9 @@ export default function Page() {
           right: -20%;
           width: 300px;
           height: 300px;
-          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+          background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
           border-radius: 50%;
+          animation: float 6s ease-in-out infinite;
         }
         
         .hero-header::after {
@@ -196,8 +256,27 @@ export default function Page() {
           left: -10%;
           width: 200px;
           height: 200px;
-          background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
           border-radius: 50%;
+          animation: float 8s ease-in-out infinite reverse;
+        }
+        
+        /* Water wave effect overlay */
+        .hero-header .water-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(
+            45deg,
+            transparent 30%,
+            rgba(255,255,255,0.03) 50%,
+            transparent 70%
+          );
+          background-size: 200% 200%;
+          animation: water-flow 3s linear infinite;
+          pointer-events: none;
         }
         
         .hero-content {
@@ -205,53 +284,111 @@ export default function Page() {
           z-index: 1;
         }
         
-        .hero-title-line1 {
-          font-size: 28px;
+        /* ⭐ TITLU CENTRAT + UPPERCASE */
+        .hero-title-main {
+          font-size: 24px;
           font-weight: 900;
           color: #ffffff;
           text-transform: uppercase;
-          letter-spacing: 2px;
+          letter-spacing: 3px;
           margin: 0;
+          text-align: center;
+          text-shadow: 0 2px 15px rgba(0,0,0,0.3),
+                       0 0 30px rgba(255,255,255,0.2);
+          background: linear-gradient(90deg, #fff, #e0f2fe, #fff);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          background-clip: text;
+          animation: shimmer 3s linear infinite;
+        }
+        
+        .hero-title-sub {
+          font-size: 18px;
+          font-weight: 700;
+          color: rgba(255, 255, 255, 0.95);
+          margin: 6px 0 0 0;
+          letter-spacing: 2px;
+          text-align: center;
+          text-transform: uppercase;
           text-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
         
-        .hero-title-line2 {
-          font-size: 22px;
-          font-weight: 700;
-          color: rgba(255, 255, 255, 0.9);
-          margin: 4px 0 0 0;
-          letter-spacing: 1px;
-        }
-        
+        /* ⭐ FEATURES GRID - ALINIATE FRUMOS */
         .hero-features {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          margin-top: 16px;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+          margin-top: 20px;
         }
         
         .hero-feature {
-          display: inline-flex;
+          display: flex;
           align-items: center;
-          gap: 6px;
-          padding: 6px 12px;
-          background: rgba(255, 255, 255, 0.15);
+          justify-content: center;
+          gap: 8px;
+          padding: 10px 14px;
+          background: rgba(255, 255, 255, 0.12);
           backdrop-filter: blur(10px);
-          border-radius: 20px;
+          border-radius: 14px;
           font-size: 12px;
-          font-weight: 600;
+          font-weight: 700;
           color: rgba(255, 255, 255, 0.95);
           border: 1px solid rgba(255, 255, 255, 0.2);
-          transition: all 0.2s ease;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: default;
+          position: relative;
+          overflow: hidden;
+          animation: fadeInUp 0.5s ease forwards;
+          opacity: 0;
+        }
+        
+        .hero-feature:nth-child(1) { animation-delay: 0.1s; }
+        .hero-feature:nth-child(2) { animation-delay: 0.2s; }
+        .hero-feature:nth-child(3) { animation-delay: 0.3s; }
+        .hero-feature:nth-child(4) { animation-delay: 0.4s; }
+        .hero-feature:nth-child(5) { animation-delay: 0.5s; }
+        .hero-feature:nth-child(6) { animation-delay: 0.6s; }
+        
+        .hero-feature::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 0;
+          height: 0;
+          background: rgba(255,255,255,0.2);
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+          transition: width 0.4s ease, height 0.4s ease;
         }
         
         .hero-feature:hover {
           background: rgba(255, 255, 255, 0.25);
-          transform: translateY(-1px);
+          transform: translateY(-3px) scale(1.02);
+          box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+          animation: pulse-glow 2s ease-in-out infinite;
+        }
+        
+        .hero-feature:hover::before {
+          width: 200px;
+          height: 200px;
+        }
+        
+        .hero-feature:hover .hero-feature-icon {
+          animation: icon-bounce 0.5s ease;
         }
         
         .hero-feature-icon {
-          font-size: 14px;
+          font-size: 16px;
+          transition: transform 0.3s ease;
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+        
+        .hero-feature-text {
+          position: relative;
+          z-index: 1;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         /* ===== MOBILE STYLES ===== */
@@ -274,27 +411,29 @@ export default function Page() {
             margin: 0;
           }
           
-          .hero-title-line1 {
-            font-size: 20px;
+          .hero-title-main {
+            font-size: 16px;
+            letter-spacing: 1.5px;
+          }
+          
+          .hero-title-sub {
+            font-size: 14px;
             letter-spacing: 1px;
           }
           
-          .hero-title-line2 {
-            font-size: 16px;
-          }
-          
           .hero-features {
-            gap: 6px;
-            margin-top: 12px;
+            gap: 8px;
+            margin-top: 14px;
           }
           
           .hero-feature {
-            padding: 5px 10px;
+            padding: 8px 10px;
             font-size: 10px;
+            border-radius: 12px;
           }
           
           .hero-feature-icon {
-            font-size: 12px;
+            font-size: 14px;
           }
           
           /* Container hartă cu legendă suprapusă */
@@ -382,37 +521,38 @@ export default function Page() {
         }
       `}</style>
 
-      {/* ⭐ HEADER MOBIL NOU - Design modern cu gradient */}
+      {/* ⭐ HEADER MOBIL NOU - Design modern cu gradient și animații */}
       <div className="mobile-header">
         <div className="hero-header">
+          <div className="water-overlay"></div>
           <div className="hero-content">
-            <h1 className="hero-title-line1">INFORMAȚII HIDROGRAFICE</h1>
-            <h2 className="hero-title-line2">ale Dunării</h2>
+            <h1 className="hero-title-main">INFORMAȚII HIDROGRAFICE</h1>
+            <h2 className="hero-title-sub">DUNĂRE</h2>
             
             <div className="hero-features">
               <span className="hero-feature">
                 <span className="hero-feature-icon">💧</span>
-                Nivelul apei
+                <span className="hero-feature-text">Nivel</span>
               </span>
               <span className="hero-feature">
                 <span className="hero-feature-icon">🌊</span>
-                Debitul
+                <span className="hero-feature-text">Debit</span>
               </span>
               <span className="hero-feature">
                 <span className="hero-feature-icon">🌡️</span>
-                Temperatura apă
+                <span className="hero-feature-text">Temperatura Apei</span>
               </span>
               <span className="hero-feature">
                 <span className="hero-feature-icon">📊</span>
-                Indicatori statistici
+                <span className="hero-feature-text">Statistică</span>
               </span>
               <span className="hero-feature">
                 <span className="hero-feature-icon">☁️</span>
-                Condiții meteorologice
+                <span className="hero-feature-text">Meteo</span>
               </span>
               <span className="hero-feature">
                 <span className="hero-feature-icon">🗺️</span>
-                Hartă interactivă
+                <span className="hero-feature-text">Hartă</span>
               </span>
             </div>
           </div>
@@ -423,34 +563,35 @@ export default function Page() {
       <aside className="page-sidebar">
         {/* ⭐ HEADER DESKTOP NOU */}
         <div className="hero-header" style={{ marginBottom: 16 }}>
+          <div className="water-overlay"></div>
           <div className="hero-content">
-            <h1 className="hero-title-line1" style={{ fontSize: 18 }}>INFORMAȚII HIDROGRAFICE</h1>
-            <h2 className="hero-title-line2" style={{ fontSize: 14 }}>ale Dunării</h2>
+            <h1 className="hero-title-main" style={{ fontSize: 18 }}>INFORMAȚII HIDROGRAFICE</h1>
+            <h2 className="hero-title-sub" style={{ fontSize: 14 }}>DUNĂRE</h2>
             
-            <div className="hero-features" style={{ marginTop: 12 }}>
+            <div className="hero-features" style={{ marginTop: 14 }}>
               <span className="hero-feature">
                 <span className="hero-feature-icon">💧</span>
-                Nivelul apei
+                <span className="hero-feature-text">Nivel</span>
               </span>
               <span className="hero-feature">
                 <span className="hero-feature-icon">🌊</span>
-                Debitul
+                <span className="hero-feature-text">Debit</span>
               </span>
               <span className="hero-feature">
                 <span className="hero-feature-icon">🌡️</span>
-                Temperatura apă
+                <span className="hero-feature-text">Temperatura Apei</span>
               </span>
               <span className="hero-feature">
                 <span className="hero-feature-icon">📊</span>
-                Indicatori statistici
+                <span className="hero-feature-text">Statistică</span>
               </span>
               <span className="hero-feature">
                 <span className="hero-feature-icon">☁️</span>
-                Condiții meteo
+                <span className="hero-feature-text">Meteo</span>
               </span>
               <span className="hero-feature">
                 <span className="hero-feature-icon">🗺️</span>
-                Hartă interactivă
+                <span className="hero-feature-text">Hartă</span>
               </span>
             </div>
           </div>
