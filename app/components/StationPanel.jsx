@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import StationChart from "./StationChart";
 import WeatherWidget from "./WeatherWidget";
+import ForecastChart from "./ForecastChart";  // ⭐ NOU: grafic prognoză
 import { stationSlug } from "../lib/stations";
 
 const PERIODS = [
@@ -449,6 +450,11 @@ export default function StationPanel({
           ) : (
             <StationChart rows={rows} />
           )}
+        </div>
+
+        {/* ⭐ NOU: GRAFIC PROGNOZĂ - sub graficul nivel/temperatură */}
+        <div style={{ padding: "0 16px 16px 16px", minWidth: 0 }}>
+          <ForecastChart stationName={name} nivelActual={latest?.nivel_cm} />
         </div>
 
         {/* ⭐ WIDGET TULCEA - DOAR PE MOBIL (sub grafic, înainte de meteo) */}
