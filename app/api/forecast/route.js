@@ -4,15 +4,19 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
+// ✅ forțează route handler-ul să fie dinamic (evită încercarea de prerender static)
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-export async function GET(request) {
+export async function GET(req) {
   try {
-    const { searchParams } = new URL(request.url);
-    const station = searchParams.get("station");
+    // ✅ NU folosi new URL(request.url) — asta ți-a declanșat DYNAMIC_SERVER_USAGE
+    const station = req.nextUrl.searchParams.get("station");
 
     if (!station) {
       return NextResponse.json(
@@ -63,15 +67,25 @@ export async function GET(request) {
       ].filter((p) => p.value !== null), // Exclude valorile null
     };
 
-    return NextResponse.json({
-      ok: true,
-      station,
-      forecast,
-    });
+    return NextResponse.json(
+      {
+        ok: true,
+        station,
+        forecast,
+      },
+      {
+        // ✅ evită caching agresiv în prod (mai ales pe Vercel)
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    );
   } catch (err) {
     console.error("Forecast API error:", err);
     return NextResponse.json(
-      { error: "Eroare internă", details: err.message },
+      { error: "Eroare internă", details: err?.message || String(err) },
       { status: 500 }
     );
   }
