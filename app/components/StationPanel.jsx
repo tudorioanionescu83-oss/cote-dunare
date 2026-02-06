@@ -321,6 +321,7 @@ export default function StationPanel({
           width: 100%;
           height: 100%;
           object-fit: cover;
+          object-position: center;
           cursor: pointer;
         }
 
@@ -491,6 +492,12 @@ export default function StationPanel({
 
           .station-image-wrapper {
             height: 160px;
+          }
+
+          .station-image {
+            object-fit: contain;
+            object-position: center;
+            background: #f9fafb;
           }
 
           .cards-grid {
