@@ -322,6 +322,7 @@ export default function StationPanel({
           height: 100%;
           object-fit: cover;
           object-position: center;
+          background: #f9fafb;
           cursor: pointer;
         }
 
@@ -495,6 +496,7 @@ export default function StationPanel({
           }
 
           .station-image {
+            /* MOBILE: show the full image (no crop) and keep it centered */
             object-fit: contain;
             object-position: center;
             background: #f9fafb;

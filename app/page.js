@@ -169,6 +169,9 @@ export default function Page() {
       <DonationWidget />
       
       <style jsx global>{`
+        /* FIX: media should never overflow the viewport */
+        img, svg, canvas, video { max-width: 100%; height: auto; }
+
         /* FIX: prevent horizontal overflow on mobile/desktop */
         html, body {
           margin: 0;
