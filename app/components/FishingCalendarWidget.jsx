@@ -77,6 +77,9 @@ function CalendarDay({ date, dayData, isToday, isSelected, isCurrentMonth, onCli
   if (!isCurrentMonth) {
     return (
       <div style={{
+        width: "100%",
+        maxWidth: "100%",
+        boxSizing: "border-box",
         aspectRatio: "1",
         display: "flex",
         alignItems: "center",
@@ -427,7 +430,7 @@ export default function FishingCalendarWidget() {
         {/* Day headers */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
+          gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
           gap: 4,
           marginBottom: 8,
         }}>
@@ -450,7 +453,7 @@ export default function FishingCalendarWidget() {
         {/* Days grid */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
+          gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
           gap: 4,
         }}>
           {calendarData.map((day, i) => (

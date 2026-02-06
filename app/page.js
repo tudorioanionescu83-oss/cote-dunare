@@ -181,7 +181,7 @@ export default function Page() {
           overflow-x: hidden;
         }
         *, *::before, *::after { box-sizing: border-box; }
-        .page-layout { width: 100%; max-width: 100%; overflow-x: hidden; }
+        .page-layout { width: 100%; max-width: 100%; }
 
         @keyframes float {
           0%, 100% { transform: translateY(0px); }

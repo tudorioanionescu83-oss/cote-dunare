@@ -84,6 +84,9 @@ export default function DonationWidget() {
           animation: pulse-btn 2s ease-in-out infinite, float-in 0.5s ease-out;
           transition: all 0.3s ease;
           text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+          max-width: calc(100vw - 32px);
+          box-sizing: border-box;
+          transform-origin: top right;
         }
         .donation-trigger:hover {
           animation: none;

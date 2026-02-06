@@ -262,6 +262,9 @@ export default function StationPanel({
 
         /* FIX: keep children from forcing wider layouts */
         .station-panel-container, .station-panel-container * { box-sizing: border-box; }
+        .safe-block { width: 100%; max-width: 100%; min-width: 0; }
+        .safe-block > * { max-width: 100%; }
+
 
 
         .station-name-header {
