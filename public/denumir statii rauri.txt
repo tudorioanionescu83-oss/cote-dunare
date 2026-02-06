@@ -1,0 +1,20 @@
+# Lista statii rauri
+@" 
+Alba Iulia (Mures) https://ro.wikipedia.org/wiki/Alba_Iulia
+Alexandria (Vedea) https://ro.wikipedia.org/wiki/Alexandria,_Rom%C3%A2nia
+Arad (Mures) https://ro.wikipedia.org/wiki/Arad
+Chisineu Cris (Crisul Alb) https://ro.wikipedia.org/wiki/Chi%C8%99ineu-Cri%C8%99
+Dragesti (Siret) https://ro.wikipedia.org/wiki/Dr%C4%83ge%C8%99ti_(D%C4%83miene%C8%99ti),_Bac%C4%83u
+Frumosu (Moldova)https://ro.wikipedia.org/wiki/Comuna_Frumosu,_Suceava
+Gurahont (Crisul Alb)https://ro.wikipedia.org/wiki/Comuna_Gurahon%C8%9B,_Arad
+Hoghiz (Olt) https://ro.wikipedia.org/wiki/Hoghiz,_Bra%C8%99ov
+Lugoj (Timis)https://ro.wikipedia.org/wiki/Lugoj
+Mihalt (Tarnava Mare) https://ro.wikipedia.org/wiki/Comuna_Mihal%C8%9B,_Alba
+Podari (Jiu)https://ro.wikipedia.org/wiki/Comuna_Podari,_Dolj
+Radauti-Prut (Prut) https://ro.wikipedia.org/wiki/Comuna_R%C4%83d%C4%83u%C8%9Bi-Prut,_Boto%C8%99ani
+Salard (Barcau) https://ro.wikipedia.org/wiki/Comuna_S%C4%83lard,_Bihor
+Satu Mare (Somes)https://ro.wikipedia.org/wiki/Satu_Mare
+Tupilati (Siret) https://ro.wikipedia.org/wiki/Comuna_Tupila%C8%9Bi,_Neam%C8%9B
+Vranceni (Siret)
+Zerind (Crisul Negru) https://ro.wikipedia.org/wiki/Zerind,_Arad
+"@
