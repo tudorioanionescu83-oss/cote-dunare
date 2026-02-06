@@ -181,7 +181,7 @@ export default function Page() {
           overflow-x: hidden;
         }
         *, *::before, *::after { box-sizing: border-box; }
-        .page-layout { width: 100%; max-width: 100%; }
+        .page-layout { width: 100%; max-width: 100%; overflow-x: hidden; }
 
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
@@ -311,7 +311,7 @@ export default function Page() {
 
         .page-layout {
           display: grid;
-          grid-template-columns: 260px 1fr;
+          grid-template-columns: 260px minmax(0, 1fr);
           gap: 20px;
           padding: 20px;
           min-height: 100vh;

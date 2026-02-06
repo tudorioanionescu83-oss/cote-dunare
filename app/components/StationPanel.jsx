@@ -262,9 +262,6 @@ export default function StationPanel({
 
         /* FIX: keep children from forcing wider layouts */
         .station-panel-container, .station-panel-container * { box-sizing: border-box; }
-        .safe-block { width: 100%; max-width: 100%; min-width: 0; }
-        .safe-block > * { max-width: 100%; }
-
 
 
         .station-name-header {
@@ -825,7 +822,7 @@ function TulceaFlowWidget({ latestData }) {
         <div style={{ fontSize: 16, fontWeight: 900, color: "#111827" }}>🌊 Debit Dunăre - Tulcea</div>
       </div>
       <div style={{ padding: "15px 16px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 12, marginBottom: 12 }}>
           <div>
             <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 700, marginBottom: 4 }}>Nivel</div>
             <div style={{ fontSize: 22, fontWeight: 950, color: "#111827" }}>{flowInfo.nivel_cm} cm</div>

@@ -68,6 +68,9 @@ export default function DonationWidget() {
           position: fixed;
           top: 16px;
           right: 16px;
+          max-width: calc(100vw - 32px);
+          overflow: hidden;
+          text-overflow: ellipsis;
           z-index: 9998;
           display: flex;
           align-items: center;
@@ -84,9 +87,6 @@ export default function DonationWidget() {
           animation: pulse-btn 2s ease-in-out infinite, float-in 0.5s ease-out;
           transition: all 0.3s ease;
           text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-          max-width: calc(100vw - 32px);
-          box-sizing: border-box;
-          transform-origin: top right;
         }
         .donation-trigger:hover {
           animation: none;
@@ -214,6 +214,9 @@ export default function DonationWidget() {
             top: auto;
             bottom: 16px;
             right: 16px;
+          max-width: calc(100vw - 32px);
+          overflow: hidden;
+          text-overflow: ellipsis;
             padding: 12px 14px;
           }
           .donation-trigger span:not(.donation-trigger-icon) {

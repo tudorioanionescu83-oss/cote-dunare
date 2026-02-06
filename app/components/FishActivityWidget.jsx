@@ -162,7 +162,7 @@ function FishCard({ fish, score, isExpanded, onClick }) {
         transition: "all 0.3s ease",
       }}
     >
-      <div style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box",  display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{
           width: 50,
           height: 50,
@@ -266,6 +266,10 @@ function TopFishBanner({ topFish, score }) {
   
   return (
     <div style={{
+      width: "100%",
+      maxWidth: "100%",
+      overflowX: "clip",
+      minWidth: 0,
       background: `linear-gradient(135deg, ${topFish.color}33, ${topFish.color}11)`,
       border: `2px solid ${topFish.color}`,
       borderRadius: 16,

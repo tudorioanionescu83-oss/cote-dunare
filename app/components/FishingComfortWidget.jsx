@@ -241,7 +241,11 @@ function FactorBar({ factor }) {
   const percentage = (factor.score / factor.max) * 100;
   
   return (
-    <div style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box",  marginBottom: 10 }}>
+    <div style={{ width: "100%",
+      maxWidth: "100%",
+      overflowX: "clip",
+      minWidth: 0,
+      marginBottom: 10 }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
         <span style={{ fontSize: 12, color: "#e2e8f0", fontWeight: 600 }}>{factor.name}</span>
         <span style={{ fontSize: 12, color: factor.good ? "#10b981" : "#f59e0b", fontWeight: 700 }}>
