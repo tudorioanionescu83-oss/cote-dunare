@@ -169,6 +169,17 @@ export default function Page() {
       <DonationWidget />
       
       <style jsx global>{`
+        /* FIX: prevent horizontal overflow on mobile/desktop */
+        html, body {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        .page-layout { width: 100%; max-width: 100%; overflow-x: hidden; }
+
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-5px); }
@@ -253,7 +264,7 @@ export default function Page() {
         /* BUTOANE FEATURES - 2 randuri de 3 */
         .hero-features {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 6px;
           margin-top: 12px;
         }
@@ -359,7 +370,7 @@ export default function Page() {
           /* BUTOANE MOBIL - 2 randuri de 3, fix */
           .mobile-features {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 8px;
             margin-top: 12px;
             width: 100%;

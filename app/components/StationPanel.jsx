@@ -255,8 +255,14 @@ export default function StationPanel({
           border-radius: 20px;
           background: #ffffff;
           width: 100%;
+          max-width: 100%;
           overflow: hidden;
+          overflow-x: hidden;
         }
+
+        /* FIX: keep children from forcing wider layouts */
+        .station-panel-container, .station-panel-container * { box-sizing: border-box; }
+
 
         .station-name-header {
           text-align: center;
@@ -293,10 +299,12 @@ export default function StationPanel({
 
         .station-content {
           display: grid;
-          grid-template-columns: 260px 1fr;
+          grid-template-columns: 260px minmax(0, 1fr);
           gap: 16px;
           padding: 16px;
         }
+        .station-content > * { min-width: 0; }
+
 
         .station-image-wrapper {
           border-radius: 14px;
@@ -324,11 +332,14 @@ export default function StationPanel({
           font-size: 14px;
           color: #374151;
           line-height: 1.55;
+          min-width: 0;
+          overflow-wrap: anywhere;
+          word-break: break-word;
         }
 
         .cards-grid {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 12px;
           padding: 0 16px 16px 16px;
         }
@@ -483,7 +494,7 @@ export default function StationPanel({
           }
 
           .cards-grid {
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 8px;
             padding: 0 12px 12px 12px;
           }
