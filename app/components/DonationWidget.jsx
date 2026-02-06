@@ -68,13 +68,10 @@ export default function DonationWidget() {
           position: fixed;
           top: 16px;
           right: 16px;
-          max-width: calc(100vw - 32px);
           z-index: 9998;
           display: flex;
           align-items: center;
           gap: 8px;
-          flex-wrap: wrap;
-
           padding: 10px 16px;
           background: linear-gradient(135deg, #f59e0b, #d97706, #b45309);
           background-size: 200% 200%;

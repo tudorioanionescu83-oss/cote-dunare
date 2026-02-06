@@ -427,7 +427,7 @@ export default function FishingCalendarWidget() {
         {/* Day headers */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+          gridTemplateColumns: "repeat(7, 1fr)",
           gap: 4,
           marginBottom: 8,
         }}>
@@ -450,7 +450,7 @@ export default function FishingCalendarWidget() {
         {/* Days grid */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+          gridTemplateColumns: "repeat(7, 1fr)",
           gap: 4,
         }}>
           {calendarData.map((day, i) => (

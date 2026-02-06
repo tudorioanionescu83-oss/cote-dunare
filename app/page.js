@@ -27,55 +27,6 @@ export default function Page() {
   const [stations, setStations] = useState([]);
   const [selectedStation, setSelectedStation] = useState("Tulcea");
 
-// AUTO-FIX: detect & constrain any element that overflows the viewport (prevents "missing 10% of screen")
-useEffect(() => {
-  function __applyOverflowFix() {
-    const vw = document.documentElement.clientWidth || window.innerWidth || 0;
-    if (!vw) return;
-
-    // Fast path: if nothing overflows, do nothing.
-    if (document.documentElement.scrollWidth <= vw + 1) return;
-
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT);
-    let node = walker.currentNode;
-    let count = 0;
-
-    while (node && count < 6000) {
-      count++;
-      const el = node;
-      // Skip elements that shouldn't be touched
-      const tag = el.tagName;
-      if (tag !== "HTML" && tag !== "BODY") {
-        const rect = el.getBoundingClientRect?.();
-        if (rect && (rect.right > vw + 1 || rect.width > vw + 1)) {
-          el.classList.add("__overflow-fix");
-          // Also allow grid/flex children to shrink
-          if (el.style) {
-            if (!el.style.minWidth) el.style.minWidth = "0";
-          }
-        }
-      }
-      node = walker.nextNode();
-    }
-  }
-
-  // Run after paint + on resize/orientation changes
-  const t = setTimeout(__applyOverflowFix, 50);
-  window.addEventListener("resize", __applyOverflowFix);
-  window.addEventListener("orientationchange", __applyOverflowFix);
-
-  // Run again after fonts/images load
-  window.addEventListener("load", __applyOverflowFix);
-
-  return () => {
-    clearTimeout(t);
-    window.removeEventListener("resize", __applyOverflowFix);
-    window.removeEventListener("orientationchange", __applyOverflowFix);
-    window.removeEventListener("load", __applyOverflowFix);
-  };
-}, []);
-
-
   const [latestByName, setLatestByName] = useState({});
   const [riverStations, setRiverStations] = useState([]);
   const [chartByStation, setChartByStation] = useState({});
@@ -218,16 +169,6 @@ useEffect(() => {
       <DonationWidget />
       
       <style jsx global>{`
-/* AUTO-FIX: constrain common overflow offenders (leaflet, charts, media) */
-img, svg, canvas, video, iframe { max-width: 100%; height: auto; }
-.recharts-responsive-container, .recharts-wrapper { max-width: 100%; }
-.leaflet-container, .leaflet-pane, .leaflet-map-pane, .leaflet-control-container { max-width: 100% !important; }
-.leaflet-container { width: 100% !important; }
-
-/* Applied by JS to any element that overflows the viewport */
-.__overflow-fix { max-width: 100% !important; box-sizing: border-box !important; overflow-x: clip !important; }
-.__overflow-fix svg, .__overflow-fix canvas { max-width: 100% !important; }
-
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-5px); }
