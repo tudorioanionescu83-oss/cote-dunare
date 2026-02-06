@@ -69,12 +69,12 @@ export default function DonationWidget() {
           top: 16px;
           right: 16px;
           max-width: calc(100vw - 32px);
-          overflow: hidden;
-          text-overflow: ellipsis;
           z-index: 9998;
           display: flex;
           align-items: center;
           gap: 8px;
+          flex-wrap: wrap;
+
           padding: 10px 16px;
           background: linear-gradient(135deg, #f59e0b, #d97706, #b45309);
           background-size: 200% 200%;
@@ -214,9 +214,6 @@ export default function DonationWidget() {
             top: auto;
             bottom: 16px;
             right: 16px;
-          max-width: calc(100vw - 32px);
-          overflow: hidden;
-          text-overflow: ellipsis;
             padding: 12px 14px;
           }
           .donation-trigger span:not(.donation-trigger-icon) {

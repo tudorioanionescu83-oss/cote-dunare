@@ -77,11 +77,7 @@ function CalendarDay({ date, dayData, isToday, isSelected, isCurrentMonth, onCli
   if (!isCurrentMonth) {
     return (
       <div style={{
-        width: "100%",
-      maxWidth: "100%",
-      overflowX: "clip",
-      minWidth: 0,
-      aspectRatio: "1",
+        aspectRatio: "1",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

@@ -255,14 +255,8 @@ export default function StationPanel({
           border-radius: 20px;
           background: #ffffff;
           width: 100%;
-          max-width: 100%;
           overflow: hidden;
-          overflow-x: hidden;
         }
-
-        /* FIX: keep children from forcing wider layouts */
-        .station-panel-container, .station-panel-container * { box-sizing: border-box; }
-
 
         .station-name-header {
           text-align: center;
@@ -299,12 +293,10 @@ export default function StationPanel({
 
         .station-content {
           display: grid;
-          grid-template-columns: 260px minmax(0, 1fr);
+          grid-template-columns: 260px 1fr;
           gap: 16px;
           padding: 16px;
         }
-        .station-content > * { min-width: 0; }
-
 
         .station-image-wrapper {
           border-radius: 14px;
@@ -321,8 +313,6 @@ export default function StationPanel({
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center;
-          background: #f9fafb;
           cursor: pointer;
         }
 
@@ -334,14 +324,11 @@ export default function StationPanel({
           font-size: 14px;
           color: #374151;
           line-height: 1.55;
-          min-width: 0;
-          overflow-wrap: anywhere;
-          word-break: break-word;
         }
 
         .cards-grid {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(3, 1fr);
           gap: 12px;
           padding: 0 16px 16px 16px;
         }
@@ -495,15 +482,8 @@ export default function StationPanel({
             height: 160px;
           }
 
-          .station-image {
-            /* MOBILE: show the full image (no crop) and keep it centered */
-            object-fit: contain;
-            object-position: center;
-            background: #f9fafb;
-          }
-
           .cards-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 8px;
             padding: 0 12px 12px 12px;
           }
@@ -822,7 +802,7 @@ function TulceaFlowWidget({ latestData }) {
         <div style={{ fontSize: 16, fontWeight: 900, color: "#111827" }}>🌊 Debit Dunăre - Tulcea</div>
       </div>
       <div style={{ padding: "15px 16px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 12, marginBottom: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
           <div>
             <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 700, marginBottom: 4 }}>Nivel</div>
             <div style={{ fontSize: 22, fontWeight: 950, color: "#111827" }}>{flowInfo.nivel_cm} cm</div>

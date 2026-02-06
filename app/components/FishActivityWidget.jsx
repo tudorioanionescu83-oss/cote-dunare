@@ -221,7 +221,7 @@ function FishCard({ fish, score, isExpanded, onClick }) {
       {/* Expanded details */}
       {isExpanded && (
         <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div style={{ 
               background: "rgba(0,0,0,0.2)", 
               padding: 10, 
@@ -266,10 +266,6 @@ function TopFishBanner({ topFish, score }) {
   
   return (
     <div style={{
-      width: "100%",
-      maxWidth: "100%",
-      overflowX: "clip",
-      minWidth: 0,
       background: `linear-gradient(135deg, ${topFish.color}33, ${topFish.color}11)`,
       border: `2px solid ${topFish.color}`,
       borderRadius: 16,
