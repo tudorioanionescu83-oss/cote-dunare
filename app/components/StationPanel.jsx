@@ -688,13 +688,13 @@ export default function StationPanel({
 
         {/* GRAFIC DEBIT */}
         {(latest?.debit_mc_s || isRiverStation) && (
-          <div className="section-spacing">
+          <div id="debit-section" className="section-spacing">
             <DebitChart
               debit_mc_s={latest?.debit_mc_s}
               debit_trend={latest?.debit_trend}
               stationName={name}
               showTemperature={isRiverStation}
-              chartData={isRiverStation ? rows : null}
+              chartData={rows}
             />
           </div>
         )}

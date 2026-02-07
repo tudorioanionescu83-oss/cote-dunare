@@ -31,6 +31,7 @@ export default function Page() {
   const [riverStations, setRiverStations] = useState([]);
   const [chartByStation, setChartByStation] = useState({});
   const [chartLoading, setChartLoading] = useState(false);
+  const [mapFullscreen, setMapFullscreen] = useState(false);
 
   const [periodDays, setPeriodDays] = useState(30);
   const [useCustomRange, setUseCustomRange] = useState(false);
@@ -228,6 +229,42 @@ export default function Page() {
         .mobile-search { display: none; }
         .map-container-mobile { position: relative; }
         .legend-overlay-mobile { display: none; }
+        
+        /* FULLSCREEN MAP */
+        .map-fullscreen {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          z-index: 9999 !important;
+          background: white;
+        }
+        .map-fullscreen-btn {
+          position: absolute;
+          top: 10px;
+          left: 50px;
+          z-index: 1001;
+          background: white;
+          border: 2px solid rgba(0,0,0,0.2);
+          border-radius: 8px;
+          padding: 8px 12px;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 700;
+          color: #374151;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+          transition: all 0.2s;
+        }
+        .map-fullscreen-btn:hover {
+          background: #f3f4f6;
+          transform: scale(1.05);
+        }
 
         /* TITLU CASETA CU EFECTE */
         .hero-title-box {
@@ -651,7 +688,14 @@ export default function Page() {
       </aside>
 
       <main className="page-main">
-        <div id="map-section" className="map-container-mobile">
+        <div id="map-section" className={`map-container-mobile ${mapFullscreen ? 'map-fullscreen' : ''}`}>
+          <button 
+            className="map-fullscreen-btn"
+            onClick={() => setMapFullscreen(!mapFullscreen)}
+            title={mapFullscreen ? "Ieși din fullscreen" : "Hartă fullscreen"}
+          >
+            {mapFullscreen ? "✕ Închide" : "⛶ Fullscreen"}
+          </button>
           <MapView
             stations={stations}
             latestByName={latestByName}
