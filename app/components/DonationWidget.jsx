@@ -16,11 +16,11 @@ export default function DonationWidget() {
 
   // COMPLETEAZĂ CU DATELE TALE:
   const bankDetails = {
-    name: "Tudor Ionescu",
+    name: "Tudor IONESCU",
     iban: "RO86BREL0002005296230101",
     bank: "Libra Internet Bank",
   };
-  const email = "tudor.ionescu@sturgeons.eu";
+  const email = "email@exemplu.ro";
 
   const copyToClipboard = (text, field) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -293,17 +293,18 @@ export default function DonationWidget() {
                   Dacă v-a plăcut și considerați utilă munca noastră...
                 </p>
                 <div style={{ 
-                  fontSize: 26, 
+                  fontSize: 24, 
                   color: "#fbbf24", 
                   fontWeight: 900,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 10,
+                  gap: 8,
                   textShadow: "0 2px 10px rgba(251, 191, 36, 0.4)",
                 }}>
+                  <span style={{ fontSize: 32 }}>🦁</span>
                   <span className="coin-icon">🪙</span>
-                  <span>Dă un LEU pentru graficul meu!</span>
+                  <span>Dă un leu pentru graficul meu!</span>
                 </div>
               </div>
 

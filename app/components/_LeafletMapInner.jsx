@@ -546,12 +546,13 @@ export default function LeafletMapInner({
         })}
       </MapContainer>
 
-      {/* Indicator blocare */}
+      {/* Indicator blocare - CENTRU JOS */}
       {isLocked && (
         <div style={{
           position: "absolute",
           bottom: 10,
-          right: 10,
+          left: "50%",
+          transform: "translateX(-50%)",
           background: "rgba(2, 132, 199, 0.9)",
           color: "white",
           padding: "6px 12px",
