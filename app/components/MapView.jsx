@@ -1,8 +1,6 @@
-﻿"use client";
-
+"use client";
 import React from "react";
 import dynamic from "next/dynamic";
-
 const LeafletMapInner = dynamic(() => import("./_LeafletMapInner.jsx"), {
   ssr: false,
   loading: () => (
@@ -25,7 +23,6 @@ const LeafletMapInner = dynamic(() => import("./_LeafletMapInner.jsx"), {
     </div>
   ),
 });
-
 export default function MapView(props) {
   return <LeafletMapInner {...props} />;
 }

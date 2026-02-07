@@ -724,6 +724,7 @@ export default function Page() {
               riverStations={riverStations}
               selectedStation={selectedStation}
               onSelectStation={setSelectedStation}
+              fullscreen={true}
             />
           </div>
         )}

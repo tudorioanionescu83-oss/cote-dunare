@@ -273,6 +273,7 @@ export default function LeafletMapInner({
   riverStations = [],
   selectedStation,
   onSelectStation,
+  fullscreen = false,
 }) {
   const [isLocked, setIsLocked] = useState(false);
   
@@ -313,7 +314,7 @@ export default function LeafletMapInner({
   }, [pts, riverPts, selectedStation]);
 
   return (
-    <div style={{ width: "100%", borderRadius: 16, overflow: "hidden", position: "relative" }}>
+    <div style={{ width: "100%", borderRadius: fullscreen ? 0 : 16, overflow: "hidden", position: "relative" }}>
       {/* CSS pentru Safari/iOS touch fix */}
       <style>{`
         .leaflet-marker-icon {
@@ -338,7 +339,7 @@ export default function LeafletMapInner({
         doubleClickZoom={!isLocked}
         touchZoom={!isLocked}
         zoomControl={false}
-        style={{ height: 450, width: "100%" }}
+        style={{ height: fullscreen ? "100vh" : 450, width: "100%" }}
       >
         {/* Layer Control - Satelit / Hartă / Râuri */}
         <LayersControl position="topleft">
