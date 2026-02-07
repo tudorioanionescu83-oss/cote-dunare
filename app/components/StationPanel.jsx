@@ -686,8 +686,8 @@ export default function StationPanel({
           </div>
         </div>
 
-        {/* GRAFIC DEBIT */}
-        {(latest?.debit_mc_s || isRiverStation) && (
+        {/* GRAFIC DEBIT - pentru stații cu debit (Dunăre: Bazias, Isaccea, Calafat, Giurgiu) sau râuri */}
+        {(latest?.debit_mc_s || isRiverStation || ['Bazias', 'Isaccea', 'Calafat', 'Giurgiu'].includes(name)) && (
           <div id="debit-section" className="section-spacing">
             <DebitChart
               debit_mc_s={latest?.debit_mc_s}
