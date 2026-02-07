@@ -417,7 +417,7 @@ export default function Page() {
             flex-direction: column;
             gap: 3px;
             position: absolute;
-            bottom: 35px;
+            bottom: 85px;
             right: 8px;
             background: rgba(240, 249, 255, 0.95);
             border: 1px solid rgba(14, 165, 233, 0.2);

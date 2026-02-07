@@ -380,7 +380,7 @@ export default function StationPanel({
         }
 
         .chart-header-nivel {
-          background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+          background: linear-gradient(135deg, #0c4a6e, #0369a1, #0284c7);
         }
 
         .chart-title {

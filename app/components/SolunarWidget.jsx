@@ -433,10 +433,10 @@ export default function SolunarWidget({ lat, lng, stationName, stations = [], ri
       maxWidth: "100%",
       boxSizing: "border-box",
     }}>
-      {/* Header */}
+      {/* Header - ALBASTRU */}
       <div style={{
         padding: "14px 18px",
-        background: "linear-gradient(135deg, #1e3a5f, #0f172a)",
+        background: "linear-gradient(135deg, #0c4a6e, #0369a1, #0284c7)",
         borderBottom: "1px solid rgba(255,255,255,0.1)",
       }}>
         {/* Rând 1: Titlu și Toggle-uri perioadă */}

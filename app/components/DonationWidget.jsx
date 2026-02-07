@@ -16,11 +16,11 @@ export default function DonationWidget() {
 
   // COMPLETEAZĂ CU DATELE TALE:
   const bankDetails = {
-    name: "IONESCU TUDOR",
-    iban: "RO86BREL0002005296230101",
-    bank: "LIBRA BANK",
+    name: "NUMELE TĂU COMPLET",
+    iban: "RO49XXXXXXXXXXXXXXXX",
+    bank: "Banca Ta",
   };
-  const email = "tudor.ionescu@sturgeons.eu";
+  const email = "email@exemplu.ro";
 
   const copyToClipboard = (text, field) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -71,31 +71,25 @@ export default function DonationWidget() {
           z-index: 9998;
           display: flex;
           align-items: center;
-          gap: 8px;
-          padding: 10px 16px;
-          background: linear-gradient(135deg, #f59e0b, #d97706, #b45309);
-          background-size: 200% 200%;
+          gap: 6px;
+          padding: 8px 12px;
+          background: linear-gradient(135deg, #0369a1, #0284c7);
           border: none;
           border-radius: 50px;
           color: white;
-          font-size: 13px;
-          font-weight: 800;
+          font-size: 11px;
+          font-weight: 700;
           cursor: pointer;
-          animation: pulse-btn 2s ease-in-out infinite, float-in 0.5s ease-out;
+          box-shadow: 0 2px 10px rgba(3, 105, 161, 0.3);
+          animation: float-in 0.5s ease-out;
           transition: all 0.3s ease;
-          text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
         .donation-trigger:hover {
-          animation: none;
-          transform: scale(1.08);
-          box-shadow: 0 8px 40px rgba(245, 158, 11, 0.5);
+          transform: scale(1.05);
+          box-shadow: 0 4px 15px rgba(3, 105, 161, 0.4);
         }
         .donation-trigger-icon {
-          font-size: 20px;
-          animation: wiggle 2s ease-in-out infinite;
-        }
-        .donation-trigger:hover .donation-trigger-icon {
-          animation: wiggle 0.5s ease-in-out infinite;
+          font-size: 14px;
         }
         .donation-overlay {
           position: fixed;
@@ -209,15 +203,13 @@ export default function DonationWidget() {
         @media (max-width: 500px) {
           .donation-trigger {
             top: auto;
-            bottom: 16px;
-            right: 16px;
-            padding: 12px 14px;
-          }
-          .donation-trigger span:not(.donation-trigger-icon) {
-            display: none;
+            bottom: 70px;
+            right: 12px;
+            padding: 6px 10px;
+            font-size: 10px;
           }
           .donation-trigger-icon {
-            font-size: 24px;
+            font-size: 12px;
           }
           .donation-modal {
             margin: 10px;
@@ -227,8 +219,8 @@ export default function DonationWidget() {
 
       {/* Buton principal - colț dreapta sus */}
       <button className="donation-trigger" onClick={() => setIsOpen(true)}>
-        <span className="donation-trigger-icon">👆</span>
-        <span>Apasă!</span>
+        <span className="donation-trigger-icon">❤️</span>
+        <span>Susține</span>
       </button>
 
       {/* Modal principal */}
