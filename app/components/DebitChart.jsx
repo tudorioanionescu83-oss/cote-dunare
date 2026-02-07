@@ -93,13 +93,6 @@ export default function DebitChart({
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async (days, from, to) => {
-    if (chartData) {
-      // Folosim datele primite direct (pentru rauri)
-      setRows(chartData);
-      setLoading(false);
-      return;
-    }
-    
     setLoading(true);
     try {
       let url = `/api/measurements?station=${encodeURIComponent(stationName)}`;
@@ -116,13 +109,18 @@ export default function DebitChart({
       setRows([]);
     }
     setLoading(false);
-  }, [stationName, chartData]);
+  }, [stationName]);
 
   useEffect(() => {
-    if (chartData) {
+    // Verificăm dacă chartData are date de debit
+    const hasDebitData = chartData && chartData.some(r => r.debit_mc_s !== null && r.debit_mc_s !== undefined);
+    
+    if (hasDebitData) {
+      // Folosim datele primite direct
       setRows(chartData);
       setLoading(false);
     } else if (stationName) {
+      // Facem fetch separat pentru date de debit
       if (isCustomActive && customFrom && customTo) {
         fetchData(null, customFrom, customTo);
       } else {

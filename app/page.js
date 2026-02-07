@@ -17,10 +17,19 @@ function diffDaysUTC(fromYmd, toYmd) {
 }
 
 function scrollToSection(id) {
-  const el = document.getElementById(id);
-  if (el) {
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+  // Timeout mic pentru a aștepta renderarea completă
+  setTimeout(() => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      // Dacă nu găsește elementul, încearcă station-panel
+      const panel = document.getElementById("station-panel");
+      if (panel) {
+        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  }, 100);
 }
 
 export default function Page() {
@@ -241,12 +250,23 @@ export default function Page() {
           height: 100vh !important;
           z-index: 9999 !important;
           background: white;
+          margin: 0 !important;
+          padding: 0 !important;
+          border-radius: 0 !important;
+        }
+        .map-fullscreen > div {
+          height: 100vh !important;
+          width: 100vw !important;
+        }
+        .map-fullscreen .leaflet-container {
+          height: 100vh !important;
+          width: 100vw !important;
         }
         .map-fullscreen-btn {
           position: absolute;
           top: 10px;
           left: 50px;
-          z-index: 1001;
+          z-index: 10001;
           background: white;
           border: 2px solid rgba(0,0,0,0.2);
           border-radius: 8px;
@@ -260,6 +280,12 @@ export default function Page() {
           gap: 6px;
           box-shadow: 0 2px 6px rgba(0,0,0,0.15);
           transition: all 0.2s;
+        }
+        .map-fullscreen .map-fullscreen-btn {
+          position: fixed;
+          top: 10px;
+          left: 10px;
+          z-index: 10001;
         }
         .map-fullscreen-btn:hover {
           background: #f3f4f6;
