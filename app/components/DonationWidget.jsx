@@ -6,11 +6,11 @@ export default function DonationWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [showBankDetails, setShowBankDetails] = useState(false);
   const [copied, setCopied] = useState(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Arată butonul după 2 secunde
+  // Fix hydration - așteaptă mount-ul
   useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 2000);
+    const timer = setTimeout(() => setIsMounted(true), 2000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -28,8 +28,6 @@ export default function DonationWidget() {
       setTimeout(() => setCopied(null), 2000);
     });
   };
-
-  if (!isVisible) return null;
 
   return (
     <>
@@ -228,13 +226,15 @@ export default function DonationWidget() {
       `}</style>
 
       {/* Buton principal - mână cu text DONEAZĂ dedesubt */}
-      <button className="donation-trigger" onClick={() => setIsOpen(true)}>
-        <span className="donation-trigger-icon">👆</span>
-        <span className="donation-trigger-text">DONEAZĂ</span>
-      </button>
+      {isMounted && (
+        <button className="donation-trigger" onClick={() => setIsOpen(true)}>
+          <span className="donation-trigger-icon">👆</span>
+          <span className="donation-trigger-text">DONEAZĂ</span>
+        </button>
+      )}
 
       {/* Modal principal */}
-      {isOpen && !showBankDetails && (
+      {isMounted && isOpen && !showBankDetails && (
         <div className="donation-overlay" onClick={() => setIsOpen(false)}>
           <div className="donation-modal" onClick={(e) => e.stopPropagation()}>
             <div className="donation-header">
@@ -345,7 +345,7 @@ export default function DonationWidget() {
       )}
 
       {/* Modal detalii bancare */}
-      {isOpen && showBankDetails && (
+      {isMounted && isOpen && showBankDetails && (
         <div className="donation-overlay" onClick={() => { setIsOpen(false); setShowBankDetails(false); }}>
           <div className="donation-modal" onClick={(e) => e.stopPropagation()}>
             <div className="donation-header" style={{ padding: "20px 24px" }}>
