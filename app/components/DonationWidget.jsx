@@ -73,27 +73,32 @@ export default function DonationWidget() {
           flex-direction: column;
           align-items: center;
           gap: 2px;
-          padding: 8px 12px 6px;
-          background: linear-gradient(135deg, #0369a1, #0284c7);
+          padding: 10px 14px 8px;
+          background: linear-gradient(135deg, #f59e0b, #d97706);
           border: none;
-          border-radius: 12px;
+          border-radius: 14px;
           color: white;
           cursor: pointer;
-          box-shadow: 0 2px 10px rgba(3, 105, 161, 0.3);
-          animation: float-in 0.5s ease-out;
+          box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+          animation: pulse-btn 2s ease-in-out infinite, float-in 0.5s ease-out;
           transition: all 0.3s ease;
         }
         .donation-trigger:hover {
-          transform: scale(1.05);
-          box-shadow: 0 4px 15px rgba(3, 105, 161, 0.4);
+          animation: none;
+          transform: scale(1.1);
+          box-shadow: 0 6px 30px rgba(245, 158, 11, 0.6);
         }
         .donation-trigger-icon {
-          font-size: 18px;
+          font-size: 22px;
+          animation: wiggle 2s ease-in-out infinite;
+        }
+        .donation-trigger:hover .donation-trigger-icon {
+          animation: wiggle 0.4s ease-in-out infinite;
         }
         .donation-trigger-text {
-          font-size: 9px;
-          font-weight: 600;
-          opacity: 0.9;
+          font-size: 8px;
+          font-weight: 800;
+          letter-spacing: 0.5px;
         }
         .donation-overlay {
           position: fixed;
@@ -208,13 +213,13 @@ export default function DonationWidget() {
           .donation-trigger {
             top: 12px;
             right: 12px;
-            padding: 6px 10px 4px;
+            padding: 8px 10px 6px;
           }
           .donation-trigger-icon {
-            font-size: 16px;
+            font-size: 18px;
           }
           .donation-trigger-text {
-            font-size: 8px;
+            font-size: 7px;
           }
           .donation-modal {
             margin: 10px;
@@ -222,10 +227,10 @@ export default function DonationWidget() {
         }
       `}</style>
 
-      {/* Buton principal - mână cu text mic dedesubt */}
+      {/* Buton principal - mână cu text DONEAZĂ dedesubt */}
       <button className="donation-trigger" onClick={() => setIsOpen(true)}>
         <span className="donation-trigger-icon">👆</span>
-        <span className="donation-trigger-text">Susține</span>
+        <span className="donation-trigger-text">DONEAZĂ</span>
       </button>
 
       {/* Modal principal */}

@@ -66,10 +66,14 @@ export default function Page() {
         const res = await fetch("/api/stations", { cache: "no-store" });
         const j = await res.json();
         const list = j?.stations || [];
-        if (!cancelled) {
+        if (!cancelled && list.length) {
           setStations(list);
-          if (list.length && !list.some((s) => s.name === selectedStation)) {
-            setSelectedStation(list[0].name);
+          // Caută Galați (cu sau fără diacritice) și setează-l
+          const galatiStation = list.find(s => 
+            s.name.toLowerCase().includes("gala")
+          );
+          if (galatiStation) {
+            setSelectedStation(galatiStation.name);
           }
         }
       } catch (e) {}
