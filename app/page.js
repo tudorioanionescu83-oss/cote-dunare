@@ -647,12 +647,6 @@ export default function Page() {
             </svg>
             <span>Fără date</span>
           </div>
-          <div className="legend-item" style={{ marginTop: 4, paddingTop: 4, borderTop: "1px solid #e5e7eb" }}>
-            <svg width="14" height="14" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="7" fill="#0284c7" stroke="#0369a1" strokeWidth="2"/>
-            </svg>
-            <span style={{ color: "#0284c7" }}>Râuri interioare</span>
-          </div>
         </div>
       </aside>
 
@@ -683,12 +677,6 @@ export default function Page() {
                 <rect x="6" y="6" width="12" height="12" fill="#374151" stroke="#111827" strokeWidth="2" transform="rotate(45 12 12)"/>
               </svg>
               <span>Stabil</span>
-            </div>
-            <div className="legend-mob-item">
-              <svg width="10" height="10" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="7" fill="#0284c7" stroke="#0369a1" strokeWidth="2"/>
-              </svg>
-              <span>Râuri</span>
             </div>
           </div>
         </div>

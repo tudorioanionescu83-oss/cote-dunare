@@ -290,7 +290,7 @@ export default function DonationWidget() {
                   fontWeight: 600,
                   margin: "0 0 8px 0",
                 }}>
-                  Dacă v-a plăcut și considerați utilă munca noastră...
+                  Dacă v-a plăcut și considerați utilă munca noastră
                 </p>
                 <div style={{ 
                   fontSize: 24, 
@@ -304,7 +304,7 @@ export default function DonationWidget() {
                 }}>
                   <span style={{ fontSize: 32 }}>🦁</span>
                   <span className="coin-icon">🪙</span>
-                  <span>Dă un leu pentru graficul meu!</span>
+                  <span>Dați un leu pentru graficul meu!</span>
                 </div>
               </div>
 
