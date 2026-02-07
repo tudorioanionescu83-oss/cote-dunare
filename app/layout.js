@@ -2,22 +2,22 @@ import "./globals.css";
 import "leaflet/dist/leaflet.css";
 
 export const metadata = {
-  title: "Cotele Dunării",
-  description: "Platformă Interactivă - Date în timp real",
+  title: "Platformă Hidrologică Interactivă",
+  description: "Monitorizare în timp real: hartă interactivă, nivel, debit, temperatură apă, prognoză meteo, calendar solunar, activitate pești",
 
   metadataBase: new URL("https://cote.sturgeons.eu"),
 
   openGraph: {
-    title: "COTELE DUNĂRII",
-    description: "Informații hidrologice pe Dunăre: stații, hartă, grafice și variații.",
+    title: "PLATFORMĂ HIDROLOGICĂ INTERACTIVĂ",
+    description: "Monitorizare în timp real: hartă GIS, niveluri, debite, temperatură apă, prognoză meteo, calendar solunar și activitate pești pe Dunăre și râurile interioare.",
     url: "https://cote.sturgeons.eu",
-    siteName: "Cotele Dunării",
+    siteName: "Platformă Hidrologică Interactivă",
     images: [
       {
         url: "/og-dunare.jpg",
         width: 1200,
         height: 630,
-        alt: "Cotele Dunării – informații hidrologice",
+        alt: "Platformă Hidrologică Interactivă – Dunăre și râuri",
       },
     ],
     locale: "ro_RO",
@@ -26,8 +26,8 @@ export const metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "COTELE DUNĂRII",
-    description: "Informații hidrologice pe Dunăre: stații, hartă, grafice și variații.",
+    title: "PLATFORMĂ HIDROLOGICĂ INTERACTIVĂ",
+    description: "Monitorizare în timp real: hartă GIS, niveluri, debite, temperatură apă, prognoză meteo, calendar solunar și activitate pești.",
     images: ["/og-dunare.jpg"],
   },
 };
