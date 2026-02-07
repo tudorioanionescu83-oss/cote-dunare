@@ -324,6 +324,7 @@ export default function DebitChart({
               />
               <YAxis
                 yAxisId="debit"
+                domain={['auto', 'auto']}
                 tick={{ fontSize: 14, fill: "#374151", fontWeight: 500 }}
                 tickLine={false}
                 axisLine={false}
@@ -340,6 +341,7 @@ export default function DebitChart({
                 <YAxis
                   yAxisId="temp"
                   orientation="right"
+                  domain={['auto', 'auto']}
                   tick={{ fontSize: 14, fill: "#374151", fontWeight: 500 }}
                   tickLine={false}
                   axisLine={false}
