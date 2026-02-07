@@ -122,10 +122,12 @@ function MapControls({ defaultCenter, defaultZoom, onLockToggle, isLocked }) {
       map.dragging.enable();
       map.scrollWheelZoom.enable();
       map.doubleClickZoom.enable();
+      if (map.touchZoom) map.touchZoom.enable();
     } else {
       map.dragging.disable();
       map.scrollWheelZoom.disable();
       map.doubleClickZoom.disable();
+      if (map.touchZoom) map.touchZoom.disable();
     }
     onLockToggle(!isLocked);
   };
@@ -334,6 +336,7 @@ export default function LeafletMapInner({
         scrollWheelZoom={!isLocked}
         dragging={!isLocked}
         doubleClickZoom={!isLocked}
+        touchZoom={!isLocked}
         zoomControl={false}
         style={{ height: 450, width: "100%" }}
       >

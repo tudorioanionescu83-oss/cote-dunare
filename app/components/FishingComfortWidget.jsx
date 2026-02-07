@@ -294,15 +294,15 @@ export default function FishingComfortWidget({ waterTemp, weather, solunarRating
       maxWidth: "100%",
       boxSizing: "border-box",
     }}>
-      {/* Header */}
+      {/* Header - ALBASTRU */}
       <div style={{
         padding: "16px 20px",
-        background: comfort.gradient,
+        background: "linear-gradient(135deg, #0c4a6e, #0369a1, #0284c7)",
         borderBottom: "1px solid rgba(255,255,255,0.1)",
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 32 }}>{comfort.emoji}</span>
+            <span style={{ fontSize: 32 }}>🎯</span>
             <div>
               <div style={{ fontSize: 20, fontWeight: 900, color: "white" }}>Confort Pescuit</div>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)" }}>{comfort.message}</div>
@@ -310,7 +310,7 @@ export default function FishingComfortWidget({ waterTemp, weather, solunarRating
           </div>
           <div style={{
             padding: "8px 16px",
-            background: "rgba(255,255,255,0.2)",
+            background: comfort.color,
             borderRadius: 20,
             fontSize: 14,
             fontWeight: 800,

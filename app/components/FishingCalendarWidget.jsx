@@ -347,10 +347,10 @@ export default function FishingCalendarWidget() {
       maxWidth: "100%",
       boxSizing: "border-box",
     }}>
-      {/* Header */}
+      {/* Header - ALBASTRU */}
       <div style={{
         padding: "16px 20px",
-        background: "linear-gradient(135deg, #7c3aed, #6366f1)",
+        background: "linear-gradient(135deg, #0c4a6e, #0369a1, #0284c7)",
         borderBottom: "1px solid rgba(255,255,255,0.1)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

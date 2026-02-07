@@ -74,65 +74,71 @@ const FISH_SPECIES = [
 
 // ===== CALCUL ACTIVITATE =====
 function calculateFishActivity(fish, { waterTemp, pressure, moonPhase, hour, solunarMajor, solunarMinor }) {
-  let score = 50; // Baza
-  let validFactors = 0;
-  let totalFactors = 0;
+  let score = 30; // Baza mai mică
   
-  // Temperatura apei (max 25 puncte)
-  totalFactors++;
+  // Temperatura apei (max 35 puncte) - CEL MAI IMPORTANT FACTOR
   if (waterTemp !== null && waterTemp !== undefined && !isNaN(waterTemp)) {
-    validFactors++;
-    const tempMid = (fish.tempOptim.min + fish.tempOptim.max) / 2;
-    const tempRange = fish.tempOptim.max - fish.tempOptim.min;
-    const tempDiff = Math.abs(waterTemp - tempMid);
-    const tempScore = Math.max(0, 25 - (tempDiff / tempRange) * 25);
-    score += tempScore;
+    const tempMin = fish.tempOptim.min;
+    const tempMax = fish.tempOptim.max;
+    
+    if (waterTemp >= tempMin && waterTemp <= tempMax) {
+      // În intervalul optim - scor maxim
+      score += 35;
+    } else if (waterTemp >= tempMin - 5 && waterTemp <= tempMax + 5) {
+      // Aproape de interval - scor parțial
+      const distance = waterTemp < tempMin ? tempMin - waterTemp : waterTemp - tempMax;
+      score += Math.max(0, 25 - distance * 5);
+    } else {
+      // Prea departe de interval - scor foarte mic
+      const distance = waterTemp < tempMin ? tempMin - waterTemp : waterTemp - tempMax;
+      score += Math.max(0, 10 - distance * 2);
+    }
+  } else {
+    score += 15; // Default dacă nu avem temp
   }
   
   // Presiune atmosferică (max 15 puncte)
-  totalFactors++;
   if (pressure !== null && pressure !== undefined && !isNaN(pressure)) {
-    validFactors++;
     const presMid = (fish.presiuneOptim.min + fish.presiuneOptim.max) / 2;
     const presRange = fish.presiuneOptim.max - fish.presiuneOptim.min;
     const presDiff = Math.abs(pressure - presMid);
-    const presScore = Math.max(0, 15 - (presDiff / presRange) * 15);
-    score += presScore;
-    
-    // Bonus pentru presiune stabilă sau în creștere
-    if (pressure >= 1013 && pressure <= 1020) score += 5;
+    score += Math.max(0, 15 - (presDiff / presRange) * 15);
+  } else {
+    score += 7;
   }
   
-  // Faza lunii (max 10 puncte) - mereu disponibilă
-  totalFactors++;
-  validFactors++;
+  // Faza lunii (max 10 puncte)
   if (moonPhase !== null && moonPhase !== undefined) {
     const isFullOrNew = moonPhase < 2 || (moonPhase > 13 && moonPhase < 16);
     if (fish.preferaLuna && isFullOrNew) score += 10;
-    else if (!fish.preferaLuna && !isFullOrNew) score += 5;
-    else score += 3;
+    else if (!fish.preferaLuna && !isFullOrNew) score += 8;
+    else score += 4;
   } else {
-    score += 5; // Default dacă nu avem faza lunii
+    score += 5;
   }
   
-  // Ora din zi (max 15 puncte) - mereu disponibilă
-  totalFactors++;
-  validFactors++;
-  if (hour !== null && hour !== undefined && fish.activeHours.includes(hour)) {
-    score += 15;
+  // Ora din zi (max 20 puncte)
+  if (hour !== null && hour !== undefined) {
+    if (fish.activeHours.includes(hour)) {
+      score += 20;
+    } else {
+      // Verifică dacă e aproape de orele active
+      const closest = fish.activeHours.reduce((a, b) => 
+        Math.abs(b - hour) < Math.abs(a - hour) ? b : a
+      );
+      const diff = Math.abs(closest - hour);
+      score += Math.max(0, 10 - diff * 2);
+    }
+  } else {
+    score += 10;
   }
   
   // Solunar (max 10 puncte)
-  totalFactors++;
-  validFactors++;
   if (solunarMajor) score += 10;
-  else if (solunarMinor) score += 5;
+  else if (solunarMinor) score += 6;
   else score += 2;
   
-  // Normalizăm scorul dacă nu avem toate datele
-  const finalScore = Math.min(100, Math.max(0, Math.round(score)));
-  
-  return finalScore;
+  return Math.min(100, Math.max(0, Math.round(score)));
 }
 
 function getActivityLevel(score) {
@@ -365,17 +371,17 @@ export default function FishActivityWidget({ waterTemp, pressure, moonPhase, sol
       maxWidth: "100%",
       boxSizing: "border-box",
     }}>
-      {/* Header */}
+      {/* Header - ALBASTRU */}
       <div style={{
         padding: "16px 20px",
-        background: "linear-gradient(135deg, #065f46, #0f172a)",
+        background: "linear-gradient(135deg, #0c4a6e, #0369a1, #0284c7)",
         borderBottom: "1px solid rgba(255,255,255,0.1)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ fontSize: 28 }}>🐟</span>
           <div>
             <div style={{ fontSize: 18, fontWeight: 900, color: "white" }}>Activitate Pești</div>
-            <div style={{ fontSize: 11, color: "#64748b" }}>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>
               Bazat pe temperatură, presiune și solunar • {currentHour}:00
             </div>
           </div>
