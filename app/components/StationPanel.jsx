@@ -694,7 +694,7 @@ export default function StationPanel({
               debit_trend={latest?.debit_trend}
               stationName={name}
               showTemperature={isRiverStation}
-              chartData={rows}
+              chartData={isRiverStation ? rows : null}
             />
           </div>
         )}

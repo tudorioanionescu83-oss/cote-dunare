@@ -13,10 +13,10 @@ import {
 } from "recharts";
 
 const PERIODS = [
-  { days: 1, label: "1 zi" },
-  { days: 3, label: "3 zile" },
   { days: 7, label: "7 zile" },
-  { days: 30, label: "1 luna" },
+  { days: 30, label: "30 zile" },
+  { days: 90, label: "3 luni" },
+  { days: 365, label: "1 an" },
 ];
 
 const DEBIT_COLOR = "#0284c7";
@@ -84,7 +84,7 @@ export default function DebitChart({
   showTemperature = false,
   chartData = null 
 }) {
-  const [period, setPeriod] = useState(7);
+  const [period, setPeriod] = useState(30);
   const [customOpen, setCustomOpen] = useState(false);
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
@@ -93,6 +93,14 @@ export default function DebitChart({
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async (days, from, to) => {
+    if (chartData && chartData.length > 0) {
+      // Folosim datele primite direct (pentru rauri)
+      console.log("DebitChart: using chartData", chartData.length, "rows");
+      setRows(chartData);
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     try {
       let url = `/api/measurements?station=${encodeURIComponent(stationName)}`;
@@ -101,26 +109,23 @@ export default function DebitChart({
       } else {
         url += `&days=${days}`;
       }
+      console.log("DebitChart: fetching", url);
       const res = await fetch(url);
       const json = await res.json();
+      console.log("DebitChart: got", json.rows?.length || 0, "rows, first:", json.rows?.[0]);
       setRows(json.rows || []);
     } catch (e) {
       console.error("DebitChart fetch error:", e);
       setRows([]);
     }
     setLoading(false);
-  }, [stationName]);
+  }, [stationName, chartData]);
 
   useEffect(() => {
-    // Verificăm dacă chartData are date de debit
-    const hasDebitData = chartData && chartData.some(r => r.debit_mc_s !== null && r.debit_mc_s !== undefined);
-    
-    if (hasDebitData) {
-      // Folosim datele primite direct
+    if (chartData) {
       setRows(chartData);
       setLoading(false);
     } else if (stationName) {
-      // Facem fetch separat pentru date de debit
       if (isCustomActive && customFrom && customTo) {
         fetchData(null, customFrom, customTo);
       } else {
@@ -158,7 +163,7 @@ export default function DebitChart({
     return null;
   }
 
-  const dataSource = showTemperature ? "DanubeHIS" : "DanubeHIS";
+  const dataSource = showTemperature ? "DanubeHIS" : "AFDJ";
 
   return (
     <div id="debit-section" style={{

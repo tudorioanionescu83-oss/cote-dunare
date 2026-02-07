@@ -17,17 +17,10 @@ function diffDaysUTC(fromYmd, toYmd) {
 }
 
 function scrollToSection(id) {
-  // Timeout mic pentru a aștepta renderarea completă
   setTimeout(() => {
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else {
-      // Dacă nu găsește elementul, încearcă station-panel
-      const panel = document.getElementById("station-panel");
-      if (panel) {
-        panel.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
     }
   }, 100);
 }
@@ -238,58 +231,60 @@ export default function Page() {
         .mobile-search { display: none; }
         .map-container-mobile { position: relative; }
         .legend-overlay-mobile { display: none; }
-        
+
         /* FULLSCREEN MAP */
-        .map-fullscreen {
-          position: fixed !important;
-          top: 0 !important;
-          left: 0 !important;
-          right: 0 !important;
-          bottom: 0 !important;
-          width: 100vw !important;
-          height: 100vh !important;
-          z-index: 9999 !important;
+        .map-fullscreen-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          width: 100vw;
+          height: 100vh;
+          z-index: 99999;
           background: white;
-          margin: 0 !important;
-          padding: 0 !important;
-          border-radius: 0 !important;
         }
-        .map-fullscreen > div {
-          height: 100vh !important;
+        .map-fullscreen-overlay .leaflet-container {
           width: 100vw !important;
-        }
-        .map-fullscreen .leaflet-container {
           height: 100vh !important;
-          width: 100vw !important;
         }
         .map-fullscreen-btn {
           position: absolute;
-          top: 10px;
-          left: 50px;
-          z-index: 10001;
+          top: 80px;
+          left: 10px;
+          z-index: 1001;
           background: white;
           border: 2px solid rgba(0,0,0,0.2);
-          border-radius: 8px;
-          padding: 8px 12px;
+          border-radius: 6px;
+          width: 34px;
+          height: 34px;
           cursor: pointer;
-          font-size: 14px;
-          font-weight: 700;
-          color: #374151;
           display: flex;
           align-items: center;
-          gap: 6px;
+          justify-content: center;
+          font-size: 18px;
           box-shadow: 0 2px 6px rgba(0,0,0,0.15);
           transition: all 0.2s;
         }
-        .map-fullscreen .map-fullscreen-btn {
-          position: fixed;
-          top: 10px;
-          left: 10px;
-          z-index: 10001;
-        }
         .map-fullscreen-btn:hover {
           background: #f3f4f6;
-          transform: scale(1.05);
+        }
+        .map-fullscreen-close {
+          position: fixed;
+          top: 10px;
+          right: 10px;
+          z-index: 100000;
+          background: white;
+          border: 2px solid rgba(0,0,0,0.3);
+          border-radius: 8px;
+          padding: 10px 20px;
+          cursor: pointer;
+          font-size: 16px;
+          font-weight: 700;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .map-fullscreen-close:hover {
+          background: #fee2e2;
         }
 
         /* TITLU CASETA CU EFECTE */
@@ -714,13 +709,32 @@ export default function Page() {
       </aside>
 
       <main className="page-main">
-        <div id="map-section" className={`map-container-mobile ${mapFullscreen ? 'map-fullscreen' : ''}`}>
+        {/* FULLSCREEN MAP OVERLAY */}
+        {mapFullscreen && (
+          <div className="map-fullscreen-overlay">
+            <button 
+              className="map-fullscreen-close"
+              onClick={() => setMapFullscreen(false)}
+            >
+              ✕ Închide
+            </button>
+            <MapView
+              stations={stations}
+              latestByName={latestByName}
+              riverStations={riverStations}
+              selectedStation={selectedStation}
+              onSelectStation={setSelectedStation}
+            />
+          </div>
+        )}
+
+        <div id="map-section" className="map-container-mobile">
           <button 
             className="map-fullscreen-btn"
-            onClick={() => setMapFullscreen(!mapFullscreen)}
-            title={mapFullscreen ? "Ieși din fullscreen" : "Hartă fullscreen"}
+            onClick={() => setMapFullscreen(true)}
+            title="Hartă fullscreen"
           >
-            {mapFullscreen ? "✕ Închide" : "⛶ Fullscreen"}
+            ⛶
           </button>
           <MapView
             stations={stations}
