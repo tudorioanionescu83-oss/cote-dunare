@@ -16,11 +16,11 @@ export default function DonationWidget() {
 
   // COMPLETEAZĂ CU DATELE TALE:
   const bankDetails = {
-    name: "NUMELE TĂU COMPLET",
-    iban: "RO49XXXXXXXXXXXXXXXX",
-    bank: "Banca Ta",
+    name: "Tudor Ionescu",
+    iban: "RO86BREL0002005296230101",
+    bank: "Libra Internet Bank",
   };
-  const email = "email@exemplu.ro";
+  const email = "tudor.ionescu@sturgeons.eu";
 
   const copyToClipboard = (text, field) => {
     navigator.clipboard.writeText(text).then(() => {
