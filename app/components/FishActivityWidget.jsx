@@ -362,6 +362,8 @@ export default function FishActivityWidget({ waterTemp, pressure, moonPhase, sol
       borderRadius: 20,
       overflow: "hidden",
       border: "1px solid rgba(255,255,255,0.1)",
+      maxWidth: "100%",
+      boxSizing: "border-box",
     }}>
       {/* Header */}
       <div style={{

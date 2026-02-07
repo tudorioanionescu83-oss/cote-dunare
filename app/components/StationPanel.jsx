@@ -427,6 +427,8 @@ export default function StationPanel({
 
         .section-spacing {
           padding: 0 16px 16px 16px;
+          overflow: hidden;
+          max-width: 100%;
         }
 
         .img-lightbox {
@@ -503,6 +505,8 @@ export default function StationPanel({
 
           .section-spacing {
             padding: 0 12px 12px 12px;
+            overflow: hidden;
+            max-width: 100%;
           }
 
           .station-name {

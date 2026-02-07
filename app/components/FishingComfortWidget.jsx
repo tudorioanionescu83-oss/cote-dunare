@@ -291,6 +291,8 @@ export default function FishingComfortWidget({ waterTemp, weather, solunarRating
       borderRadius: 20,
       overflow: "hidden",
       border: "1px solid rgba(255,255,255,0.1)",
+      maxWidth: "100%",
+      boxSizing: "border-box",
     }}>
       {/* Header */}
       <div style={{

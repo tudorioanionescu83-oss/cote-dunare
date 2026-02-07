@@ -430,6 +430,8 @@ export default function SolunarWidget({ lat, lng, stationName, stations = [], ri
       borderRadius: 20,
       overflow: "hidden",
       border: "1px solid rgba(255,255,255,0.1)",
+      maxWidth: "100%",
+      boxSizing: "border-box",
     }}>
       {/* Header */}
       <div style={{
@@ -542,7 +544,7 @@ export default function SolunarWidget({ lat, lng, stationName, stations = [], ri
       )}
       
       {/* Grid zile - responsive */}
-      <div style={{ padding: "0 18px 18px" }}>
+      <div style={{ padding: "0 18px 18px", overflow: "hidden" }}>
         <div style={{ fontSize: 11, color: "#64748b", fontWeight: 700, marginBottom: 10, textTransform: "uppercase" }}>
           Următoarele {period} zile
         </div>
@@ -550,8 +552,9 @@ export default function SolunarWidget({ lat, lng, stationName, stations = [], ri
           display: "grid",
           gridTemplateColumns: period <= 7 
             ? `repeat(${period}, 1fr)` 
-            : "repeat(auto-fill, minmax(60px, 1fr))",
+            : "repeat(auto-fill, minmax(55px, 1fr))",
           gap: 6,
+          maxWidth: "100%",
         }}>
           {solunarData.map((s, i) => (
             <DayCard

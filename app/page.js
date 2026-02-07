@@ -169,6 +169,15 @@ export default function Page() {
       <DonationWidget />
       
       <style jsx global>{`
+        /* PREVINE OVERFLOW ORIZONTAL */
+        html, body {
+          overflow-x: hidden;
+          max-width: 100vw;
+        }
+        * {
+          box-sizing: border-box;
+        }
+        
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-5px); }
