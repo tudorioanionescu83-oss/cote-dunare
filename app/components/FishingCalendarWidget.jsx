@@ -340,12 +340,13 @@ export default function FishingCalendarWidget() {
   
   return (
     <div style={{
-      background: "linear-gradient(180deg, #0f172a, #1e293b)",
+      background: "linear-gradient(180deg, #0c4a6e 0%, #0a3d5c 50%, #082f49 100%)",
       borderRadius: 20,
       overflow: "hidden",
-      border: "1px solid rgba(255,255,255,0.1)",
+      border: "1px solid rgba(14, 165, 233, 0.2)",
       maxWidth: "100%",
       boxSizing: "border-box",
+      boxShadow: "0 4px 20px rgba(8, 47, 73, 0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
     }}>
       {/* Header - ALBASTRU */}
       <div style={{

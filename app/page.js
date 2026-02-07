@@ -25,7 +25,7 @@ function scrollToSection(id) {
 
 export default function Page() {
   const [stations, setStations] = useState([]);
-  const [selectedStation, setSelectedStation] = useState("Tulcea");
+  const [selectedStation, setSelectedStation] = useState("Galați");
 
   const [latestByName, setLatestByName] = useState({});
   const [riverStations, setRiverStations] = useState([]);
@@ -206,6 +206,19 @@ export default function Page() {
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }
         }
+        @keyframes text-glow {
+          0%, 100% { 
+            text-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(14, 165, 233, 0.5), 0 2px 10px rgba(0,0,0,0.3);
+          }
+          50% { 
+            text-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(14, 165, 233, 0.8), 0 2px 10px rgba(0,0,0,0.3);
+          }
+        }
+        @keyframes water-flow {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
 
         .mobile-header { display: none; }
         .mobile-search { display: none; }
@@ -214,15 +227,16 @@ export default function Page() {
 
         /* TITLU CASETA CU EFECTE */
         .hero-title-box {
-          background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 30%, #0284c7 70%, #0ea5e9 100%);
-          background-size: 200% 200%;
-          animation: gradient-shift 6s ease infinite, pulse-glow 3s ease-in-out infinite;
+          background: linear-gradient(135deg, #082f49 0%, #0c4a6e 25%, #0369a1 50%, #0284c7 75%, #0c4a6e 100%);
+          background-size: 300% 300%;
+          animation: water-flow 8s ease infinite, pulse-glow 3s ease-in-out infinite;
           border-radius: 16px;
           padding: 16px 20px;
           margin-bottom: 16px;
           text-align: center;
           position: relative;
           overflow: hidden;
+          border: 1px solid rgba(14, 165, 233, 0.3);
         }
         .hero-title-box::before {
           content: '';
@@ -231,8 +245,18 @@ export default function Page() {
           left: -100%;
           width: 200%;
           height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-          animation: shimmer 3s infinite;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+          animation: shimmer 4s infinite;
+        }
+        .hero-title-box::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.8), transparent);
+          animation: shimmer 2s infinite;
         }
         .hero-title-icon {
           font-size: 28px;
@@ -244,7 +268,7 @@ export default function Page() {
           font-size: 15px;
           font-weight: 900;
           color: white;
-          text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+          animation: text-glow 3s ease-in-out infinite;
           letter-spacing: 1.5px;
           text-transform: uppercase;
           position: relative;
@@ -335,21 +359,46 @@ export default function Page() {
           
           .mobile-header {
             display: block;
-            background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0ea5e9 100%);
-            background-size: 200% 200%;
-            animation: gradient-shift 6s ease infinite;
+            background: linear-gradient(135deg, #082f49 0%, #0c4a6e 25%, #0369a1 50%, #0284c7 75%, #0c4a6e 100%);
+            background-size: 300% 300%;
+            animation: water-flow 8s ease infinite, pulse-glow 3s ease-in-out infinite;
             border-radius: 16px;
             padding: 16px;
             margin-bottom: 12px;
             text-align: center;
             width: 100%;
             box-sizing: border-box;
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            position: relative;
+            overflow: hidden;
+          }
+          .mobile-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 4s infinite;
+          }
+          .mobile-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.8), transparent);
+            animation: shimmer 2s infinite;
           }
           .mobile-header-icon {
             font-size: 28px;
             animation: wave 3s ease-in-out infinite;
             display: block;
             margin-bottom: 6px;
+            position: relative;
+            z-index: 1;
           }
           .mobile-header-text h1 {
             font-size: 14px;
@@ -358,20 +407,27 @@ export default function Page() {
             margin: 0;
             text-transform: uppercase;
             letter-spacing: 1px;
+            animation: text-glow 3s ease-in-out infinite;
+            position: relative;
+            z-index: 1;
           }
           .mobile-header-text p {
             font-size: 10px;
             color: rgba(255,255,255,0.85);
             margin: 4px 0 0 0;
+            position: relative;
+            z-index: 1;
           }
           
-          /* BUTOANE MOBIL - 2 randuri de 3, fix */
+          /* BUTOANE MOBIL - 3 randuri de 3, fix */
           .mobile-features {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
             margin-top: 12px;
             width: 100%;
+            position: relative;
+            z-index: 1;
           }
           .mobile-feature {
             display: flex;
@@ -388,6 +444,11 @@ export default function Page() {
             cursor: pointer;
             white-space: nowrap;
             min-width: 0;
+            transition: all 0.2s ease;
+          }
+          .mobile-feature:active {
+            background: rgba(255,255,255,0.25);
+            transform: scale(0.98);
           }
           .mobile-feature-icon { font-size: 14px; flex-shrink: 0; }
           
@@ -417,7 +478,7 @@ export default function Page() {
             flex-direction: column;
             gap: 3px;
             position: absolute;
-            bottom: 85px;
+            bottom: 100px;
             right: 8px;
             background: rgba(240, 249, 255, 0.95);
             border: 1px solid rgba(14, 165, 233, 0.2);

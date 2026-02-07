@@ -792,28 +792,28 @@ function TulceaFlowWidget({ latestData }) {
 
   return (
     <div style={{
-      background: "rgba(255, 255, 255, 0.95)",
+      background: "linear-gradient(180deg, #0c4a6e 0%, #0a3d5c 50%, #082f49 100%)",
       borderRadius: 16,
-      border: "1px solid rgba(0, 0, 0, 0.08)",
+      border: "1px solid rgba(14, 165, 233, 0.2)",
       overflow: "hidden",
-      boxShadow: "0 8px 24px rgba(0, 0, 0, 0.1)",
+      boxShadow: "0 4px 20px rgba(8, 47, 73, 0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
     }}>
       <div style={{
-        background: `linear-gradient(135deg, ${flowInfo.color}22, ${flowInfo.color}44)`,
+        background: "linear-gradient(135deg, #0c4a6e, #0369a1, #0284c7)",
         padding: "15px 16px",
-        borderBottom: `2px solid ${flowInfo.color}`,
+        borderBottom: "1px solid rgba(14, 165, 233, 0.3)",
       }}>
-        <div style={{ fontSize: 16, fontWeight: 900, color: "#111827" }}>🌊 Debit Dunăre - Tulcea</div>
+        <div style={{ fontSize: 16, fontWeight: 900, color: "white" }}>🌊 Debit Dunăre - Tulcea</div>
       </div>
       <div style={{ padding: "15px 16px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
           <div>
-            <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 700, marginBottom: 4 }}>Nivel</div>
-            <div style={{ fontSize: 22, fontWeight: 950, color: "#111827" }}>{flowInfo.nivel_cm} cm</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", fontWeight: 700, marginBottom: 4 }}>Nivel</div>
+            <div style={{ fontSize: 22, fontWeight: 950, color: "white" }}>{flowInfo.nivel_cm} cm</div>
           </div>
           <div>
-            <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 700, marginBottom: 4 }}>Debit</div>
-            <div style={{ fontSize: 20, fontWeight: 950, color: "#111827" }}>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", fontWeight: 700, marginBottom: 4 }}>Debit</div>
+            <div style={{ fontSize: 20, fontWeight: 950, color: "white" }}>
               {flowInfo.debit_m3s?.toLocaleString()} <span style={{ fontSize: 14 }}>m³/s</span>
             </div>
           </div>
@@ -822,7 +822,7 @@ function TulceaFlowWidget({ latestData }) {
           display: "inline-block",
           padding: "6px 14px",
           borderRadius: 999,
-          background: `${flowInfo.color}22`,
+          background: `${flowInfo.color}33`,
           border: `2px solid ${flowInfo.color}`,
           fontSize: 14,
           fontWeight: 900,
@@ -830,7 +830,7 @@ function TulceaFlowWidget({ latestData }) {
         }}>
           {flowInfo.emoji} {flowInfo.label}
         </div>
-        <div style={{ marginTop: 14, height: 8, background: "#f3f4f6", borderRadius: 4, overflow: "hidden" }}>
+        <div style={{ marginTop: 14, height: 8, background: "rgba(255,255,255,0.1)", borderRadius: 4, overflow: "hidden" }}>
           <div style={{
             height: "100%",
             width: `${barHeight}%`,
@@ -838,9 +838,9 @@ function TulceaFlowWidget({ latestData }) {
             transition: "width 0.5s ease",
           }} />
         </div>
-        <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 12, lineHeight: 1.4 }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 12, lineHeight: 1.4 }}>
           Debit estimat pe baza corelației nivel-debit. Date oficiale:{" "}
-          <a href="https://www.hidro.ro/" target="_blank" rel="noreferrer" style={{ color: "#3b82f6", textDecoration: "none", fontWeight: 700 }}>
+          <a href="https://www.hidro.ro/" target="_blank" rel="noreferrer" style={{ color: "#38bdf8", textDecoration: "none", fontWeight: 700 }}>
             INHGA
           </a>
         </div>

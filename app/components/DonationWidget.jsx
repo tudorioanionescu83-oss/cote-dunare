@@ -70,15 +70,14 @@ export default function DonationWidget() {
           right: 16px;
           z-index: 9998;
           display: flex;
+          flex-direction: column;
           align-items: center;
-          gap: 6px;
-          padding: 8px 12px;
+          gap: 2px;
+          padding: 8px 12px 6px;
           background: linear-gradient(135deg, #0369a1, #0284c7);
           border: none;
-          border-radius: 50px;
+          border-radius: 12px;
           color: white;
-          font-size: 11px;
-          font-weight: 700;
           cursor: pointer;
           box-shadow: 0 2px 10px rgba(3, 105, 161, 0.3);
           animation: float-in 0.5s ease-out;
@@ -89,7 +88,12 @@ export default function DonationWidget() {
           box-shadow: 0 4px 15px rgba(3, 105, 161, 0.4);
         }
         .donation-trigger-icon {
-          font-size: 14px;
+          font-size: 18px;
+        }
+        .donation-trigger-text {
+          font-size: 9px;
+          font-weight: 600;
+          opacity: 0.9;
         }
         .donation-overlay {
           position: fixed;
@@ -202,14 +206,15 @@ export default function DonationWidget() {
         }
         @media (max-width: 500px) {
           .donation-trigger {
-            top: auto;
-            bottom: 70px;
+            top: 12px;
             right: 12px;
-            padding: 6px 10px;
-            font-size: 10px;
+            padding: 6px 10px 4px;
           }
           .donation-trigger-icon {
-            font-size: 12px;
+            font-size: 16px;
+          }
+          .donation-trigger-text {
+            font-size: 8px;
           }
           .donation-modal {
             margin: 10px;
@@ -217,10 +222,10 @@ export default function DonationWidget() {
         }
       `}</style>
 
-      {/* Buton principal - colț dreapta sus */}
+      {/* Buton principal - mână cu text mic dedesubt */}
       <button className="donation-trigger" onClick={() => setIsOpen(true)}>
-        <span className="donation-trigger-icon">❤️</span>
-        <span>Susține</span>
+        <span className="donation-trigger-icon">👆</span>
+        <span className="donation-trigger-text">Susține</span>
       </button>
 
       {/* Modal principal */}
