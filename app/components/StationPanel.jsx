@@ -324,7 +324,6 @@ export default function StationPanel({
           font-size: 14px;
           color: #374151;
           line-height: 1.55;
-          min-height: 50px;
         }
 
         .cards-grid {
@@ -506,9 +505,8 @@ export default function StationPanel({
 
           .section-spacing {
             padding: 0 12px 12px 12px;
-            overflow: visible;
+            overflow: hidden;
             max-width: 100%;
-            min-height: 50px;
           }
 
           .station-name {
@@ -531,11 +529,8 @@ export default function StationPanel({
           )}
         </div>
 
-        {/* ANCHOR pentru Info/Wiki */}
-        <div id="wiki-section" style={{ position: 'relative', top: '-10px' }}></div>
-        
         {/* CONȚINUT - Poză stânga, Wiki dreapta */}
-        <div className="station-content">
+        <div id="wiki-section" className="station-content">
           <div>
             <div className="station-image-wrapper">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -691,12 +686,9 @@ export default function StationPanel({
           </div>
         </div>
 
-        {/* ANCHOR pentru Debit */}
-        <div id="debit-section" style={{ position: 'relative', top: '-10px' }}></div>
-        
         {/* GRAFIC DEBIT */}
-        <div className="section-spacing">
-          {(latest?.debit_mc_s || isRiverStation || ['Bazias', 'Isaccea', 'Calafat', 'Giurgiu'].includes(name)) ? (
+        <div id="debit-section" className="section-spacing">
+          {(latest?.debit_mc_s || isRiverStation || ['Bazias', 'Isaccea', 'Calafat', 'Giurgiu'].includes(name)) && (
             <DebitChart
               debit_mc_s={latest?.debit_mc_s}
               debit_trend={latest?.debit_trend}
@@ -704,7 +696,7 @@ export default function StationPanel({
               showTemperature={isRiverStation}
               chartData={isRiverStation ? rows : null}
             />
-          ) : null}
+          )}
         </div>
 
         {/* PROGNOZĂ */}
