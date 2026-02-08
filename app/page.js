@@ -431,9 +431,10 @@ export default function Page() {
             width: 100%;
             box-sizing: border-box;
             border: 1px solid rgba(14, 165, 233, 0.3);
-            position: relative;
-            overflow: hidden;
-            z-index: 100;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            overflow: visible;
           }
           .mobile-header::before {
             content: '';
@@ -490,7 +491,7 @@ export default function Page() {
             margin-top: 12px;
             width: 100%;
             position: relative;
-            z-index: 101;
+            z-index: 1;
           }
           .mobile-feature {
             display: flex;
@@ -508,8 +509,6 @@ export default function Page() {
             white-space: nowrap;
             min-width: 0;
             transition: all 0.2s ease;
-            position: relative;
-            z-index: 102;
           }
           .mobile-feature:active {
             background: rgba(255,255,255,0.25);
@@ -552,7 +551,7 @@ export default function Page() {
             font-size: 8px;
             font-weight: 700;
             color: #0c4a6e;
-            z-index: 1000;
+            z-index: 900;
           }
           .legend-mob-item {
             display: flex;
