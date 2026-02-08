@@ -18,9 +18,20 @@ function diffDaysUTC(fromYmd, toYmd) {
 
 function scrollToSection(id) {
   setTimeout(() => {
-    const el = document.getElementById(id);
+    console.log('Scrolling to:', id);
+    let el = document.getElementById(id);
+    console.log('Found element:', el);
+    
+    // Fallback: dacă debit-section nu există, du-te la nivel-section
+    if (!el && id === 'debit-section') {
+      console.log('debit-section not found, falling back to nivel-section');
+      el = document.getElementById('nivel-section');
+    }
+    
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      console.error('Element not found:', id);
     }
   }, 100);
 }
