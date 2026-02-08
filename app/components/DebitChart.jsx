@@ -166,7 +166,7 @@ export default function DebitChart({
   const dataSource = showTemperature ? "DanubeHIS" : "AFDJ";
 
   return (
-    <div id="debit-section" style={{
+    <div style={{
       background: "#ffffff",
       borderRadius: 16,
       border: "1px solid #e5e7eb",
