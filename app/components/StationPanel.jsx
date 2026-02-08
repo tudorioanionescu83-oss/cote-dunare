@@ -531,6 +531,9 @@ export default function StationPanel({
           )}
         </div>
 
+        {/* ANCHOR pentru Info/Wiki */}
+        <div id="wiki-section" style={{ position: 'relative', top: '-10px' }}></div>
+        
         {/* CONȚINUT - Poză stânga, Wiki dreapta */}
         <div className="station-content">
           <div>
@@ -546,7 +549,7 @@ export default function StationPanel({
             </div>
           </div>
 
-          <div id="wiki-section" className="wiki-container">
+          <div className="wiki-container">
             {wiki.loading ? (
               <div style={{ color: "#9ca3af" }}>Se încarcă informațiile...</div>
             ) : wiki.found ? (
@@ -688,8 +691,11 @@ export default function StationPanel({
           </div>
         </div>
 
+        {/* ANCHOR pentru Debit */}
+        <div id="debit-section" style={{ position: 'relative', top: '-10px' }}></div>
+        
         {/* GRAFIC DEBIT */}
-        <div id="debit-section" className="section-spacing">
+        <div className="section-spacing">
           {(latest?.debit_mc_s || isRiverStation || ['Bazias', 'Isaccea', 'Calafat', 'Giurgiu'].includes(name)) ? (
             <DebitChart
               debit_mc_s={latest?.debit_mc_s}
