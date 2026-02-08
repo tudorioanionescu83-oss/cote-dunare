@@ -17,15 +17,32 @@ function diffDaysUTC(fromYmd, toYmd) {
 }
 
 function scrollToSection(id, fallbackId = null) {
-  const el = document.getElementById(id);
-  if (el) {
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  } else if (fallbackId) {
-    const fallback = document.getElementById(fallbackId);
-    if (fallback) {
-      fallback.scrollIntoView({ behavior: "smooth", block: "start" });
+  let count = 0;
+  const maxTries = 30;
+  
+  const tryScroll = () => {
+    count++;
+    const el = document.getElementById(id);
+    
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
     }
-  }
+    
+    if (fallbackId) {
+      const fb = document.getElementById(fallbackId);
+      if (fb) {
+        fb.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+    }
+    
+    if (count < maxTries) {
+      setTimeout(tryScroll, 100);
+    }
+  };
+  
+  tryScroll();
 }
 
 export default function Page() {
