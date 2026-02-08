@@ -431,10 +431,8 @@ export default function Page() {
             width: 100%;
             box-sizing: border-box;
             border: 1px solid rgba(14, 165, 233, 0.3);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            overflow: visible;
+            position: relative;
+            overflow: hidden;
           }
           .mobile-header::before {
             content: '';
@@ -551,7 +549,7 @@ export default function Page() {
             font-size: 8px;
             font-weight: 700;
             color: #0c4a6e;
-            z-index: 900;
+            z-index: 1000;
           }
           .legend-mob-item {
             display: flex;
