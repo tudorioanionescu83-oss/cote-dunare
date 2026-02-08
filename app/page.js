@@ -17,25 +17,36 @@ function diffDaysUTC(fromYmd, toYmd) {
 }
 
 function scrollToSection(id) {
-  const tryScroll = (attempts = 0) => {
+  // Funcție cu retry pentru mobile
+  let attempts = 0;
+  const maxAttempts = 30;
+  
+  const doScroll = () => {
     const el = document.getElementById(id);
     if (el) {
-      // Calculăm poziția elementului
-      const rect = el.getBoundingClientRect();
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const targetY = rect.top + scrollTop - 20; // 20px padding
-      
-      window.scrollTo({
-        top: targetY,
-        behavior: 'smooth'
-      });
-    } else if (attempts < 20) {
-      // Reîncearcă după 150ms dacă elementul nu e încă randat
-      setTimeout(() => tryScroll(attempts + 1), 150);
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      return true;
     }
+    return false;
   };
-  // Prima încercare după 50ms
-  setTimeout(() => tryScroll(0), 50);
+  
+  // Prima încercare imediată
+  if (doScroll()) return;
+  
+  // Retry cu interval
+  const interval = setInterval(() => {
+    attempts++;
+    if (doScroll()) {
+      clearInterval(interval);
+    } else if (attempts >= maxAttempts) {
+      clearInterval(interval);
+      // Fallback: scrollează la station-panel dacă nu găsește secțiunea
+      const fallback = document.getElementById('station-panel');
+      if (fallback) {
+        fallback.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  }, 100);
 }
 
 export default function Page() {
