@@ -239,7 +239,7 @@ export default function DonationWidget() {
           <div className="donation-modal" onClick={(e) => e.stopPropagation()}>
             <div className="donation-header">
               <button className="donation-close" onClick={() => setIsOpen(false)}>✕</button>
-              <div className="donation-heart">❤️</div>
+              <div className="donation-heart">💙</div>
               <h2 style={{ 
                 fontSize: 22, 
                 fontWeight: 900, 
@@ -248,7 +248,7 @@ export default function DonationWidget() {
                 position: "relative",
                 textShadow: "0 2px 4px rgba(0,0,0,0.2)",
               }}>
-                Susține Proiectul!
+                Contribuie la Proiect
               </h2>
             </div>
             
@@ -260,8 +260,10 @@ export default function DonationWidget() {
                 marginBottom: 16,
                 textAlign: "center",
               }}>
-                <strong style={{ color: "#fbbf24" }}>Salut!</strong> Acesta este un proiect individual, 
-                făcut cu <span style={{ color: "#ef4444" }}>trudă</span> și <span style={{ color: "#fbbf24" }}>pasiune</span>!
+                Prima platformă hidrologică interactivă din România, dedicată 
+                <strong style={{ color: "#38bdf8" }}> iubitorilor de natură</strong>, 
+                <strong style={{ color: "#22c55e" }}> pasionaților de pescuit</strong> și 
+                <strong style={{ color: "#fbbf24" }}> comunităților riverane</strong>.
               </p>
               
               <p style={{ 
@@ -271,9 +273,8 @@ export default function DonationWidget() {
                 marginBottom: 20,
                 textAlign: "center",
               }}>
-                Încercăm să îl menținem <strong style={{ color: "#10b981" }}>GRATIS</strong>, 
-                dar întreținerea zilnică și dezvoltarea de noi module necesită, 
-                pe lângă implicare și timp personal, un buget minim!
+                Cu contribuția ta, putem menține platforma <strong style={{ color: "#10b981" }}>GRATUITĂ</strong> și 
+                să adăugăm funcții noi pentru o experiență și mai bună!
               </p>
 
               <div style={{
@@ -288,9 +289,9 @@ export default function DonationWidget() {
                   fontSize: 15, 
                   color: "#e2e8f0", 
                   fontWeight: 600,
-                  margin: "0 0 8px 0",
+                  margin: "0 0 12px 0",
                 }}>
-                  Dacă v-a plăcut și considerați utilă munca noastră
+                  Împreună putem îmbunătăți experiența!
                 </p>
                 <div style={{ 
                   fontSize: 24, 
@@ -304,7 +305,7 @@ export default function DonationWidget() {
                 }}>
                   <span style={{ fontSize: 32 }}>🦁</span>
                   <span className="coin-icon">🪙</span>
-                  <span>:)</span>
+                  <span style={{ fontSize: 32 }}>🦁</span>
                 </div>
               </div>
 
@@ -337,7 +338,7 @@ export default function DonationWidget() {
                 }}
               >
                 <span style={{ fontSize: 20 }}>💳</span>
-                <span>Vreau să contribui!</span>
+                <span>Contribuie acum!</span>
               </button>
             </div>
           </div>
