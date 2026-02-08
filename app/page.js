@@ -16,33 +16,13 @@ function diffDaysUTC(fromYmd, toYmd) {
   return (toUTC - fromUTC) / (1000 * 60 * 60 * 24);
 }
 
-function scrollToSection(id, fallbackId = null) {
-  let count = 0;
-  const maxTries = 30;
-  
-  const tryScroll = () => {
-    count++;
+function scrollToSection(id) {
+  setTimeout(() => {
     const el = document.getElementById(id);
-    
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
-      return;
     }
-    
-    if (fallbackId) {
-      const fb = document.getElementById(fallbackId);
-      if (fb) {
-        fb.scrollIntoView({ behavior: "smooth", block: "start" });
-        return;
-      }
-    }
-    
-    if (count < maxTries) {
-      setTimeout(tryScroll, 100);
-    }
-  };
-  
-  tryScroll();
+  }, 100);
 }
 
 export default function Page() {
@@ -595,7 +575,7 @@ export default function Page() {
             <span className="mobile-feature-icon">📈</span>
             <span>Nivel</span>
           </button>
-          <button className="mobile-feature" onClick={() => scrollToSection('debit-section', 'nivel-section')}>
+          <button className="mobile-feature" onClick={() => scrollToSection('debit-section')}>
             <span className="mobile-feature-icon">🌊</span>
             <span>Debit</span>
           </button>
@@ -619,7 +599,7 @@ export default function Page() {
             <span className="mobile-feature-icon">📅</span>
             <span>Calendar</span>
           </button>
-          <button className="mobile-feature" onClick={() => scrollToSection('wiki-section', 'station-panel')}>
+          <button className="mobile-feature" onClick={() => scrollToSection('wiki-section')}>
             <span className="mobile-feature-icon">ℹ️</span>
             <span>Info</span>
           </button>
@@ -641,7 +621,7 @@ export default function Page() {
               <span className="hero-feature-icon">📈</span>
               <span>Nivel</span>
             </button>
-            <button className="hero-feature" onClick={() => scrollToSection('debit-section', 'nivel-section')}>
+            <button className="hero-feature" onClick={() => scrollToSection('debit-section')}>
               <span className="hero-feature-icon">🌊</span>
               <span>Debit</span>
             </button>
@@ -665,7 +645,7 @@ export default function Page() {
               <span className="hero-feature-icon">📅</span>
               <span>Calendar</span>
             </button>
-            <button className="hero-feature" onClick={() => scrollToSection('wiki-section', 'station-panel')}>
+            <button className="hero-feature" onClick={() => scrollToSection('wiki-section')}>
               <span className="hero-feature-icon">ℹ️</span>
               <span>Info</span>
             </button>

@@ -530,7 +530,7 @@ export default function StationPanel({
         </div>
 
         {/* CONȚINUT - Poză stânga, Wiki dreapta */}
-        <div id="wiki-section" className="station-content">
+        <div className="station-content">
           <div>
             <div className="station-image-wrapper">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -544,7 +544,7 @@ export default function StationPanel({
             </div>
           </div>
 
-          <div className="wiki-container">
+          <div id="wiki-section" className="wiki-container">
             {wiki.loading ? (
               <div style={{ color: "#9ca3af" }}>Se încarcă informațiile...</div>
             ) : wiki.found ? (
@@ -686,9 +686,9 @@ export default function StationPanel({
           </div>
         </div>
 
-        {/* GRAFIC DEBIT */}
-        <div id="debit-section" className="section-spacing">
-          {(latest?.debit_mc_s || isRiverStation || ['Bazias', 'Isaccea', 'Calafat', 'Giurgiu'].includes(name)) && (
+        {/* GRAFIC DEBIT - pentru stații cu debit (Dunăre: Bazias, Isaccea, Calafat, Giurgiu) sau râuri */}
+        {(latest?.debit_mc_s || isRiverStation || ['Bazias', 'Isaccea', 'Calafat', 'Giurgiu'].includes(name)) && (
+          <div id="debit-section" className="section-spacing">
             <DebitChart
               debit_mc_s={latest?.debit_mc_s}
               debit_trend={latest?.debit_trend}
@@ -696,8 +696,8 @@ export default function StationPanel({
               showTemperature={isRiverStation}
               chartData={isRiverStation ? rows : null}
             />
-          )}
-        </div>
+          </div>
+        )}
 
         {/* PROGNOZĂ */}
         <div id="forecast-section" className="section-spacing">
