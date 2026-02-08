@@ -17,34 +17,29 @@ function diffDaysUTC(fromYmd, toYmd) {
 }
 
 function scrollToSection(id) {
+  console.log('scrollToSection called:', id);
   let attempts = 0;
   const maxAttempts = 50;
   
   const doScroll = () => {
     const el = document.getElementById(id);
+    console.log(`Attempt ${attempts}: ${id} =`, el ? 'FOUND' : 'NOT FOUND');
     if (el) {
-      // Metoda 1: scrollIntoView
-      try {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-      } catch (e) {
-        // Metoda 2: fallback pentru browsere vechi
-        const rect = el.getBoundingClientRect();
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        window.scrollTo({ top: rect.top + scrollTop - 10, behavior: "smooth" });
-      }
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
       return true;
     }
     return false;
   };
   
-  // Prima încercare imediată
   if (doScroll()) return;
   
-  // Retry cu interval
   const interval = setInterval(() => {
     attempts++;
     if (doScroll() || attempts >= maxAttempts) {
       clearInterval(interval);
+      if (attempts >= maxAttempts) {
+        console.log(`FAILED: ${id} not found after ${maxAttempts} attempts`);
+      }
     }
   }, 100);
 }

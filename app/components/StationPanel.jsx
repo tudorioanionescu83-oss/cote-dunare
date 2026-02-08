@@ -688,9 +688,9 @@ export default function StationPanel({
           </div>
         </div>
 
-        {/* GRAFIC DEBIT - pentru stații cu debit (Dunăre: Bazias, Isaccea, Calafat, Giurgiu) sau râuri */}
-        {(latest?.debit_mc_s || isRiverStation || ['Bazias', 'Isaccea', 'Calafat', 'Giurgiu'].includes(name)) && (
-          <div id="debit-section" className="section-spacing">
+        {/* GRAFIC DEBIT */}
+        <div id="debit-section" className="section-spacing">
+          {(latest?.debit_mc_s || isRiverStation || ['Bazias', 'Isaccea', 'Calafat', 'Giurgiu'].includes(name)) ? (
             <DebitChart
               debit_mc_s={latest?.debit_mc_s}
               debit_trend={latest?.debit_trend}
@@ -698,8 +698,8 @@ export default function StationPanel({
               showTemperature={isRiverStation}
               chartData={isRiverStation ? rows : null}
             />
-          </div>
-        )}
+          ) : null}
+        </div>
 
         {/* PROGNOZĂ */}
         <div id="forecast-section" className="section-spacing">
