@@ -20,7 +20,7 @@ export default function DonationWidget() {
     iban: "RO86BREL0002005296230101",
     bank: "Libra Internet Bank",
   };
-  const email = "email@exemplu.ro";
+  const email = "tudor.ionescu@sturgeons.eu";
 
   const copyToClipboard = (text, field) => {
     navigator.clipboard.writeText(text).then(() => {
