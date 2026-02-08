@@ -17,12 +17,17 @@ function diffDaysUTC(fromYmd, toYmd) {
 }
 
 function scrollToSection(id) {
-  setTimeout(() => {
+  const tryScroll = (attempts = 0) => {
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (attempts < 10) {
+      // Reîncearcă după 100ms dacă elementul nu e încă randat
+      setTimeout(() => tryScroll(attempts + 1), 100);
     }
-  }, 100);
+  };
+  // Prima încercare după 50ms
+  setTimeout(() => tryScroll(0), 50);
 }
 
 export default function Page() {
