@@ -433,6 +433,7 @@ export default function Page() {
             border: 1px solid rgba(14, 165, 233, 0.3);
             position: relative;
             overflow: hidden;
+            z-index: 100;
           }
           .mobile-header::before {
             content: '';
@@ -489,7 +490,7 @@ export default function Page() {
             margin-top: 12px;
             width: 100%;
             position: relative;
-            z-index: 1;
+            z-index: 101;
           }
           .mobile-feature {
             display: flex;
@@ -507,6 +508,8 @@ export default function Page() {
             white-space: nowrap;
             min-width: 0;
             transition: all 0.2s ease;
+            position: relative;
+            z-index: 102;
           }
           .mobile-feature:active {
             background: rgba(255,255,255,0.25);
