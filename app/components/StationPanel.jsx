@@ -324,6 +324,7 @@ export default function StationPanel({
           font-size: 14px;
           color: #374151;
           line-height: 1.55;
+          min-height: 50px;
         }
 
         .cards-grid {
@@ -505,8 +506,9 @@ export default function StationPanel({
 
           .section-spacing {
             padding: 0 12px 12px 12px;
-            overflow: hidden;
+            overflow: visible;
             max-width: 100%;
+            min-height: 50px;
           }
 
           .station-name {
