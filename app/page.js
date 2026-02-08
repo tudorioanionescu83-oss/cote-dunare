@@ -443,6 +443,7 @@ export default function Page() {
             height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
             animation: shimmer 4s infinite;
+            pointer-events: none;
           }
           .mobile-header::after {
             content: '';
@@ -453,6 +454,7 @@ export default function Page() {
             height: 2px;
             background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.8), transparent);
             animation: shimmer 2s infinite;
+            pointer-events: none;
           }
           .mobile-header-icon {
             font-size: 28px;
