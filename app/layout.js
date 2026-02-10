@@ -3,13 +3,19 @@ import "leaflet/dist/leaflet.css";
 
 export const metadata = {
   title: "Platformă Hidrologică Interactivă",
-  description: "Monitorizare în timp real: hartă interactivă, nivel, debit, temperatură apă, prognoză meteo, calendar solunar, activitate pești",
+  description:
+    "Monitorizare în timp real: hartă interactivă, nivel, debit, temperatură apă, prognoză meteo, calendar solunar, activitate pești",
 
   metadataBase: new URL("https://cote.sturgeons.eu"),
 
+  verification: {
+    google: "0f918Szy12lnfntrcS-6v8o58Rs8v2fj-QMyjC6alG8",
+  },
+
   openGraph: {
     title: "PLATFORMĂ HIDROLOGICĂ INTERACTIVĂ",
-    description: "Monitorizare în timp real: hartă GIS, niveluri, debite, temperatură apă, prognoză meteo, calendar solunar și activitate pești pe Dunăre și râurile interioare.",
+    description:
+      "Monitorizare în timp real: hartă GIS, niveluri, debite, temperatură apă, prognoză meteo, calendar solunar și activitate pești pe Dunăre și râurile interioare.",
     url: "https://cote.sturgeons.eu",
     siteName: "Platformă Hidrologică Interactivă",
     images: [
@@ -27,7 +33,8 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "PLATFORMĂ HIDROLOGICĂ INTERACTIVĂ",
-    description: "Monitorizare în timp real: hartă GIS, niveluri, debite, temperatură apă, prognoză meteo, calendar solunar și activitate pești.",
+    description:
+      "Monitorizare în timp real: hartă GIS, niveluri, debite, temperatură apă, prognoză meteo, calendar solunar și activitate pești.",
     images: ["/og-dunare.jpg"],
   },
 };
