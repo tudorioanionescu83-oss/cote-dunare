@@ -1,0 +1,219 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdate": "2026-02-12",
+    "sources": [
+      {
+        "id": "banarescu1964",
+        "citation": "Bănărescu P. (1964) Fauna RPR Vol. XIII, Pisces - Osteichthyes",
+        "pages": "472-485"
+      },
+      {
+        "id": "zootaxa2025",
+        "citation": "Iftime A. & Oțel V. (2025) Zootaxa 5654(1): 1-64",
+        "doi": "10.11646/zootaxa.5654.1.1"
+      }
+    ]
+  },
+  
+  "cyprinus_carpio": {
+    "taxonomy": {
+      "order": "Cypriniformes",
+      "family": "Cyprinidae",
+      "genus": "Cyprinus",
+      "species": "carpio",
+      "subspecies": "carpio",
+      "scientificName": "Cyprinus carpio carpio",
+      "author": "Linnaeus, 1758",
+      "status": "native",
+      "distribution": "widespread freshwater"
+    },
+    
+    "names": {
+      "ro": ["crap", "șăran"],
+      "ro_dialect": {
+        "crap": "peste 4 kg",
+        "ciortocrap": "2-4 kg",
+        "ciortan": "sub 2 kg",
+        "ciortănică": "sub dimensiunile legale",
+        "crăpcean": "sub dimensiunile legale",
+        "ciuciu": "puietul mărunt",
+        "olocari": "exemplare alungite"
+      },
+      "international": {
+        "en": { "name": "common carp", "flag": "🇬🇧" },
+        "de": { "name": "Karpfen", "flag": "🇩🇪" },
+        "fr": { "name": "carpe commune", "flag": "🇫🇷" },
+        "ru": { "name": "сазан, карп", "flag": "🇷🇺" },
+        "hu": { "name": "ponty", "flag": "🇭🇺" },
+        "bg": { "name": "шаран", "flag": "🇧🇬" },
+        "sr": { "name": "шаран", "flag": "🇷🇸" },
+        "pl": { "name": "karp", "flag": "🇵🇱" },
+        "cs": { "name": "kapr", "flag": "🇨🇿" },
+        "uk": { "name": "короп", "flag": "🇺🇦" }
+      }
+    },
+    
+    "identification": {
+      "keyFeatures": [
+        { "feature": "Mustăți", "value": "2 perechi", "detail": "Una pe maxilar, una la colțul gurii" },
+        { "feature": "Dorsală lungă", "value": "17-22 radii ramificate" },
+        { "feature": "Radii zimțate", "value": "Ultima radie osificată la D și A" },
+        { "feature": "Solzi mari", "value": "34-40 în linia laterală" },
+        { "feature": "Dinți molariformi", "value": "Formula 1.1.3 - 3.1.1" },
+        { "feature": "Caudală scobită", "value": "Adânc scobită, lobi rotunjiți" }
+      ],
+      "meristicFormulas": {
+        "D": "(II) III-IV (17) 18-21 (22)",
+        "A": "(II) III (4) 5 (6)",
+        "P": "I (14) 15-18 (19)",
+        "V": "II 7-9",
+        "L_lat": "(34) 36-39 (40)",
+        "sq": "(22) 23-27 (28) / 5-7",
+        "pharyngealTeeth": "1.1.3 - 3.1.1"
+      },
+      "legend": {
+        "D": "Înotătoare dorsală",
+        "A": "Înotătoare anală",
+        "P": "Înotătoare pectorale",
+        "V": "Înotătoare ventrale",
+        "L_lat": "Solzi în linia laterală",
+        "sq": "Rânduri solzi deasupra/sub L.lat.",
+        "()": "Valori extreme rare",
+        "romanNumerals": "Radii nedivizate (osoase)"
+      }
+    },
+    
+    "morphology": {
+      "bodyHeight": {
+        "wild": "22.2-41.5%",
+        "cultivated": "până la 50%+"
+      },
+      "headLength": "21.5-27.5%",
+      "mouth": "terminală/subterminală, semilunară",
+      "barbels": "2 perechi, posterioarele mai lungi",
+      "scales": "mari, linia laterală completă"
+    },
+    
+    "coloration": {
+      "dorsal": { "description": "cenușie-negricioasă sau cafenie", "hex": "#4a4a4a" },
+      "flanks": { "description": "aurii-ruginii", "hex": "#b8860b" },
+      "ventral": { "description": "galbenă-deschis", "hex": "#f5deb3" },
+      "reproduction": { "description": "aripioare bat în roșu", "hex": "#cd5c5c" },
+      "iris": { "description": "auriu", "hex": "#daa520" }
+    },
+    
+    "dimensions": {
+      "record": { "weight": 27, "length": 110, "unit": "kg/cm" },
+      "common": { "weight": 2, "length": 50, "unit": "kg/cm" }
+    },
+    
+    "ecology": {
+      "habitat": "râuri încete, bălți, lacuri, părți îndulcite ale mării",
+      "behavior": "semimigrator în Dunărea inferioară, sedentar în lacuri izolate",
+      "migration": {
+        "spring": "7-8°C - intrare în bălți",
+        "summer": "24-26°C - retragere în Dunăre"
+      }
+    },
+    
+    "reproduction": {
+      "maturity": "3-4 ani",
+      "spawningTemp": "13-16°C",
+      "spawningPeriod": "aprilie-iunie (izolat până în septembrie)",
+      "fecundity": { "max": 1900000, "mean": "100.000-550.000 după vârstă" },
+      "eggs": { "diameter": "1.5-1.8 mm", "type": "lipicioase" },
+      "incubation": "2.5-7.5 zile"
+    },
+    
+    "diet": {
+      "type": "omnivor",
+      "food": ["moluște", "larve insecte", "crustacee", "detritus vegetal", "zooplancton (puiet)"]
+    },
+    
+    "regulations": {
+      "minimumSize": {
+        "value": 40,
+        "unit": "cm",
+        "measurement": "de la vârful botului până la baza caudalei",
+        "legislation": "MADR Ord. 342/2008"
+      },
+      "closedSeason": {
+        "start": "09 aprilie",
+        "end": "07 iunie",
+        "days": 60,
+        "legislation": "MADR+MMAP Ord. 23/2025"
+      },
+      "RBDD": "catch & release + max 1 exemplar/zi"
+    },
+    
+    "distribution": {
+      "romania": {
+        "danube": {
+          "description": "Dunărea de la Baziaș până la vărsare, toate bălțile",
+          "gps": {
+            "delta": { "latMin": 44.4167, "latMax": 45.5000, "lonMin": 28.7500, "lonMax": 29.7500 },
+            "bazias": { "lat": 44.7167, "lon": 21.4000 }
+          }
+        },
+        "litoral": ["Razelm", "Sinoe", "Siutghiol", "Tașaul", "Mangalia"],
+        "transylvania": {
+          "rivers": ["Someș (de la Apahida)", "Mureș (de la Târgu-Mureș)", "Crișuri"],
+          "ponds": ["Cefa", "Ineu", "Inand"],
+          "gps": {
+            "cefa": { "lat": 46.9500, "lon": 21.6833 },
+            "targuMures": { "lat": 46.5500, "lon": 24.5500 }
+          }
+        },
+        "walachia": {
+          "rivers": ["Jiu (de la Filiași)", "Olt", "Argeș", "Colentina"],
+          "lakes": ["Snagov", "Căldărușani", "lacurile București"],
+          "gps": {
+            "snagov": { "lat": 44.7000, "lon": 26.1500 },
+            "bucharest": { "lat": 44.4268, "lon": 26.1025 }
+          }
+        },
+        "moldavia": {
+          "rivers": ["Siret", "Prut", "Moldova", "Bistrița", "Buzău", "Jijia", "Bârlad"],
+          "gps": {
+            "prutEntry": { "lat": 48.2667, "lon": 26.6333 },
+            "prutMouth": { "lat": 45.4667, "lon": 28.2000 }
+          }
+        }
+      }
+    },
+    
+    "fishing": {
+      "commercial": {
+        "primary": "Setca compusă (Avă) - în derivă (râuri) sau fix (lacuri)",
+        "other": ["Vintire (primăvara)", "Năvoade (vara-toamna, iarna sub gheață)", "Lese la baraje"]
+      },
+      "recreational": {
+        "methods": ["Sedentar cu plută (ape stătătoare)", "La fund (râuri)"],
+        "baits": ["porumb", "boilies", "paste", "viermi"],
+        "bestPeriods": ["primăvara înainte de prohibiție", "toamna"]
+      }
+    },
+    
+    "similarSpecies": [
+      {
+        "name": "Carassius carassius",
+        "roName": "Caras",
+        "differences": ["fără mustăți", "dorsală mai lungă", "corp mai înalt"]
+      },
+      {
+        "name": "Carassius gibelio",
+        "roName": "Caracudă argentie",
+        "differences": ["fără mustăți", "colorit argintiu", "L.lat. 26-31"]
+      }
+    ],
+    
+    "economicImportance": "Cea mai importantă specie de apă dulce din punct de vedere economic din Europa",
+    
+    "taxonomicNotes2025": {
+      "koi": "Rasă ornamentală din Cyprinus rubrofuscus Lacépède, 1803",
+      "controversy": "C. rubrofuscus acceptat ca specie distinctă, dar studii genetice sugerează revizuire",
+      "conclusion": "Structura genetică sugerează tratare ca single biological species"
+    }
+  }
+}

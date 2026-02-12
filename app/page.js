@@ -18,20 +18,9 @@ function diffDaysUTC(fromYmd, toYmd) {
 
 function scrollToSection(id) {
   setTimeout(() => {
-    console.log('Scrolling to:', id);
-    let el = document.getElementById(id);
-    console.log('Found element:', el);
-    
-    // Fallback: dacă debit-section nu există, du-te la nivel-section
-    if (!el && id === 'debit-section') {
-      console.log('debit-section not found, falling back to nivel-section');
-      el = document.getElementById('nivel-section');
-    }
-    
+    const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else {
-      console.error('Element not found:', id);
     }
   }, 100);
 }
@@ -454,7 +443,6 @@ export default function Page() {
             height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
             animation: shimmer 4s infinite;
-            pointer-events: none;
           }
           .mobile-header::after {
             content: '';
@@ -465,7 +453,6 @@ export default function Page() {
             height: 2px;
             background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.8), transparent);
             animation: shimmer 2s infinite;
-            pointer-events: none;
           }
           .mobile-header-icon {
             font-size: 28px;
