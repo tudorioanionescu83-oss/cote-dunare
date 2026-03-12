@@ -1,461 +1,531 @@
 #!/usr/bin/env python3
-"""
-Automated Copernicus Marine -> Supabase updater for Constanta marine station.
-
-Requirements:
-  pip install copernicusmarine xarray netcdf4 numpy supabase
-"""
-
 from __future__ import annotations
 
 import datetime as dt
+import json
 import math
 import os
-import re
-import tempfile
+import subprocess
+import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional
+from urllib import error as urlerror
+from urllib import request
 
-import numpy as np
-import xarray as xr
-from supabase import create_client
-
-import copernicusmarine
+try:
+    import numpy as np
+    import xarray as xr
+except ImportError as exc:  # pragma: no cover - runtime guard
+    raise SystemExit(
+        "Missing python dependencies. Install: pip install copernicusmarine xarray netCDF4 numpy"
+    ) from exc
 
 
 STATION_ID = "constanta_marine"
 SOURCE_LABEL = "Copernicus Marine"
 
-CONST_LAT = 44.17
-CONST_LON = 28.65
-BBOX = {
-    "minimum_latitude": 44.0,
-    "maximum_latitude": 44.4,
-    "minimum_longitude": 28.4,
-    "maximum_longitude": 28.9,
-}
+LAT = 44.17
+LON = 28.65
+MIN_LAT = 44.0
+MAX_LAT = 44.4
+MIN_LON = 28.4
+MAX_LON = 28.9
+# Data extraction point can be slightly offshore to avoid coastal land-mask nulls.
+# Marker/UI location remains Constanta (44.17, 28.65).
+DATA_LAT = 44.12
+DATA_LON = 28.78
 
-DATASET_TEMP = os.getenv("COPERNICUS_DATASET_TEMP", "cmems_mod_blk_phy-temp_anfc_2.5km_PT1H-m")
-DATASET_CUR = os.getenv("COPERNICUS_DATASET_CUR", "cmems_mod_blk_phy-cur_anfc_2.5km_PT1H-m")
-DATASET_SAL = os.getenv("COPERNICUS_DATASET_SAL", "cmems_mod_blk_phy-sal_anfc_2.5km_PT1H-m")
-DATASET_WAV = os.getenv("COPERNICUS_DATASET_WAV", "cmems_mod_blk_wav_anfc_2.5km_PT1H-i")
+# Copernicus Toolbox needs concrete dataset IDs (cmems_mod_*), not product IDs.
+TEMP_DATASET_ID = "cmems_mod_blk_phy-temp_anfc_2.5km_PT1H-m"
+CURRENT_DATASET_ID = "cmems_mod_blk_phy-cur_anfc_2.5km_PT1H-m"
+SALINITY_DATASET_ID = "cmems_mod_blk_phy-sal_anfc_2.5km_PT1H-m"
+WAVE_DATASET_ID = "cmems_mod_blk_wav_anfc_2.5km_PT1H-i"
 
-VAR_TEMP = "thetao"
-VAR_U = "uo"
-VAR_V = "vo"
-VAR_SAL = "so"
-VARS_WAV = ["VHM0", "VMDR", "VTPK"]
+TEMP_VARIABLES = ["thetao"]
+CURRENT_VARIABLES = ["uo", "vo"]
+SALINITY_VARIABLES = ["so"]
+WAVE_VARIABLES = ["VHM0", "VMDR", "VTPK"]
 
 
-def read_env(name: str, default: Optional[str] = None) -> str:
-    value = os.getenv(name, default)
-    if value is None or value == "":
-        raise RuntimeError(f"Missing environment variable: {name}")
+def _require_env(name: str) -> str:
+    value = (os.getenv(name) or "").strip()
+    if not value:
+        raise RuntimeError(f"Missing required environment variable: {name}")
     return value
 
 
-def utc_now() -> dt.datetime:
-    return dt.datetime.now(dt.timezone.utc)
-
-
-def to_iso(dt_obj: dt.datetime) -> str:
-    return dt_obj.astimezone(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-
-
-def maybe_login(username: str, password: str) -> None:
-    login_fn = getattr(copernicusmarine, "login", None)
-    if not callable(login_fn):
-        return
-    try:
-        login_fn(username=username, password=password)
-        print("Copernicus login succeeded.")
-    except Exception as exc:  # noqa: BLE001
-        print(f"Copernicus login skipped (subset call still uses credentials): {exc}")
-
-
-def safe_subset(**kwargs: Any) -> Any:
-    request = dict(kwargs)
-    # Deprecated options in newer versions.
-    request.pop("force_download", None)
-    request.pop("overwrite_output_data", None)
-
-    while True:
-        try:
-            return copernicusmarine.subset(**request)
-        except TypeError as exc:
-            match = re.search(r"unexpected keyword argument '([^']+)'", str(exc))
-            if not match:
-                raise
-            bad_key = match.group(1)
-            if bad_key not in request:
-                raise
-            request.pop(bad_key, None)
-            print(f"Removed unsupported subset option: {bad_key}")
-
-
-def resolve_subset_path(result: Any, output_dir: Path, expected_name: str) -> Path:
-    candidate = output_dir / expected_name
-    if candidate.exists():
-        return candidate
-
-    if isinstance(result, (str, Path)):
-        path_obj = Path(result)
-        if path_obj.exists():
-            return path_obj
-
-    for attr in ("path", "file_path", "output_path", "local_path"):
-        value = getattr(result, attr, None)
-        if value:
-            path_obj = Path(value)
-            if path_obj.exists():
-                return path_obj
-
-    files_attr = getattr(result, "files", None)
-    if isinstance(files_attr, Iterable):
-        for item in files_attr:
-            path_obj = Path(str(item))
-            if path_obj.exists():
-                return path_obj
-
-    nc_files = sorted(output_dir.glob("*.nc"), key=lambda p: p.stat().st_mtime, reverse=True)
-    if not nc_files:
-        raise RuntimeError(f"No subset file found in {output_dir}")
-    return nc_files[0]
-
-
-def first_existing_var(ds: xr.Dataset, names: List[str]) -> Optional[str]:
+def _require_any_env(*names: str) -> str:
     for name in names:
-        if name in ds.variables:
+        value = (os.getenv(name) or "").strip()
+        if value:
+            return value
+    joined = ", ".join(names)
+    raise RuntimeError(f"Missing required environment variable. Provide one of: {joined}")
+
+
+def _run_command(cmd: List[str]) -> None:
+    print("Running:", " ".join(cmd))
+    subprocess.run(cmd, check=True)
+
+
+def _variable_flags(variables: Iterable[str]) -> List[str]:
+    args: List[str] = []
+    for variable in variables:
+        args.extend(["--variable", variable])
+    return args
+
+
+def _iso_z(value: dt.datetime) -> str:
+    return value.replace(microsecond=0, tzinfo=dt.timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _find_netcdf_file(folder: Path) -> Path:
+    files = sorted(folder.glob("**/*.nc"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if not files:
+        raise RuntimeError(f"No NetCDF file generated in {folder}")
+    return files[0]
+
+
+def _detect_coord_name(dataset: xr.Dataset, candidates: Iterable[str]) -> Optional[str]:
+    for name in candidates:
+        if name in dataset.coords:
+            return name
+    for name in candidates:
+        if name in dataset.dims:
             return name
     return None
 
 
-def scalar_float(value: Any) -> Optional[float]:
-    if value is None:
+def _detect_variable(dataset: xr.Dataset, preferred: str) -> Optional[str]:
+    by_lower = {name.lower(): name for name in dataset.data_vars}
+    return by_lower.get(preferred.lower())
+
+
+def _normalize_time(value: np.datetime64) -> str:
+    dt_value = np.datetime_as_string(value, unit="s")
+    if dt_value.endswith("Z"):
+        return dt_value
+    return f"{dt_value}Z"
+
+
+def _to_optional_float(raw: object) -> Optional[float]:
+    if raw is None:
         return None
     try:
-        arr = np.asarray(value)
-        if arr.size == 0:
-            return None
-        if arr.size == 1:
-            val = float(arr.reshape(-1)[0])
-        else:
-            # Fallback for unresolved spatial dims: use finite mean.
-            finite = arr[np.isfinite(arr)]
-            if finite.size == 0:
-                return None
-            val = float(finite.mean())
-    except Exception:  # noqa: BLE001
+        arr = np.asarray(raw)
+    except Exception:
         return None
-    if math.isnan(val) or math.isinf(val):
+    if arr.size == 0:
         return None
-    return val
-
-
-def normalize_time_value(value: Any) -> Optional[str]:
-    if value is None:
+    try:
+        value = float(arr.reshape(-1)[0])
+    except Exception:
         return None
-
-    if isinstance(value, np.datetime64):
-        if np.isnat(value):
-            return None
-        text = np.datetime_as_string(value, unit="s")
-        if text.endswith("Z"):
-            return text
-        return f"{text}Z"
-
-    if hasattr(value, "isoformat"):
-        text = value.isoformat()
-        if text.endswith("+00:00"):
-            return text.replace("+00:00", "Z")
-        if text.endswith("Z"):
-            return text
-        return f"{text}Z"
-
-    text = str(value)
-    return text if text else None
+    if math.isnan(value):
+        return None
+    return value
 
 
-def extract_series(ds: xr.Dataset, variable_name: str, lat: float, lon: float) -> Dict[str, Optional[float]]:
-    da = ds[variable_name]
+def _as_ndarray_no_mask(values: object) -> np.ndarray:
+    arr = np.asarray(values)
+    if np.ma.isMaskedArray(arr):
+        return arr.filled(np.nan)
+    return arr
 
-    time_name = next(
-        (name for name in ("time", "valid_time", "time_counter") if name in da.coords or name in da.dims),
-        None,
+
+def _pick_nearest_valid_series(
+    da: xr.DataArray,
+    *,
+    ds: xr.Dataset,
+    lat_name: str,
+    lon_name: str,
+    time_name: str,
+    variable_name: str,
+) -> xr.DataArray:
+    # Keep only time + spatial dimensions (drop scalar dims if any).
+    base_dims = [d for d in da.dims if d != time_name]
+    if not base_dims:
+        return da
+
+    stacked = da.stack(point=base_dims).transpose(time_name, "point")
+    values = _as_ndarray_no_mask(stacked.values)
+    if values.ndim != 2:
+        return stacked
+
+    valid_mask = np.isfinite(values)
+    valid_point_indexes = np.where(np.any(valid_mask, axis=0))[0]
+    if valid_point_indexes.size == 0:
+        return stacked.isel(point=0)
+
+    lat_points: Optional[np.ndarray] = None
+    lon_points: Optional[np.ndarray] = None
+    try:
+        if lat_name in ds.coords and lon_name in ds.coords:
+            lat_coord = ds[lat_name]
+            lon_coord = ds[lon_name]
+            if all(dim in base_dims for dim in lat_coord.dims) and all(dim in base_dims for dim in lon_coord.dims):
+                lat_points = _as_ndarray_no_mask(lat_coord.stack(point=base_dims).values).reshape(-1)
+                lon_points = _as_ndarray_no_mask(lon_coord.stack(point=base_dims).values).reshape(-1)
+        elif lat_name in da.coords and lon_name in da.coords:
+            lat_coord = da[lat_name]
+            lon_coord = da[lon_name]
+            if all(dim in base_dims for dim in lat_coord.dims) and all(dim in base_dims for dim in lon_coord.dims):
+                lat_points = _as_ndarray_no_mask(lat_coord.stack(point=base_dims).values).reshape(-1)
+                lon_points = _as_ndarray_no_mask(lon_coord.stack(point=base_dims).values).reshape(-1)
+    except Exception:
+        lat_points = None
+        lon_points = None
+
+    best_idx = None
+    best_distance = float("inf")
+
+    if lat_points is not None and lon_points is not None and len(lat_points) == len(lon_points):
+        for idx in valid_point_indexes.tolist():
+            lat_val = _to_optional_float(lat_points[idx])
+            lon_val = _to_optional_float(lon_points[idx])
+            if lat_val is None or lon_val is None:
+                continue
+            distance = (lat_val - DATA_LAT) ** 2 + (lon_val - DATA_LON) ** 2
+            if distance < best_distance:
+                best_distance = distance
+                best_idx = idx
+
+    if best_idx is None:
+        # Fallback: closest valid index in stacked space.
+        best_idx = int(valid_point_indexes[0])
+        print(
+            f"[marine-update] variable={variable_name} fallback to first valid marine point index={best_idx} "
+            f"(no usable lat/lon coordinate mapping)"
+        )
+        return stacked.isel(point=best_idx)
+
+    print(
+        f"[marine-update] variable={variable_name} selected wet cell "
+        f"lat={float(lat_points[best_idx]):.5f} lon={float(lon_points[best_idx]):.5f} "
+        f"(target {DATA_LAT:.5f},{DATA_LON:.5f})"
     )
-    if not time_name:
-        return {}
+    return stacked.isel(point=best_idx)
 
-    # Prefer nearest selection on standard coord names.
-    lat_name = next((name for name in ("latitude", "lat", "y", "nav_lat") if name in da.dims), None)
-    lon_name = next((name for name in ("longitude", "lon", "x", "nav_lon") if name in da.dims), None)
 
-    if lat_name:
-        if lat_name in da.coords:
-            idx_lat = int(np.abs(da[lat_name].values - lat).argmin())
-            da = da.isel({lat_name: idx_lat})
-        else:
-            da = da.isel({lat_name: da.sizes[lat_name] // 2})
+def _extract_series(nc_path: Path, variables: Iterable[str]) -> Dict[str, Dict[str, Optional[float]]]:
+    try:
+        ds = xr.open_dataset(nc_path, engine="netcdf4")
+    except Exception:
+        ds = xr.open_dataset(nc_path)
+    lat_name = _detect_coord_name(ds, ("latitude", "lat", "nav_lat"))
+    lon_name = _detect_coord_name(ds, ("longitude", "lon", "nav_lon"))
+    time_name = _detect_coord_name(ds, ("time", "valid_time"))
 
-    if lon_name:
-        if lon_name in da.coords:
-            idx_lon = int(np.abs(da[lon_name].values - lon).argmin())
-            da = da.isel({lon_name: idx_lon})
-        else:
-            da = da.isel({lon_name: da.sizes[lon_name] // 2})
+    if not lat_name or not lon_name or not time_name:
+        raise RuntimeError(f"Could not detect coordinates in dataset: {nc_path}")
 
-    for dim_name in ("depth", "depthu", "depthv", "depthw", "lev", "z", "sigma", "deptht"):
-        if dim_name in da.dims:
-            da = da.isel({dim_name: 0})
+    result: Dict[str, Dict[str, Optional[float]]] = {}
 
-    # Collapse any residual non-time dimensions deterministically.
-    residual_dims = [dim for dim in da.dims if dim != time_name]
-    for dim_name in residual_dims:
-        da = da.isel({dim_name: 0})
-
-    times = da[time_name].values
-    values = da.values
-
-    # Guarantee iterability for single-value arrays.
-    if np.ndim(times) == 0:
-        times = [times]
-        values = [values]
-
-    series: Dict[str, Optional[float]] = {}
-    for ts, val in zip(times, values):
-        ts_iso = normalize_time_value(ts)
-        if not ts_iso:
+    for var in variables:
+        found_name = _detect_variable(ds, var)
+        if not found_name:
+            print(f"[marine-update] variable '{var}' not found in {nc_path.name}")
+            result[var] = {}
             continue
-        series[ts_iso] = scalar_float(val)
-    return series
+
+        da = ds[found_name]
+        for depth_name in ("depth", "depthu", "depthv", "deptht"):
+            if depth_name in da.dims:
+                da = da.isel({depth_name: 0})
+
+        if time_name not in da.dims:
+            result[var] = {}
+            continue
+
+        da = _pick_nearest_valid_series(
+            da,
+            ds=ds,
+            lat_name=lat_name,
+            lon_name=lon_name,
+            time_name=time_name,
+            variable_name=var,
+        )
+        timestamps = da[time_name].values
+        values = da.values
+        series: Dict[str, Optional[float]] = {}
+        for idx, ts in enumerate(timestamps):
+            key = _normalize_time(ts)
+            series[key] = _to_optional_float(values[idx])
+        result[var] = series
+
+    ds.close()
+    return result
 
 
-def merge_by_timestamp(series_map: Dict[str, Dict[str, Optional[float]]]) -> Dict[str, Dict[str, Optional[float]]]:
-    merged: Dict[str, Dict[str, Optional[float]]] = {}
-    for field_name, series in series_map.items():
-        for ts, val in series.items():
-            if ts not in merged:
-                merged[ts] = {}
-            merged[ts][field_name] = val
-    return merged
+def _derive_current_direction(u: float, v: float) -> float:
+    # 0 deg = North, clockwise.
+    return (math.degrees(math.atan2(u, v)) + 360.0) % 360.0
 
 
-def current_speed(u: Optional[float], v: Optional[float]) -> Optional[float]:
-    if u is None or v is None:
-        return None
-    return math.sqrt((u * u) + (v * v))
-
-
-def current_direction(u: Optional[float], v: Optional[float]) -> Optional[float]:
-    if u is None or v is None:
-        return None
-    # 0° = North, clockwise.
-    direction = (math.degrees(math.atan2(u, v)) + 360.0) % 360.0
-    return direction
-
-
-def fill_with_last_valid(points: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    last_values: Dict[str, Optional[float]] = {
-        "water_temperature": None,
-        "current_u": None,
-        "current_v": None,
-        "salinity": None,
-        "wave_height": None,
-        "wave_direction": None,
-        "wave_period": None,
-    }
-
-    out: List[Dict[str, Any]] = []
-    for point in points:
-        normalized = dict(point)
-        for key in last_values:
-            if normalized.get(key) is None:
-                normalized[key] = last_values[key]
-            else:
-                last_values[key] = normalized[key]
-
-        normalized["current_speed"] = current_speed(normalized.get("current_u"), normalized.get("current_v"))
-        normalized["current_direction"] = current_direction(normalized.get("current_u"), normalized.get("current_v"))
-        out.append(normalized)
-    return out
-
-
-def chunked(items: List[Dict[str, Any]], size: int) -> Iterable[List[Dict[str, Any]]]:
-    for idx in range(0, len(items), size):
-        yield items[idx : idx + size]
-
-
-def download_subsets(username: str, password: str, output_dir: Path) -> Dict[str, Path]:
-    now = utc_now()
-    start = now - dt.timedelta(hours=int(os.getenv("COPERNICUS_LOOKBACK_HOURS", "72")))
-    end = now + dt.timedelta(hours=int(os.getenv("COPERNICUS_FORECAST_HOURS", "120")))
-
-    print(f"Subset time window: {to_iso(start)} -> {to_iso(end)}")
-
-    temp_name = "constanta_temp.nc"
-    cur_name = "constanta_cur.nc"
-    sal_name = "constanta_sal.nc"
-    wav_name = "constanta_wav.nc"
-
-    temp_result = safe_subset(
-        dataset_id=DATASET_TEMP,
-        variables=[VAR_TEMP],
-        start_datetime=to_iso(start),
-        end_datetime=to_iso(end),
-        output_directory=str(output_dir),
-        output_filename=temp_name,
-        username=username,
-        password=password,
-        minimum_depth=0.0,
-        maximum_depth=1.0,
-        **BBOX,
+def _build_records(
+    phys: Dict[str, Dict[str, Optional[float]]],
+    wav: Dict[str, Dict[str, Optional[float]]],
+) -> List[Dict[str, object]]:
+    all_times = sorted(
+        set(phys.get("thetao", {}).keys())
+        | set(phys.get("uo", {}).keys())
+        | set(phys.get("vo", {}).keys())
+        | set(phys.get("so", {}).keys())
+        | set(wav.get("VHM0", {}).keys())
+        | set(wav.get("VMDR", {}).keys())
+        | set(wav.get("VTPK", {}).keys())
     )
+    if not all_times:
+        return []
 
-    cur_result = safe_subset(
-        dataset_id=DATASET_CUR,
-        variables=[VAR_U, VAR_V],
-        start_datetime=to_iso(start),
-        end_datetime=to_iso(end),
-        output_directory=str(output_dir),
-        output_filename=cur_name,
-        username=username,
-        password=password,
-        minimum_depth=0.0,
-        maximum_depth=1.0,
-        **BBOX,
-    )
+    last_temp: Optional[float] = None
+    last_u: Optional[float] = None
+    last_v: Optional[float] = None
+    last_salinity: Optional[float] = None
+    last_wave_height: Optional[float] = None
+    last_wave_direction: Optional[float] = None
+    last_wave_period: Optional[float] = None
 
-    sal_result = safe_subset(
-        dataset_id=DATASET_SAL,
-        variables=[VAR_SAL],
-        start_datetime=to_iso(start),
-        end_datetime=to_iso(end),
-        output_directory=str(output_dir),
-        output_filename=sal_name,
-        username=username,
-        password=password,
-        minimum_depth=0.0,
-        maximum_depth=1.0,
-        **BBOX,
-    )
+    records: List[Dict[str, object]] = []
+    for ts in all_times:
+        last_temp = phys.get("thetao", {}).get(ts, None) if phys.get("thetao", {}).get(ts, None) is not None else last_temp
+        last_u = phys.get("uo", {}).get(ts, None) if phys.get("uo", {}).get(ts, None) is not None else last_u
+        last_v = phys.get("vo", {}).get(ts, None) if phys.get("vo", {}).get(ts, None) is not None else last_v
+        last_salinity = phys.get("so", {}).get(ts, None) if phys.get("so", {}).get(ts, None) is not None else last_salinity
+        last_wave_height = (
+            wav.get("VHM0", {}).get(ts, None)
+            if wav.get("VHM0", {}).get(ts, None) is not None
+            else last_wave_height
+        )
+        last_wave_direction = (
+            wav.get("VMDR", {}).get(ts, None)
+            if wav.get("VMDR", {}).get(ts, None) is not None
+            else last_wave_direction
+        )
+        last_wave_period = (
+            wav.get("VTPK", {}).get(ts, None)
+            if wav.get("VTPK", {}).get(ts, None) is not None
+            else last_wave_period
+        )
 
-    wav_result = safe_subset(
-        dataset_id=DATASET_WAV,
-        variables=VARS_WAV,
-        start_datetime=to_iso(start),
-        end_datetime=to_iso(end),
-        output_directory=str(output_dir),
-        output_filename=wav_name,
-        username=username,
-        password=password,
-        **BBOX,
-    )
+        current_speed = None
+        current_direction = None
+        if last_u is not None and last_v is not None:
+            current_speed = math.sqrt(last_u * last_u + last_v * last_v)
+            current_direction = _derive_current_direction(last_u, last_v)
 
-    temp_path = resolve_subset_path(temp_result, output_dir, temp_name)
-    cur_path = resolve_subset_path(cur_result, output_dir, cur_name)
-    sal_path = resolve_subset_path(sal_result, output_dir, sal_name)
-    wav_path = resolve_subset_path(wav_result, output_dir, wav_name)
-    print(f"Downloaded temp subset: {temp_path}")
-    print(f"Downloaded current subset: {cur_path}")
-    print(f"Downloaded salinity subset: {sal_path}")
-    print(f"Downloaded wave subset: {wav_path}")
-    return {"temp": temp_path, "cur": cur_path, "sal": sal_path, "waves": wav_path}
-
-
-def build_normalized_rows(temp_path: Path, cur_path: Path, sal_path: Path, waves_path: Path) -> List[Dict[str, Any]]:
-    # Force netcdf4 backend in CI to avoid optional h5netcdf/h5py issues.
-    with (
-        xr.open_dataset(temp_path, engine="netcdf4") as ds_temp,
-        xr.open_dataset(cur_path, engine="netcdf4") as ds_cur,
-        xr.open_dataset(sal_path, engine="netcdf4") as ds_sal,
-        xr.open_dataset(waves_path, engine="netcdf4") as ds_wav,
-    ):
-        var_thetao = first_existing_var(ds_temp, ["thetao"])
-        var_uo = first_existing_var(ds_cur, ["uo"])
-        var_vo = first_existing_var(ds_cur, ["vo"])
-        var_so = first_existing_var(ds_sal, ["so"])
-
-        var_vhm0 = first_existing_var(ds_wav, ["VHM0", "vhm0"])
-        var_vmdr = first_existing_var(ds_wav, ["VMDR", "vmdr"])
-        var_vtpk = first_existing_var(ds_wav, ["VTPK", "vtpk"])
-
-        series_map: Dict[str, Dict[str, Optional[float]]] = {}
-        if var_thetao:
-            series_map["water_temperature"] = extract_series(ds_temp, var_thetao, CONST_LAT, CONST_LON)
-        if var_uo:
-            series_map["current_u"] = extract_series(ds_cur, var_uo, CONST_LAT, CONST_LON)
-        if var_vo:
-            series_map["current_v"] = extract_series(ds_cur, var_vo, CONST_LAT, CONST_LON)
-        if var_so:
-            series_map["salinity"] = extract_series(ds_sal, var_so, CONST_LAT, CONST_LON)
-        if var_vhm0:
-            series_map["wave_height"] = extract_series(ds_wav, var_vhm0, CONST_LAT, CONST_LON)
-        if var_vmdr:
-            series_map["wave_direction"] = extract_series(ds_wav, var_vmdr, CONST_LAT, CONST_LON)
-        if var_vtpk:
-            series_map["wave_period"] = extract_series(ds_wav, var_vtpk, CONST_LAT, CONST_LON)
-
-    merged = merge_by_timestamp(series_map)
-    ordered_points = []
-    for ts in sorted(merged.keys()):
-        ordered_points.append({"timestamp": ts, **merged[ts]})
-
-    filled_points = fill_with_last_valid(ordered_points)
-
-    normalized_rows: List[Dict[str, Any]] = []
-    for point in filled_points:
-        normalized_rows.append(
+        records.append(
             {
                 "station_id": STATION_ID,
-                "timestamp": point["timestamp"],
-                "water_temperature": point.get("water_temperature"),
-                "current_u": point.get("current_u"),
-                "current_v": point.get("current_v"),
-                "current_speed": point.get("current_speed"),
-                "current_direction": point.get("current_direction"),
-                "salinity": point.get("salinity"),
-                "wave_height": point.get("wave_height"),
-                "wave_direction": point.get("wave_direction"),
-                "wave_period": point.get("wave_period"),
+                "timestamp": ts,
+                "water_temperature": last_temp,
+                "current_u": last_u,
+                "current_v": last_v,
+                "current_speed": current_speed,
+                "current_direction": current_direction,
+                "salinity": last_salinity,
+                "wave_height": last_wave_height,
+                "wave_direction": last_wave_direction,
+                "wave_period": last_wave_period,
                 "source": SOURCE_LABEL,
             }
         )
 
-    return normalized_rows
+    return records
 
 
-def upsert_rows(rows: List[Dict[str, Any]], supabase_url: str, supabase_key: str) -> None:
-    if not rows:
-        print("No rows to upsert.")
-        return
+def _upsert_supabase(records: List[Dict[str, object]]) -> None:
+    if not records:
+        raise RuntimeError("No records to upsert.")
 
-    client = create_client(supabase_url, supabase_key)
-    for batch in chunked(rows, 500):
-        client.table("marine_station_data").upsert(batch, on_conflict="station_id,timestamp").execute()
-    print(f"Upserted {len(rows)} rows into marine_station_data.")
+    supabase_url = _require_any_env("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL").rstrip("/")
+    service_role = _require_env("SUPABASE_SERVICE_ROLE_KEY")
+    endpoint = f"{supabase_url}/rest/v1/marine_station_data?on_conflict=station_id,timestamp"
 
-    retention_days = int(os.getenv("MARINE_RETENTION_DAYS", "45"))
-    cutoff = to_iso(utc_now() - dt.timedelta(days=retention_days))
-    client.table("marine_station_data").delete().eq("station_id", STATION_ID).lt("timestamp", cutoff).execute()
-    print(f"Retention cleanup completed. Kept last {retention_days} days.")
+    headers = {
+        "apikey": service_role,
+        "Authorization": f"Bearer {service_role}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=minimal",
+    }
+
+    batch_size = 500
+    for idx in range(0, len(records), batch_size):
+        chunk = records[idx : idx + batch_size]
+        payload = json.dumps(chunk).encode("utf-8")
+        req = request.Request(endpoint, data=payload, headers=headers, method="POST")
+        try:
+            with request.urlopen(req) as resp:
+                if resp.status not in (200, 201, 204):
+                    body = resp.read().decode("utf-8", errors="replace")
+                    raise RuntimeError(f"Supabase upsert failed: HTTP {resp.status} {body}")
+        except urlerror.HTTPError as exc:
+            body = exc.read().decode("utf-8", errors="replace")
+            raise RuntimeError(f"Supabase upsert failed: HTTP {exc.code} {body}") from exc
 
 
-def main() -> None:
-    username = read_env("COPERNICUSMARINE_SERVICE_USERNAME")
-    password = read_env("COPERNICUSMARINE_SERVICE_PASSWORD")
-    supabase_url = os.getenv("SUPABASE_URL") or read_env("NEXT_PUBLIC_SUPABASE_URL")
-    supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or read_env("SUPABASE_KEY")
+def main() -> int:
+    _require_env("COPERNICUSMARINE_SERVICE_USERNAME")
+    _require_env("COPERNICUSMARINE_SERVICE_PASSWORD")
+    _require_any_env("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL")
+    _require_env("SUPABASE_SERVICE_ROLE_KEY")
 
-    maybe_login(username, password)
+    now = dt.datetime.now(tz=dt.timezone.utc)
+    start = _iso_z(now - dt.timedelta(days=7))
+    end = _iso_z(now + dt.timedelta(days=5))
 
-    with tempfile.TemporaryDirectory(prefix="copernicus_constanta_") as tmp_dir:
-        output_dir = Path(tmp_dir)
-        paths = download_subsets(username=username, password=password, output_dir=output_dir)
-        rows = build_normalized_rows(paths["temp"], paths["cur"], paths["sal"], paths["waves"])
-        upsert_rows(rows, supabase_url=supabase_url, supabase_key=supabase_key)
+    base_output = Path("data") / "copernicus"
+    temp_output = base_output / "temp"
+    cur_output = base_output / "cur"
+    sal_output = base_output / "sal"
+    wav_output = base_output / "wav"
+    temp_output.mkdir(parents=True, exist_ok=True)
+    cur_output.mkdir(parents=True, exist_ok=True)
+    sal_output.mkdir(parents=True, exist_ok=True)
+    wav_output.mkdir(parents=True, exist_ok=True)
 
-    print("Constanta marine update finished successfully.")
+    _run_command(
+        [
+            "copernicusmarine",
+            "subset",
+            "--dataset-id",
+            TEMP_DATASET_ID,
+            *_variable_flags(TEMP_VARIABLES),
+            "--minimum-longitude",
+            str(MIN_LON),
+            "--maximum-longitude",
+            str(MAX_LON),
+            "--minimum-latitude",
+            str(MIN_LAT),
+            "--maximum-latitude",
+            str(MAX_LAT),
+            "--start-datetime",
+            start,
+            "--end-datetime",
+            end,
+            "--output-directory",
+            str(temp_output),
+        ]
+    )
+
+    _run_command(
+        [
+            "copernicusmarine",
+            "subset",
+            "--dataset-id",
+            CURRENT_DATASET_ID,
+            *_variable_flags(CURRENT_VARIABLES),
+            "--minimum-longitude",
+            str(MIN_LON),
+            "--maximum-longitude",
+            str(MAX_LON),
+            "--minimum-latitude",
+            str(MIN_LAT),
+            "--maximum-latitude",
+            str(MAX_LAT),
+            "--start-datetime",
+            start,
+            "--end-datetime",
+            end,
+            "--output-directory",
+            str(cur_output),
+        ]
+    )
+
+    _run_command(
+        [
+            "copernicusmarine",
+            "subset",
+            "--dataset-id",
+            SALINITY_DATASET_ID,
+            *_variable_flags(SALINITY_VARIABLES),
+            "--minimum-longitude",
+            str(MIN_LON),
+            "--maximum-longitude",
+            str(MAX_LON),
+            "--minimum-latitude",
+            str(MIN_LAT),
+            "--maximum-latitude",
+            str(MAX_LAT),
+            "--start-datetime",
+            start,
+            "--end-datetime",
+            end,
+            "--output-directory",
+            str(sal_output),
+        ]
+    )
+
+    _run_command(
+        [
+            "copernicusmarine",
+            "subset",
+            "--dataset-id",
+            WAVE_DATASET_ID,
+            *_variable_flags(WAVE_VARIABLES),
+            "--minimum-longitude",
+            str(MIN_LON),
+            "--maximum-longitude",
+            str(MAX_LON),
+            "--minimum-latitude",
+            str(MIN_LAT),
+            "--maximum-latitude",
+            str(MAX_LAT),
+            "--start-datetime",
+            start,
+            "--end-datetime",
+            end,
+            "--output-directory",
+            str(wav_output),
+        ]
+    )
+
+    temp_nc = _find_netcdf_file(temp_output)
+    cur_nc = _find_netcdf_file(cur_output)
+    sal_nc = _find_netcdf_file(sal_output)
+    wav_nc = _find_netcdf_file(wav_output)
+
+    phys_series: Dict[str, Dict[str, Optional[float]]] = {}
+    phys_series.update(_extract_series(temp_nc, TEMP_VARIABLES))
+    phys_series.update(_extract_series(cur_nc, CURRENT_VARIABLES))
+    phys_series.update(_extract_series(sal_nc, SALINITY_VARIABLES))
+    wave_series = _extract_series(wav_nc, WAVE_VARIABLES)
+    records = _build_records(phys_series, wave_series)
+    if not records:
+        raise RuntimeError("No records were generated from Copernicus subset results.")
+
+    value_fields = (
+        "water_temperature",
+        "current_u",
+        "current_v",
+        "current_speed",
+        "current_direction",
+        "salinity",
+        "wave_height",
+        "wave_direction",
+        "wave_period",
+    )
+    field_counts = {field: 0 for field in value_fields}
+    for record in records:
+        for field in value_fields:
+            if record.get(field) is not None:
+                field_counts[field] += 1
+    print("[marine-update] non-null counts:", json.dumps(field_counts))
+
+    has_any_value = any(any(record.get(field) is not None for field in value_fields) for record in records)
+    if not has_any_value:
+        raise RuntimeError(
+            "All generated marine records are null. Likely selected grid cell is on land or subset is invalid."
+        )
+
+    _upsert_supabase(records)
+    print(f"Upserted {len(records)} records for station={STATION_ID}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        raise SystemExit(main())
+    except Exception as exc:  # pragma: no cover - runtime guard
+        print(f"[marine-update] ERROR: {exc}", file=sys.stderr)
+        raise SystemExit(1)
