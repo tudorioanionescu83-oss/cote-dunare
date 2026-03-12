@@ -11,6 +11,7 @@ from __future__ import annotations
 import datetime as dt
 import math
 import os
+import re
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
@@ -68,13 +69,23 @@ def maybe_login(username: str, password: str) -> None:
 
 
 def safe_subset(**kwargs: Any) -> Any:
-    try:
-        return copernicusmarine.subset(**kwargs)
-    except TypeError:
-        fallback = dict(kwargs)
-        fallback.pop("force_download", None)
-        fallback.pop("overwrite_output_data", None)
-        return copernicusmarine.subset(**fallback)
+    request = dict(kwargs)
+    # Deprecated options in newer versions.
+    request.pop("force_download", None)
+    request.pop("overwrite_output_data", None)
+
+    while True:
+        try:
+            return copernicusmarine.subset(**request)
+        except TypeError as exc:
+            match = re.search(r"unexpected keyword argument '([^']+)'", str(exc))
+            if not match:
+                raise
+            bad_key = match.group(1)
+            if bad_key not in request:
+                raise
+            request.pop(bad_key, None)
+            print(f"Removed unsupported subset option: {bad_key}")
 
 
 def resolve_subset_path(result: Any, output_dir: Path, expected_name: str) -> Path:
@@ -260,8 +271,6 @@ def download_subsets(username: str, password: str, output_dir: Path) -> Dict[str
         end_datetime=to_iso(end),
         output_directory=str(output_dir),
         output_filename=phy_name,
-        force_download=True,
-        overwrite_output_data=True,
         username=username,
         password=password,
         minimum_depth=0.0,
@@ -276,8 +285,6 @@ def download_subsets(username: str, password: str, output_dir: Path) -> Dict[str
         end_datetime=to_iso(end),
         output_directory=str(output_dir),
         output_filename=wav_name,
-        force_download=True,
-        overwrite_output_data=True,
         username=username,
         password=password,
         **BBOX,
