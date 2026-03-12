@@ -39,7 +39,7 @@ export default function Page() {
     current: null,
     timeseries: null,
     forecast: null,
-    layers: [],
+    layers: { layers: [] },
   });
   const [chartByStation, setChartByStation] = useState({});
   const [chartLoading, setChartLoading] = useState(false);
@@ -247,7 +247,7 @@ export default function Page() {
             current: null,
             timeseries: null,
             forecast: null,
-            layers: [],
+            layers: { layers: [] },
           });
         }
         return;
@@ -287,7 +287,7 @@ export default function Page() {
           current: currentPayload,
           timeseries: timeseriesPayload,
           forecast: forecastPayload,
-          layers: layersPayload?.layers || [],
+          layers: layersPayload || { layers: [] },
         });
       } catch (error) {
         if (!cancelled) {
@@ -297,7 +297,7 @@ export default function Page() {
             current: null,
             timeseries: null,
             forecast: null,
-            layers: [],
+            layers: { layers: [] },
           });
         }
       }

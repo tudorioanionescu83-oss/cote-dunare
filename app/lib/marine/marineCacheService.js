@@ -49,3 +49,19 @@ export async function upsertMarineRows(rows) {
   });
   if (error) throw new Error(error.message);
 }
+
+export async function readLatestMarineLayerSnapshot({ stationId = "constanta_marine" } = {}) {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("marine_layer_snapshots")
+    .select(
+      "station_id,timestamp,bbox,temperature_points,salinity_points,wave_points,current_vectors,source,created_at"
+    )
+    .eq("station_id", stationId)
+    .order("timestamp", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data || null;
+}

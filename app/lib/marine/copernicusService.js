@@ -3,7 +3,7 @@ import {
   COPERNICUS_DATASETS,
   COPERNICUS_VARIABLES,
 } from "./marineStationConfig";
-import { readMarineRows } from "./marineCacheService";
+import { readLatestMarineLayerSnapshot, readMarineRows } from "./marineCacheService";
 import {
   currentDirectionFromUV,
   currentSpeedFromUV,
@@ -15,6 +15,7 @@ const SOURCE_LABEL = "Copernicus Marine";
 const MAX_TIMESERIES_HOURS = 24 * 14;
 const MAX_FORECAST_DAYS = 10;
 const FRESHNESS_HOURS = 12;
+const BATHYMETRY_POINTS_URL = "/marine/constanta-bathymetry.json";
 
 function inferFreshness(timestamp) {
   const ts = Date.parse(timestamp || "");
@@ -120,12 +121,49 @@ export async function getConstantaMarineForecast(days = 5) {
   };
 }
 
-export function getConstantaMarineLayers() {
-  return {
+function sanitizePointList(points) {
+  if (!Array.isArray(points)) return [];
+  return points
+    .map((point) => ({
+      lat: toFiniteNumber(point?.lat),
+      lon: toFiniteNumber(point?.lon),
+      value: toFiniteNumber(point?.value),
+    }))
+    .filter((point) => point.lat !== null && point.lon !== null && point.value !== null);
+}
+
+function sanitizeVectorList(vectors) {
+  if (!Array.isArray(vectors)) return [];
+  return vectors
+    .map((point) => ({
+      lat: toFiniteNumber(point?.lat),
+      lon: toFiniteNumber(point?.lon),
+      u: toFiniteNumber(point?.u),
+      v: toFiniteNumber(point?.v),
+      speed: toFiniteNumber(point?.speed),
+      direction: toFiniteNumber(point?.direction),
+    }))
+    .filter(
+      (point) =>
+        point.lat !== null &&
+        point.lon !== null &&
+        point.u !== null &&
+        point.v !== null &&
+        point.speed !== null &&
+        point.direction !== null
+    );
+}
+
+export async function getConstantaMarineLayers() {
+  const payload = {
     stationId: CONSTANTA_MARINE_STATION.id,
     name: CONSTANTA_MARINE_STATION.name,
     kind: CONSTANTA_MARINE_STATION.kind,
     source: SOURCE_LABEL,
+    bathymetry: {
+      source: "Copernicus Marine BLK-MFC_007_003",
+      pointsUrl: BATHYMETRY_POINTS_URL,
+    },
     layers: [
       {
         id: "temperature",
@@ -160,6 +198,14 @@ export function getConstantaMarineLayers() {
         wmtsTemplateUrl: null,
       },
       {
+        id: "bathymetry",
+        label: "Batimetrie",
+        datasetId: "BLK-MFC_007_003_mask_bathy",
+        variables: ["deptho"],
+        provider: "copernicus",
+        wmtsTemplateUrl: null,
+      },
+      {
         id: "forecast",
         label: "Prognoza",
         datasetId: `${COPERNICUS_DATASETS.physical} + ${COPERNICUS_DATASETS.waves}`,
@@ -169,4 +215,23 @@ export function getConstantaMarineLayers() {
       },
     ],
   };
+
+  try {
+    const snapshot = await readLatestMarineLayerSnapshot({ stationId: CONSTANTA_MARINE_STATION.id });
+    if (snapshot) {
+      payload.snapshot = {
+        timestamp: snapshot.timestamp,
+        source: snapshot.source || SOURCE_LABEL,
+        bbox: snapshot.bbox || CONSTANTA_MARINE_STATION.bbox,
+        temperaturePoints: sanitizePointList(snapshot.temperature_points),
+        salinityPoints: sanitizePointList(snapshot.salinity_points),
+        wavePoints: sanitizePointList(snapshot.wave_points),
+        currentVectors: sanitizeVectorList(snapshot.current_vectors),
+      };
+    }
+  } catch {
+    // Optional enhancement: keep endpoint functional even if snapshot table is absent or unreadable.
+  }
+
+  return payload;
 }

@@ -8,7 +8,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
 from urllib import error as urlerror
 from urllib import request
 
@@ -45,6 +45,9 @@ TEMP_VARIABLES = ["thetao"]
 CURRENT_VARIABLES = ["uo", "vo"]
 SALINITY_VARIABLES = ["so"]
 WAVE_VARIABLES = ["VHM0", "VMDR", "VTPK"]
+
+GRID_MAX_POINTS = 950
+GRID_MAX_VECTORS = 380
 
 
 def _require_env(name: str) -> str:
@@ -257,6 +260,261 @@ def _extract_series(nc_path: Path, variables: Iterable[str]) -> Dict[str, Dict[s
     return result
 
 
+def _open_dataset(path: Path) -> xr.Dataset:
+    try:
+        return xr.open_dataset(path, engine="netcdf4")
+    except Exception:
+        return xr.open_dataset(path)
+
+
+def _to_lat_lon_mesh(ds: xr.Dataset, lat_name: str, lon_name: str) -> Tuple[np.ndarray, np.ndarray]:
+    lat_raw = _as_ndarray_no_mask(ds[lat_name].values)
+    lon_raw = _as_ndarray_no_mask(ds[lon_name].values)
+
+    if lat_raw.ndim == 1 and lon_raw.ndim == 1:
+        lat_2d, lon_2d = np.meshgrid(lat_raw, lon_raw, indexing="ij")
+        return lat_2d.astype(float), lon_2d.astype(float)
+
+    if lat_raw.ndim == 2 and lon_raw.ndim == 2:
+        return lat_raw.astype(float), lon_raw.astype(float)
+
+    raise RuntimeError(
+        f"Unsupported coordinate layout for lat/lon: lat ndim={lat_raw.ndim}, lon ndim={lon_raw.ndim}"
+    )
+
+
+def _latest_2d_field(
+    ds: xr.Dataset,
+    *,
+    var_name: str,
+    lat_name: str,
+    lon_name: str,
+) -> Tuple[Optional[np.ndarray], Optional[str]]:
+    found = _detect_variable(ds, var_name)
+    if not found:
+        return None, None
+
+    da = ds[found]
+    time_name = _detect_coord_name(ds, ("time", "valid_time"))
+
+    # Keep only the surface layer where applicable.
+    for depth_name in ("depth", "depthu", "depthv", "deptht"):
+        if depth_name in da.dims:
+            da = da.isel({depth_name: 0})
+
+    timestamp: Optional[str] = None
+    if time_name and time_name in da.dims and da.sizes.get(time_name, 0) > 0:
+        da = da.isel({time_name: -1})
+        try:
+            timestamp = _normalize_time(da[time_name].values)
+        except Exception:
+            timestamp = None
+
+    # Drop any remaining non-spatial dimensions defensively.
+    for dim in list(da.dims):
+        if dim not in (lat_name, lon_name):
+            if da.sizes.get(dim, 0) > 0:
+                da = da.isel({dim: 0})
+            else:
+                return None, timestamp
+
+    values = _as_ndarray_no_mask(da.values)
+    if values.ndim != 2:
+        return None, timestamp
+
+    return values.astype(float), timestamp
+
+
+def _bbox_mask(lat_2d: np.ndarray, lon_2d: np.ndarray) -> np.ndarray:
+    return (
+        (lat_2d >= MIN_LAT)
+        & (lat_2d <= MAX_LAT)
+        & (lon_2d >= MIN_LON)
+        & (lon_2d <= MAX_LON)
+    )
+
+
+def _sample_scalar_points(
+    values_2d: np.ndarray,
+    lat_2d: np.ndarray,
+    lon_2d: np.ndarray,
+    *,
+    max_points: int = GRID_MAX_POINTS,
+) -> List[Dict[str, float]]:
+    if values_2d.shape != lat_2d.shape or values_2d.shape != lon_2d.shape:
+        return []
+
+    valid = np.isfinite(values_2d) & np.isfinite(lat_2d) & np.isfinite(lon_2d) & _bbox_mask(lat_2d, lon_2d)
+    candidates = int(np.count_nonzero(valid))
+    if candidates <= 0:
+        return []
+
+    stride = max(1, int(math.ceil(math.sqrt(candidates / max(1, max_points)))))
+    ny, nx = values_2d.shape
+    points: List[Dict[str, float]] = []
+
+    for j in range(0, ny, stride):
+        for i in range(0, nx, stride):
+            if not valid[j, i]:
+                continue
+            v = float(values_2d[j, i])
+            if not math.isfinite(v) or v > 1e20:
+                continue
+            points.append(
+                {
+                    "lat": round(float(lat_2d[j, i]), 5),
+                    "lon": round(float(lon_2d[j, i]), 5),
+                    "value": round(v, 4),
+                }
+            )
+            if len(points) >= max_points:
+                return points
+
+    return points
+
+
+def _sample_current_vectors(
+    u_2d: np.ndarray,
+    v_2d: np.ndarray,
+    lat_2d: np.ndarray,
+    lon_2d: np.ndarray,
+    *,
+    max_vectors: int = GRID_MAX_VECTORS,
+) -> List[Dict[str, float]]:
+    if u_2d.shape != v_2d.shape or u_2d.shape != lat_2d.shape or u_2d.shape != lon_2d.shape:
+        return []
+
+    speed = np.sqrt(u_2d * u_2d + v_2d * v_2d)
+    valid = (
+        np.isfinite(u_2d)
+        & np.isfinite(v_2d)
+        & np.isfinite(speed)
+        & np.isfinite(lat_2d)
+        & np.isfinite(lon_2d)
+        & (speed >= 0.01)
+        & _bbox_mask(lat_2d, lon_2d)
+    )
+
+    candidates = int(np.count_nonzero(valid))
+    if candidates <= 0:
+        return []
+
+    stride = max(1, int(math.ceil(math.sqrt(candidates / max(1, max_vectors)))))
+    ny, nx = speed.shape
+    vectors: List[Dict[str, float]] = []
+
+    for j in range(0, ny, stride):
+        for i in range(0, nx, stride):
+            if not valid[j, i]:
+                continue
+            u = float(u_2d[j, i])
+            v = float(v_2d[j, i])
+            s = float(speed[j, i])
+            direction = _derive_current_direction(u, v)
+            vectors.append(
+                {
+                    "lat": round(float(lat_2d[j, i]), 5),
+                    "lon": round(float(lon_2d[j, i]), 5),
+                    "u": round(u, 5),
+                    "v": round(v, 5),
+                    "speed": round(s, 5),
+                    "direction": round(direction, 2),
+                }
+            )
+            if len(vectors) >= max_vectors:
+                return vectors
+
+    return vectors
+
+
+def _extract_grid_snapshot(
+    *,
+    temp_nc: Path,
+    cur_nc: Path,
+    sal_nc: Path,
+    wav_nc: Path,
+) -> Dict[str, object]:
+    temp_ds = _open_dataset(temp_nc)
+    cur_ds = _open_dataset(cur_nc)
+    sal_ds = _open_dataset(sal_nc)
+    wav_ds = _open_dataset(wav_nc)
+
+    try:
+        temp_lat_name = _detect_coord_name(temp_ds, ("latitude", "lat", "nav_lat"))
+        temp_lon_name = _detect_coord_name(temp_ds, ("longitude", "lon", "nav_lon"))
+        cur_lat_name = _detect_coord_name(cur_ds, ("latitude", "lat", "nav_lat"))
+        cur_lon_name = _detect_coord_name(cur_ds, ("longitude", "lon", "nav_lon"))
+        sal_lat_name = _detect_coord_name(sal_ds, ("latitude", "lat", "nav_lat"))
+        sal_lon_name = _detect_coord_name(sal_ds, ("longitude", "lon", "nav_lon"))
+        wav_lat_name = _detect_coord_name(wav_ds, ("latitude", "lat", "nav_lat"))
+        wav_lon_name = _detect_coord_name(wav_ds, ("longitude", "lon", "nav_lon"))
+
+        if not temp_lat_name or not temp_lon_name:
+            raise RuntimeError("Temperature dataset missing lat/lon coordinates.")
+        if not cur_lat_name or not cur_lon_name:
+            raise RuntimeError("Current dataset missing lat/lon coordinates.")
+        if not sal_lat_name or not sal_lon_name:
+            raise RuntimeError("Salinity dataset missing lat/lon coordinates.")
+        if not wav_lat_name or not wav_lon_name:
+            raise RuntimeError("Wave dataset missing lat/lon coordinates.")
+
+        temp_lat_2d, temp_lon_2d = _to_lat_lon_mesh(temp_ds, temp_lat_name, temp_lon_name)
+        cur_lat_2d, cur_lon_2d = _to_lat_lon_mesh(cur_ds, cur_lat_name, cur_lon_name)
+        sal_lat_2d, sal_lon_2d = _to_lat_lon_mesh(sal_ds, sal_lat_name, sal_lon_name)
+        wav_lat_2d, wav_lon_2d = _to_lat_lon_mesh(wav_ds, wav_lat_name, wav_lon_name)
+
+        temp_values, temp_ts = _latest_2d_field(temp_ds, var_name="thetao", lat_name=temp_lat_name, lon_name=temp_lon_name)
+        sal_values, sal_ts = _latest_2d_field(sal_ds, var_name="so", lat_name=sal_lat_name, lon_name=sal_lon_name)
+        wave_values, wave_ts = _latest_2d_field(wav_ds, var_name="VHM0", lat_name=wav_lat_name, lon_name=wav_lon_name)
+        u_values, u_ts = _latest_2d_field(cur_ds, var_name="uo", lat_name=cur_lat_name, lon_name=cur_lon_name)
+        v_values, v_ts = _latest_2d_field(cur_ds, var_name="vo", lat_name=cur_lat_name, lon_name=cur_lon_name)
+
+        temperature_points = (
+            _sample_scalar_points(temp_values, temp_lat_2d, temp_lon_2d, max_points=GRID_MAX_POINTS)
+            if temp_values is not None
+            else []
+        )
+        salinity_points = (
+            _sample_scalar_points(sal_values, sal_lat_2d, sal_lon_2d, max_points=GRID_MAX_POINTS)
+            if sal_values is not None
+            else []
+        )
+        wave_points = (
+            _sample_scalar_points(wave_values, wav_lat_2d, wav_lon_2d, max_points=GRID_MAX_POINTS)
+            if wave_values is not None
+            else []
+        )
+        current_vectors = (
+            _sample_current_vectors(u_values, v_values, cur_lat_2d, cur_lon_2d, max_vectors=GRID_MAX_VECTORS)
+            if (u_values is not None and v_values is not None)
+            else []
+        )
+
+        all_timestamps = [ts for ts in (temp_ts, sal_ts, wave_ts, u_ts, v_ts) if ts]
+        snapshot_ts = max(all_timestamps) if all_timestamps else _iso_z(dt.datetime.now(tz=dt.timezone.utc))
+
+        return {
+            "station_id": STATION_ID,
+            "timestamp": snapshot_ts,
+            "bbox": {
+                "minLat": MIN_LAT,
+                "maxLat": MAX_LAT,
+                "minLon": MIN_LON,
+                "maxLon": MAX_LON,
+            },
+            "temperature_points": temperature_points,
+            "salinity_points": salinity_points,
+            "wave_points": wave_points,
+            "current_vectors": current_vectors,
+            "source": SOURCE_LABEL,
+        }
+    finally:
+        temp_ds.close()
+        cur_ds.close()
+        sal_ds.close()
+        wav_ds.close()
+
+
 def _derive_current_direction(u: float, v: float) -> float:
     # 0 deg = North, clockwise.
     return (math.degrees(math.atan2(u, v)) + 360.0) % 360.0
@@ -334,34 +592,56 @@ def _build_records(
     return records
 
 
-def _upsert_supabase(records: List[Dict[str, object]]) -> None:
-    if not records:
-        raise RuntimeError("No records to upsert.")
+def _upsert_rest_rows(
+    *,
+    table: str,
+    rows: List[Dict[str, object]],
+    on_conflict: str,
+    prefer: str = "resolution=merge-duplicates,return=minimal",
+) -> None:
+    if not rows:
+        raise RuntimeError(f"No rows to upsert in table: {table}")
 
     supabase_url = _require_any_env("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL").rstrip("/")
     service_role = _require_env("SUPABASE_SERVICE_ROLE_KEY")
-    endpoint = f"{supabase_url}/rest/v1/marine_station_data?on_conflict=station_id,timestamp"
+    endpoint = f"{supabase_url}/rest/v1/{table}?on_conflict={on_conflict}"
 
     headers = {
         "apikey": service_role,
         "Authorization": f"Bearer {service_role}",
         "Content-Type": "application/json",
-        "Prefer": "resolution=merge-duplicates,return=minimal",
+        "Prefer": prefer,
     }
 
     batch_size = 500
-    for idx in range(0, len(records), batch_size):
-        chunk = records[idx : idx + batch_size]
+    for idx in range(0, len(rows), batch_size):
+        chunk = rows[idx : idx + batch_size]
         payload = json.dumps(chunk).encode("utf-8")
         req = request.Request(endpoint, data=payload, headers=headers, method="POST")
         try:
             with request.urlopen(req) as resp:
                 if resp.status not in (200, 201, 204):
                     body = resp.read().decode("utf-8", errors="replace")
-                    raise RuntimeError(f"Supabase upsert failed: HTTP {resp.status} {body}")
+                    raise RuntimeError(f"Supabase upsert failed [{table}]: HTTP {resp.status} {body}")
         except urlerror.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
-            raise RuntimeError(f"Supabase upsert failed: HTTP {exc.code} {body}") from exc
+            raise RuntimeError(f"Supabase upsert failed [{table}]: HTTP {exc.code} {body}") from exc
+
+
+def _upsert_supabase(records: List[Dict[str, object]]) -> None:
+    _upsert_rest_rows(
+        table="marine_station_data",
+        rows=records,
+        on_conflict="station_id,timestamp",
+    )
+
+
+def _upsert_layer_snapshot(snapshot: Dict[str, object]) -> None:
+    _upsert_rest_rows(
+        table="marine_layer_snapshots",
+        rows=[snapshot],
+        on_conflict="station_id,timestamp",
+    )
 
 
 def main() -> int:
@@ -493,6 +773,12 @@ def main() -> int:
     records = _build_records(phys_series, wave_series)
     if not records:
         raise RuntimeError("No records were generated from Copernicus subset results.")
+    grid_snapshot = _extract_grid_snapshot(
+        temp_nc=temp_nc,
+        cur_nc=cur_nc,
+        sal_nc=sal_nc,
+        wav_nc=wav_nc,
+    )
 
     value_fields = (
         "water_temperature",
@@ -519,7 +805,19 @@ def main() -> int:
         )
 
     _upsert_supabase(records)
+    _upsert_layer_snapshot(grid_snapshot)
     print(f"Upserted {len(records)} records for station={STATION_ID}")
+    print(
+        "[marine-update] layer snapshot counts:",
+        json.dumps(
+            {
+                "temperature_points": len(grid_snapshot.get("temperature_points", [])),
+                "salinity_points": len(grid_snapshot.get("salinity_points", [])),
+                "wave_points": len(grid_snapshot.get("wave_points", [])),
+                "current_vectors": len(grid_snapshot.get("current_vectors", [])),
+            }
+        ),
+    )
     return 0
 
 

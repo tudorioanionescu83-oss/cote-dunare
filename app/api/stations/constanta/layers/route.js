@@ -6,7 +6,8 @@ export const revalidate = 0;
 
 export async function GET() {
   try {
-    return NextResponse.json(getConstantaMarineLayers(), {
+    const payload = await getConstantaMarineLayers();
+    return NextResponse.json(payload, {
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
         Pragma: "no-cache",

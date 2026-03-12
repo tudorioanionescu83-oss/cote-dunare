@@ -1,15 +1,16 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Circle, MapContainer, Marker, Pane, Polyline, Popup, TileLayer, useMapEvents } from "react-leaflet";
+import { Circle, CircleMarker, MapContainer, Marker, Pane, Polyline, Popup, TileLayer, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 const TAB_CONFIG = [
-  { id: "temperature", label: "Temperatura", unit: "\u00B0C" },
+  { id: "temperature", label: "Temperatura", unit: "°C" },
   { id: "salinity", label: "Salinitate", unit: "PSU" },
   { id: "currents", label: "Curenti", unit: "m/s" },
   { id: "waves", label: "Valuri", unit: "m" },
+  { id: "bathymetry", label: "Batimetrie", unit: "m" },
   { id: "forecast", label: "Prognoza", unit: "m" },
 ];
 
@@ -20,15 +21,6 @@ const SPEED_PRESETS = [
 ];
 
 const ROMANIA_TZ = "Europe/Bucharest";
-
-function valueByLayer(point, layerId) {
-  if (!point) return null;
-  if (layerId === "temperature") return point.waterTemperature;
-  if (layerId === "salinity") return point.salinity;
-  if (layerId === "currents") return point.currentSpeed;
-  if (layerId === "waves" || layerId === "forecast") return point.waveHeight;
-  return null;
-}
 
 function formatNumber(value, digits = 2) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return "-";
@@ -73,37 +65,46 @@ function interpolateColor(stops, t) {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
-function computeRange(points, layerId, fallbackValue) {
-  const values = (points || [])
-    .map((point) => valueByLayer(point, layerId))
-    .map((v) => (v === null || v === undefined ? NaN : Number(v)))
-    .filter((v) => Number.isFinite(v));
-
-  if (Number.isFinite(Number(fallbackValue))) values.push(Number(fallbackValue));
-  if (!values.length) return { min: 0, max: 1 };
-
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  if (max - min < 1e-9) return { min: min - 0.5, max: max + 0.5 };
-
-  const pad = (max - min) * 0.12;
-  return { min: min - pad, max: max + pad };
+function defaultPalette() {
+  return [
+    [30, 64, 175],
+    [14, 165, 233],
+    [16, 185, 129],
+    [250, 204, 21],
+    [249, 115, 22],
+    [220, 38, 38],
+  ];
 }
 
-function colorForValue(value, range) {
+function bathymetryPalette() {
+  return [
+    [191, 219, 254],
+    [125, 211, 252],
+    [56, 189, 248],
+    [14, 116, 144],
+    [15, 23, 42],
+  ];
+}
+
+function colorForValue(value, range, palette) {
   if (!Number.isFinite(Number(value))) return "#94a3b8";
   const t = (Number(value) - range.min) / Math.max(1e-6, range.max - range.min);
-  return interpolateColor(
-    [
-      [30, 64, 175],
-      [14, 165, 233],
-      [16, 185, 129],
-      [250, 204, 21],
-      [249, 115, 22],
-      [220, 38, 38],
-    ],
-    t
-  );
+  return interpolateColor(palette || defaultPalette(), t);
+}
+
+function computeRange(values, fallbackValue = null) {
+  const numeric = (values || [])
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value));
+
+  if (Number.isFinite(Number(fallbackValue))) numeric.push(Number(fallbackValue));
+  if (!numeric.length) return { min: 0, max: 1 };
+
+  const min = Math.min(...numeric);
+  const max = Math.max(...numeric);
+  if (max - min < 1e-9) return { min: min - 0.5, max: max + 0.5 };
+  const pad = (max - min) * 0.12;
+  return { min: min - pad, max: max + pad };
 }
 
 function destinationPoint(latDeg, lonDeg, bearingDeg, distanceKm) {
@@ -141,12 +142,77 @@ function MapClickCapture({ onMapClick }) {
   return null;
 }
 
-export default function MarineMapsPanel({ station, current, timeseries, forecast, layers = [] }) {
+function valueByTimePoint(point, layerId) {
+  if (!point) return null;
+  if (layerId === "temperature") return point.waterTemperature;
+  if (layerId === "salinity") return point.salinity;
+  if (layerId === "currents") return point.currentSpeed;
+  if (layerId === "waves" || layerId === "forecast") return point.waveHeight;
+  return null;
+}
+
+function nearestGridPointValue(latlng, points) {
+  if (!latlng || !Array.isArray(points) || points.length === 0) return null;
+  let best = null;
+  let bestDist = Infinity;
+  for (const point of points) {
+    const dLat = Number(point.lat) - Number(latlng.lat);
+    const dLon = Number(point.lon) - Number(latlng.lng);
+    const dist = dLat * dLat + dLon * dLon;
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = point;
+    }
+  }
+  return best?.value ?? null;
+}
+
+export default function MarineMapsPanel({ station, current, timeseries, forecast, layers = { layers: [] } }) {
   const [activeLayer, setActiveLayer] = useState("temperature");
   const [clickedPoint, setClickedPoint] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speedMode, setSpeedMode] = useState("normal");
+  const [bathymetryData, setBathymetryData] = useState({ loading: false, points: [], minValue: null, maxValue: null });
+
+  const layerPayload = useMemo(() => (Array.isArray(layers) ? { layers } : layers || { layers: [] }), [layers]);
+  const layerList = layerPayload?.layers || [];
+  const layerSnapshot = layerPayload?.snapshot || null;
+  const bathymetryMeta = layerPayload?.bathymetry || null;
+
+  useEffect(() => {
+    let cancelled = false;
+    const url = bathymetryMeta?.pointsUrl;
+    if (!url) {
+      setBathymetryData({ loading: false, points: [], minValue: null, maxValue: null });
+      return undefined;
+    }
+
+    async function loadBathymetry() {
+      setBathymetryData((prev) => ({ ...prev, loading: true }));
+      try {
+        const response = await fetch(url, { cache: "force-cache" });
+        if (!response.ok) throw new Error(`Bathymetry HTTP ${response.status}`);
+        const payload = await response.json();
+        if (cancelled) return;
+        const points = Array.isArray(payload?.points) ? payload.points : [];
+        setBathymetryData({
+          loading: false,
+          points,
+          minValue: Number.isFinite(Number(payload?.minValue)) ? Number(payload.minValue) : null,
+          maxValue: Number.isFinite(Number(payload?.maxValue)) ? Number(payload.maxValue) : null,
+        });
+      } catch {
+        if (cancelled) return;
+        setBathymetryData({ loading: false, points: [], minValue: null, maxValue: null });
+      }
+    }
+
+    loadBathymetry();
+    return () => {
+      cancelled = true;
+    };
+  }, [bathymetryMeta?.pointsUrl]);
 
   const points = useMemo(() => {
     if (activeLayer === "forecast") return forecast?.points || [];
@@ -168,19 +234,40 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
   }, [points.length]);
 
   useEffect(() => {
-    if (!isPlaying || points.length < 2) return undefined;
+    if (!isPlaying || points.length < 2 || activeLayer === "bathymetry") return undefined;
     const preset = SPEED_PRESETS.find((item) => item.id === speedMode) || SPEED_PRESETS[1];
     const timer = setInterval(() => {
       setSelectedIndex((prev) => (prev >= points.length - 1 ? 0 : prev + 1));
     }, preset.intervalMs);
     return () => clearInterval(timer);
-  }, [isPlaying, points.length, speedMode]);
+  }, [isPlaying, points.length, speedMode, activeLayer]);
 
   const activeTab = TAB_CONFIG.find((item) => item.id === activeLayer) || TAB_CONFIG[0];
-  const activeValue = valueByLayer(selectedPoint || current, activeLayer);
-  const layerMeta = layers.find((layer) => layer.id === activeLayer);
-  const layerRange = useMemo(() => computeRange(points, activeLayer, activeValue), [points, activeLayer, activeValue]);
-  const activeColor = colorForValue(activeValue, layerRange);
+  const layerMeta = layerList.find((layer) => layer.id === activeLayer);
+
+  const activeGridPoints = useMemo(() => {
+    if (activeLayer === "temperature") return layerSnapshot?.temperaturePoints || [];
+    if (activeLayer === "salinity") return layerSnapshot?.salinityPoints || [];
+    if (activeLayer === "waves" || activeLayer === "forecast") return layerSnapshot?.wavePoints || [];
+    if (activeLayer === "bathymetry") return bathymetryData.points || [];
+    return [];
+  }, [activeLayer, layerSnapshot, bathymetryData.points]);
+
+  const currentVectors = useMemo(() => (activeLayer === "currents" ? layerSnapshot?.currentVectors || [] : []), [
+    activeLayer,
+    layerSnapshot,
+  ]);
+
+  const timelineValue = valueByTimePoint(selectedPoint || current, activeLayer);
+  const clickedGridValue = useMemo(() => nearestGridPointValue(clickedPoint, activeGridPoints), [clickedPoint, activeGridPoints]);
+  const activeValue = clickedGridValue ?? timelineValue;
+
+  const scalarValues = activeGridPoints.map((point) => Number(point.value)).filter((v) => Number.isFinite(v));
+  const vectorValues = currentVectors.map((point) => Number(point.speed)).filter((v) => Number.isFinite(v));
+  const rangeValues = activeLayer === "currents" ? vectorValues : scalarValues;
+  const layerRange = computeRange(rangeValues, activeValue);
+  const palette = activeLayer === "bathymetry" ? bathymetryPalette() : defaultPalette();
+  const activeColor = colorForValue(activeValue, layerRange, palette);
 
   const markerIcon = useMemo(
     () =>
@@ -195,34 +282,22 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
 
   const currentDirection = Number(selectedPoint?.currentDirection ?? current?.currentDirection);
   const currentSpeed = Number(selectedPoint?.currentSpeed ?? current?.currentSpeed);
-  const hasCurrentVector = Number.isFinite(currentDirection) && Number.isFinite(currentSpeed);
+  const hasSingleCurrentVector = Number.isFinite(currentDirection) && Number.isFinite(currentSpeed);
   const vectorDistanceKm = Math.max(1.1, Math.min(12, (Number.isFinite(currentSpeed) ? currentSpeed : 0.2) * 20));
   const stationLat = Number(station?.lat ?? 44.17);
   const stationLng = Number(station?.lng ?? station?.lon ?? 28.65);
   const mapCenter = [stationLat, stationLng];
-  const vectorTo = hasCurrentVector ? destinationPoint(stationLat, stationLng, currentDirection, vectorDistanceKm) : mapCenter;
+  const vectorTo = hasSingleCurrentVector ? destinationPoint(stationLat, stationLng, currentDirection, vectorDistanceKm) : mapCenter;
 
-  const arrowIcon = useMemo(() => {
-    if (!hasCurrentVector) return null;
-    const rotate = Number(currentDirection);
-    return L.divIcon({
-      html: `<div style="
-        width: 0;
-        height: 0;
-        border-left: 8px solid transparent;
-        border-right: 8px solid transparent;
-        border-bottom: 16px solid ${activeColor};
-        transform: rotate(${rotate}deg);
-        transform-origin: 50% 65%;
-        filter: drop-shadow(0 0 3px rgba(15,23,42,0.45));
-      "></div>`,
-      iconSize: [16, 16],
-      iconAnchor: [8, 8],
-      className: "",
-    });
-  }, [hasCurrentVector, currentDirection, activeColor]);
+  const showScalarGrid = activeLayer !== "currents" && activeGridPoints.length > 0;
+  const showVectorGrid = activeLayer === "currents" && currentVectors.length > 0;
+  const showLegacyCircles = !showScalarGrid && !showVectorGrid;
+  const hasPlayback = activeLayer !== "bathymetry";
 
-  const gradientBar = "linear-gradient(90deg,#1e40af 0%,#0ea5e9 22%,#10b981 44%,#facc15 66%,#f97316 83%,#dc2626 100%)";
+  const gradientBar =
+    activeLayer === "bathymetry"
+      ? "linear-gradient(90deg,#bfdbfe 0%,#7dd3fc 22%,#38bdf8 44%,#0e7490 66%,#0f172a 100%)"
+      : "linear-gradient(90deg,#1e40af 0%,#0ea5e9 22%,#10b981 44%,#facc15 66%,#f97316 83%,#dc2626 100%)";
 
   return (
     <section
@@ -253,8 +328,12 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
           <div style={{ fontWeight: 800, color: "#0f172a", fontSize: 13 }}>Legenda dinamica layer</div>
           <div style={{ height: 10, borderRadius: 999, background: gradientBar, border: "1px solid #cbd5e1" }} />
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#475569" }}>
-            <span>Min: {formatNumber(layerRange.min, 2)} {activeTab.unit}</span>
-            <span>Max: {formatNumber(layerRange.max, 2)} {activeTab.unit}</span>
+            <span>
+              Min: {formatNumber(activeLayer === "bathymetry" ? bathymetryData.minValue ?? layerRange.min : layerRange.min, 2)} {activeTab.unit}
+            </span>
+            <span>
+              Max: {formatNumber(activeLayer === "bathymetry" ? bathymetryData.maxValue ?? layerRange.max : layerRange.max, 2)} {activeTab.unit}
+            </span>
           </div>
         </div>
       </div>
@@ -265,16 +344,54 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
             <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             <MapClickCapture onMapClick={setClickedPoint} />
 
-            <Pane name="marine-overlay" style={{ zIndex: 420 }}>
-              <Circle center={mapCenter} radius={42000} pathOptions={{ color: activeColor, weight: 1.2, fillColor: activeColor, fillOpacity: 0.14 }} />
-              <Circle center={mapCenter} radius={26000} pathOptions={{ color: activeColor, weight: 1.2, fillColor: activeColor, fillOpacity: 0.2 }} />
-              <Circle center={mapCenter} radius={13000} pathOptions={{ color: activeColor, weight: 1.4, fillColor: activeColor, fillOpacity: 0.28 }} />
-            </Pane>
+            {showScalarGrid && (
+              <Pane name="marine-grid-scalars" style={{ zIndex: 430 }}>
+                {activeGridPoints.map((point, index) => {
+                  const color = colorForValue(point.value, layerRange, palette);
+                  return (
+                    <CircleMarker
+                      key={`${activeLayer}-pt-${index}`}
+                      center={[point.lat, point.lon]}
+                      radius={3.6}
+                      pathOptions={{
+                        color,
+                        weight: 0.4,
+                        fillColor: color,
+                        fillOpacity: 0.68,
+                      }}
+                    />
+                  );
+                })}
+              </Pane>
+            )}
 
-            {hasCurrentVector && (
-              <Pane name="marine-current-vector" style={{ zIndex: 500 }}>
+            {showVectorGrid && (
+              <Pane name="marine-grid-vectors" style={{ zIndex: 450 }}>
+                {currentVectors.map((vector, index) => {
+                  const end = destinationPoint(vector.lat, vector.lon, vector.direction, Math.max(0.45, Math.min(3.8, vector.speed * 9)));
+                  const color = colorForValue(vector.speed, layerRange, defaultPalette());
+                  return (
+                    <Polyline
+                      key={`vec-${index}`}
+                      positions={[[vector.lat, vector.lon], end]}
+                      pathOptions={{ color, weight: 1.6, opacity: 0.85 }}
+                    />
+                  );
+                })}
+              </Pane>
+            )}
+
+            {showLegacyCircles && (
+              <Pane name="marine-overlay" style={{ zIndex: 420 }}>
+                <Circle center={mapCenter} radius={42000} pathOptions={{ color: activeColor, weight: 1.2, fillColor: activeColor, fillOpacity: 0.14 }} />
+                <Circle center={mapCenter} radius={26000} pathOptions={{ color: activeColor, weight: 1.2, fillColor: activeColor, fillOpacity: 0.2 }} />
+                <Circle center={mapCenter} radius={13000} pathOptions={{ color: activeColor, weight: 1.4, fillColor: activeColor, fillOpacity: 0.28 }} />
+              </Pane>
+            )}
+
+            {!showVectorGrid && hasSingleCurrentVector && (
+              <Pane name="marine-current-vector-single" style={{ zIndex: 500 }}>
                 <Polyline positions={[mapCenter, vectorTo]} pathOptions={{ color: activeColor, weight: 3, opacity: 0.9 }} />
-                {arrowIcon ? <Marker position={vectorTo} icon={arrowIcon} /> : null}
               </Pane>
             )}
 
@@ -286,7 +403,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                     {activeTab.label}: <b>{formatNumber(activeValue, 2)} {activeTab.unit}</b>
                   </div>
                   <div style={{ marginTop: 6, color: "#64748b", fontSize: 12 }}>
-                    Timp: {formatTimestamp(selectedPoint?.timestamp || current?.timestamp)}
+                    Timp: {formatTimestamp(selectedPoint?.timestamp || layerSnapshot?.timestamp || current?.timestamp)}
                   </div>
                 </div>
               </Popup>
@@ -300,9 +417,10 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
           <div style={{ fontWeight: 800, marginBottom: 8 }}>Legenda</div>
           <div style={{ display: "grid", gap: 4, fontSize: 13, color: "#334155" }}>
             <div>Punct albastru: statia Constanta (marina)</div>
-            <div>Overlay colorat: intensitatea layer-ului activ in jurul statiei</div>
-            <div>Vector curent: directie si intensitate estimate din timestep</div>
-            <div>Click pe harta: afiseaza coordonata selectata</div>
+            <div>Puncte colorate: camp scalar Copernicus (temperatura / salinitate / valuri / batimetrie)</div>
+            <div>Linii colorate: vectori curenti Copernicus (directie + viteza)</div>
+            <div>Click pe harta: citire valoare din cel mai apropiat punct de grila</div>
+            {bathymetryData.loading && activeLayer === "bathymetry" && <div>Se incarca batimetria...</div>}
             {clickedPoint && (
               <div>
                 Coordonata selectata: <b>{clickedPoint.lat.toFixed(4)}</b>, <b>{clickedPoint.lng.toFixed(4)}</b>
@@ -327,10 +445,10 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                   background: isPlaying ? "#0284c7" : "white",
                   color: isPlaying ? "white" : "#0f172a",
                   fontWeight: 800,
-                  cursor: points.length > 1 ? "pointer" : "not-allowed",
-                  opacity: points.length > 1 ? 1 : 0.55,
+                  cursor: hasPlayback && points.length > 1 ? "pointer" : "not-allowed",
+                  opacity: hasPlayback && points.length > 1 ? 1 : 0.55,
                 }}
-                disabled={points.length < 2}
+                disabled={!hasPlayback || points.length < 2}
               >
                 {isPlaying ? "Pause" : "Play"}
               </button>
@@ -356,7 +474,9 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
             </div>
           </div>
 
-          {!points.length ? (
+          {!hasPlayback ? (
+            <div style={{ marginTop: 8, color: "#64748b", fontSize: 13 }}>Batimetria este statica (fara selector temporal).</div>
+          ) : !points.length ? (
             <div style={{ color: "#64748b", fontSize: 13 }}>Nu exista timeseries marine in cache.</div>
           ) : (
             <>
@@ -397,7 +517,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                   {forecast.points.slice(0, 32).map((point) => (
                     <tr key={point.timestamp} style={{ borderBottom: "1px solid #f1f5f9" }}>
                       <td style={{ padding: "6px 4px" }}>{formatTimestamp(point.timestamp)}</td>
-                      <td style={{ padding: "6px 4px" }}>{formatNumber(point.waterTemperature, 1)} \u00B0C</td>
+                      <td style={{ padding: "6px 4px" }}>{formatNumber(point.waterTemperature, 1)} °C</td>
                       <td style={{ padding: "6px 4px" }}>{formatNumber(point.currentSpeed, 2)} m/s</td>
                       <td style={{ padding: "6px 4px" }}>{formatNumber(point.waveHeight, 2)} m</td>
                       <td style={{ padding: "6px 4px" }}>{formatNumber(point.salinity, 2)} PSU</td>
