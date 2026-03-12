@@ -110,6 +110,22 @@ function tempStyle(temp) {
   return { color: "#dc2626" };
 }
 
+function fmtNumber(value, digits = 1) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return "—";
+  return Number(value).toFixed(digits);
+}
+
+function createMarineIcon(isSelected = false) {
+  const size = isSelected ? 32 : 26;
+  return L.divIcon({
+    html: `<svg width="${size}" height="${size}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#06b6d4" stroke="#0e7490" stroke-width="2"/><circle cx="12" cy="12" r="3.5" fill="#cffafe"/></svg>`,
+    className: "",
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2],
+  });
+}
+
 // ===== CUSTOM MAP CONTROLS =====
 function MapControls({ defaultCenter, defaultZoom, onLockToggle, isLocked }) {
   const map = useMap();
@@ -270,6 +286,7 @@ function StationMarker({ position, icon, name, children, onSelect, autoCloseDela
 export default function LeafletMapInner({
   stations = [],
   latestByName = {},
+  marineByName = {},
   riverStations = [],
   selectedStation,
   onSelectStation,
@@ -282,12 +299,35 @@ export default function LeafletMapInner({
 
   const pts = useMemo(() => {
     return (stations || [])
+      .filter((s) => s.kind !== "marine" && s.sourceType !== "copernicus")
       .map((s) => {
         const name = pick(s, ["name", "localitatea", "station"], null);
         const lat = toNum(pick(s, ["lat", "latitude", "Latitude"], null));
         const lng = toNum(pick(s, ["lng", "lon", "longitude", "Longitudine"], null));
         if (!name || lat === null || lng === null) return null;
         return { name, lat, lng, type: "dunare" };
+      })
+      .filter(Boolean);
+  }, [stations]);
+
+  const marinePts = useMemo(() => {
+    return (stations || [])
+      .filter((s) => s.kind === "marine" || s.sourceType === "copernicus")
+      .map((s) => {
+        const name = pick(s, ["name", "localitatea", "station"], null);
+        const lat = toNum(pick(s, ["lat", "latitude", "Latitude"], null));
+        const lng = toNum(pick(s, ["lng", "lon", "longitude", "Longitudine"], null));
+        if (!name || lat === null || lng === null) return null;
+        return {
+          id: s.id || name,
+          name,
+          lat,
+          lng,
+          displayName: s.displayName || name,
+          sourceType: s.sourceType || "copernicus",
+          kind: s.kind || "marine",
+          type: "marine",
+        };
       })
       .filter(Boolean);
   }, [stations]);
@@ -307,11 +347,11 @@ export default function LeafletMapInner({
   }, [riverStations]);
 
   const center = useMemo(() => {
-    const allPts = [...pts, ...riverPts];
+    const allPts = [...pts, ...riverPts, ...marinePts];
     const sel = allPts.find((p) => p.name === selectedStation);
     if (sel) return [sel.lat, sel.lng];
     return DEFAULT_CENTER;
-  }, [pts, riverPts, selectedStation]);
+  }, [pts, riverPts, marinePts, selectedStation]);
 
   return (
     <div style={{ width: "100%", borderRadius: fullscreen ? 0 : 16, overflow: "hidden", position: "relative" }}>
@@ -529,6 +569,74 @@ export default function LeafletMapInner({
                       marginTop: 10,
                       padding: "8px 16px",
                       background: "linear-gradient(135deg, #0369a1, #0284c7)",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 8,
+                      fontWeight: 700,
+                      fontSize: 12,
+                      cursor: "pointer",
+                      width: "100%",
+                    }}
+                  >
+                    Selectează stația
+                  </button>
+                </div>
+              </Popup>
+            </StationMarker>
+          );
+        })}
+
+        {/* Stații Marine */}
+        {marinePts.map((s) => {
+          const latest = marineByName?.[s.name] || null;
+          const isSel = selectedStation === s.name;
+          const icon = createMarineIcon(isSel);
+
+          const waterTemperature = toNum(pick(latest, ["waterTemperature"], null));
+          const currentSpeed = toNum(pick(latest, ["currentSpeed"], null));
+          const currentDirection = toNum(pick(latest, ["currentDirection"], null));
+          const waveHeight = toNum(pick(latest, ["waveHeight"], null));
+          const waveDirection = toNum(pick(latest, ["waveDirection"], null));
+          const wavePeriod = toNum(pick(latest, ["wavePeriod"], null));
+          const salinity = toNum(pick(latest, ["salinity"], null));
+          const at = pick(latest, ["timestamp", "data", "created_at", "at", "time"], null);
+          const source = pick(latest, ["source"], "Copernicus Marine");
+
+          return (
+            <StationMarker
+              key={s.id}
+              position={[s.lat, s.lng]}
+              icon={icon}
+              name={s.name}
+              onSelect={() => onSelectStation?.(s.name)}
+            >
+              <Popup>
+                <div style={{ minWidth: 205 }}>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: "#0e7490", marginBottom: 4 }}>Marea Neagră</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#374151", marginBottom: 8 }}>{s.displayName}</div>
+
+                  <div style={{ fontSize: 13, marginBottom: 3 }}>
+                    <strong>Temperatura apei:</strong> {fmtNumber(waterTemperature, 1)} °C
+                  </div>
+                  <div style={{ fontSize: 13, marginBottom: 3 }}>
+                    <strong>Curenți:</strong> {fmtNumber(currentSpeed, 2)} m/s | {fmtNumber(currentDirection, 0)}°
+                  </div>
+                  <div style={{ fontSize: 13, marginBottom: 3 }}>
+                    <strong>Valuri:</strong> {fmtNumber(waveHeight, 2)} m | {fmtNumber(waveDirection, 0)}° | {fmtNumber(wavePeriod, 1)} s
+                  </div>
+                  <div style={{ fontSize: 13, marginBottom: 3 }}>
+                    <strong>Salinitate:</strong> {fmtNumber(salinity, 2)} PSU
+                  </div>
+
+                  <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>Citire: {fmtAt(at)}</div>
+                  <div style={{ fontSize: 10, color: "#9ca3af" }}>Sursa: {source}</div>
+
+                  <button
+                    onClick={() => onSelectStation?.(s.name)}
+                    style={{
+                      marginTop: 10,
+                      padding: "8px 16px",
+                      background: "linear-gradient(135deg, #0e7490, #0891b2)",
                       color: "white",
                       border: "none",
                       borderRadius: 8,

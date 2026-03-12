@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import StationPanel from "./components/StationPanel";
+import MarineStationPanel from "./components/stations/MarineStationPanel";
 import DonationWidget from "./components/DonationWidget";
 
 const MapView = dynamic(() => import("./components/MapView"), { ssr: false });
@@ -31,6 +32,15 @@ export default function Page() {
 
   const [latestByName, setLatestByName] = useState({});
   const [riverStations, setRiverStations] = useState([]);
+  const [marineByName, setMarineByName] = useState({});
+  const [marinePanelData, setMarinePanelData] = useState({
+    loading: false,
+    error: "",
+    current: null,
+    timeseries: null,
+    forecast: null,
+    layers: [],
+  });
   const [chartByStation, setChartByStation] = useState({});
   const [chartLoading, setChartLoading] = useState(false);
   const [mapFullscreen, setMapFullscreen] = useState(false);
@@ -54,13 +64,28 @@ export default function Page() {
     return null;
   }, [stations, riverStations, selectedStation]);
 
+  const isMarineStation = useMemo(() => {
+    return selectedStationObj?.kind === "marine" || selectedStationObj?.sourceType === "copernicus";
+  }, [selectedStationObj]);
+
+  const dunareStations = useMemo(() => {
+    return (stations || []).filter((s) => s.kind !== "marine");
+  }, [stations]);
+
+  const marineStations = useMemo(() => {
+    return (stations || []).filter((s) => s.kind === "marine");
+  }, [stations]);
+
   const selectedLatest = useMemo(() => {
+    if (isMarineStation) {
+      return marineByName?.[selectedStation] || null;
+    }
     if (!isRiverStation) {
       return latestByName?.[selectedStation];
     }
     const riverStation = riverStations.find(s => s.name === selectedStation);
     return riverStation?.latest || null;
-  }, [isRiverStation, latestByName, riverStations, selectedStation]);
+  }, [isMarineStation, isRiverStation, latestByName, marineByName, riverStations, selectedStation]);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,6 +137,37 @@ export default function Page() {
     return () => { cancelled = true; };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadConstantaCurrent() {
+      try {
+        const res = await fetch("/api/stations/constanta/current", { cache: "no-store" });
+        if (!res.ok) return;
+        const payload = await res.json();
+        if (cancelled) return;
+
+        const stationName = payload?.name || "Constanta";
+        setMarineByName((prev) => ({
+          ...prev,
+          [stationName]: payload,
+        }));
+      } catch (error) {
+        if (!cancelled) {
+          setMarineByName((prev) => ({ ...prev }));
+        }
+      }
+    }
+
+    loadConstantaCurrent();
+    const timer = setInterval(loadConstantaCurrent, 15 * 60 * 1000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, []);
+
   const onPeriodChange = useCallback((days) => {
     setUseCustomRange(false);
     setCustomFrom("");
@@ -133,6 +189,15 @@ export default function Page() {
     let cancelled = false;
     async function loadChart() {
       if (!selectedStation) return;
+
+      if (isMarineStation) {
+        if (!cancelled) {
+          setChartByStation((prev) => ({ ...prev, [selectedStation]: [] }));
+          setChartLoading(false);
+        }
+        return;
+      }
+
       setChartLoading(true);
       try {
         const apiEndpoint = isRiverStation ? "/api/river-measurements" : "/api/measurements";
@@ -168,7 +233,84 @@ export default function Page() {
     }
     loadChart();
     return () => { cancelled = true; };
-  }, [selectedStation, periodDays, useCustomRange, customFrom, customTo, isRiverStation]);
+  }, [selectedStation, periodDays, useCustomRange, customFrom, customTo, isMarineStation, isRiverStation]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadMarinePanelData() {
+      if (!isMarineStation || selectedStationObj?.id !== "constanta_marine") {
+        if (!cancelled) {
+          setMarinePanelData({
+            loading: false,
+            error: "",
+            current: null,
+            timeseries: null,
+            forecast: null,
+            layers: [],
+          });
+        }
+        return;
+      }
+
+      if (!cancelled) {
+        setMarinePanelData((prev) => ({ ...prev, loading: true, error: "" }));
+      }
+
+      try {
+        const [currentRes, timeseriesRes, forecastRes, layersRes] = await Promise.all([
+          fetch("/api/stations/constanta/current", { cache: "no-store" }),
+          fetch("/api/stations/constanta/timeseries?hours=168", { cache: "no-store" }),
+          fetch("/api/stations/constanta/forecast?days=5", { cache: "no-store" }),
+          fetch("/api/stations/constanta/layers", { cache: "no-store" }),
+        ]);
+
+        const [currentPayload, timeseriesPayload, forecastPayload, layersPayload] = await Promise.all([
+          currentRes.ok ? currentRes.json() : Promise.resolve(null),
+          timeseriesRes.ok ? timeseriesRes.json() : Promise.resolve(null),
+          forecastRes.ok ? forecastRes.json() : Promise.resolve(null),
+          layersRes.ok ? layersRes.json() : Promise.resolve(null),
+        ]);
+
+        if (cancelled) return;
+
+        if (currentPayload?.name) {
+          setMarineByName((prev) => ({
+            ...prev,
+            [currentPayload.name]: currentPayload,
+          }));
+        }
+
+        setMarinePanelData({
+          loading: false,
+          error: "",
+          current: currentPayload,
+          timeseries: timeseriesPayload,
+          forecast: forecastPayload,
+          layers: layersPayload?.layers || [],
+        });
+      } catch (error) {
+        if (!cancelled) {
+          setMarinePanelData({
+            loading: false,
+            error: error?.message || "Eroare la citirea datelor marine",
+            current: null,
+            timeseries: null,
+            forecast: null,
+            layers: [],
+          });
+        }
+      }
+    }
+
+    loadMarinePanelData();
+    const timer = setInterval(loadMarinePanelData, 15 * 60 * 1000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [isMarineStation, selectedStationObj?.id]);
 
   return (
     <div className="page-layout">
@@ -663,12 +805,21 @@ export default function Page() {
           onChange={(e) => setSelectedStation(e.target.value)}
         >
           <optgroup label="Dunăre">
-            {stations.map((s) => (
+            {dunareStations.map((s) => (
               <option key={s.name} value={s.name}>
                 {s.name}
               </option>
             ))}
           </optgroup>
+          {marineStations.length > 0 && (
+            <optgroup label="Stații marine">
+              {marineStations.map((s) => (
+                <option key={s.name} value={s.name}>
+                  {s.name}
+                </option>
+              ))}
+            </optgroup>
+          )}
           {riverStations.length > 0 && (
             <optgroup label="Râuri interioare">
               {riverStations.map((s) => (
@@ -705,6 +856,12 @@ export default function Page() {
             </svg>
             <span>Fără date</span>
           </div>
+          <div className="legend-item">
+            <svg width="14" height="14" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="7" fill="#06b6d4" stroke="#0e7490" strokeWidth="2"/>
+            </svg>
+            <span>Stație marină</span>
+          </div>
         </div>
       </aside>
 
@@ -721,6 +878,7 @@ export default function Page() {
             <MapView
               stations={stations}
               latestByName={latestByName}
+              marineByName={marineByName}
               riverStations={riverStations}
               selectedStation={selectedStation}
               onSelectStation={setSelectedStation}
@@ -740,6 +898,7 @@ export default function Page() {
           <MapView
             stations={stations}
             latestByName={latestByName}
+            marineByName={marineByName}
             riverStations={riverStations}
             selectedStation={selectedStation}
             onSelectStation={setSelectedStation}
@@ -773,12 +932,21 @@ export default function Page() {
             onChange={(e) => setSelectedStation(e.target.value)}
           >
             <optgroup label="Dunăre">
-              {stations.map((s) => (
+              {dunareStations.map((s) => (
                 <option key={s.name} value={s.name}>
                   {s.name}
                 </option>
               ))}
             </optgroup>
+            {marineStations.length > 0 && (
+              <optgroup label="Stații marine">
+                {marineStations.map((s) => (
+                  <option key={s.name} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
+              </optgroup>
+            )}
             {riverStations.length > 0 && (
               <optgroup label="Râuri interioare">
                 {riverStations.map((s) => (
@@ -792,21 +960,33 @@ export default function Page() {
         </div>
 
         <div id="station-panel">
-          <StationPanel
-            stationName={selectedStation}
-            station={selectedStationObj}
-            latest={selectedLatest}
-            chartData={chartByStation?.[selectedStation] || []}
-            period={periodDays}
-            onPeriodChange={onPeriodChange}
-            onPeriodRangeChange={onPeriodRangeChange}
-            loading={chartLoading}
-            tulceaLatest={latestByName["Tulcea"]}
-            isRiverStation={isRiverStation}
-            stations={stations}
-            riverStations={riverStations}
-            onStationChange={setSelectedStation}
-          />
+          {isMarineStation ? (
+            <MarineStationPanel
+              station={selectedStationObj}
+              current={marinePanelData.current || selectedLatest}
+              timeseries={marinePanelData.timeseries}
+              forecast={marinePanelData.forecast}
+              layers={marinePanelData.layers}
+              loading={marinePanelData.loading}
+              error={marinePanelData.error}
+            />
+          ) : (
+            <StationPanel
+              stationName={selectedStation}
+              station={selectedStationObj}
+              latest={selectedLatest}
+              chartData={chartByStation?.[selectedStation] || []}
+              period={periodDays}
+              onPeriodChange={onPeriodChange}
+              onPeriodRangeChange={onPeriodRangeChange}
+              loading={chartLoading}
+              tulceaLatest={latestByName["Tulcea"]}
+              isRiverStation={isRiverStation}
+              stations={stations}
+              riverStations={riverStations}
+              onStationChange={setSelectedStation}
+            />
+          )}
         </div>
       </main>
     </div>
