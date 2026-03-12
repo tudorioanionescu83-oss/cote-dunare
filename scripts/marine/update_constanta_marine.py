@@ -26,10 +26,10 @@ SOURCE_LABEL = "Copernicus Marine"
 
 LAT = 44.17
 LON = 28.65
-MIN_LAT = 44.0
-MAX_LAT = 44.4
-MIN_LON = 28.4
-MAX_LON = 28.9
+MIN_LAT = 43.7
+MAX_LAT = 45.25
+MIN_LON = 28.45
+MAX_LON = 30.15
 # Data extraction point can be slightly offshore to avoid coastal land-mask nulls.
 # Marker/UI location remains Constanta (44.17, 28.65).
 DATA_LAT = 44.12

@@ -107,6 +107,57 @@ function computeRange(values, fallbackValue = null) {
   return { min: min - pad, max: max + pad };
 }
 
+function computePercentileRange(
+  values,
+  { fallbackValue = null, lowerQuantile = 0.08, upperQuantile = 0.86, maxCap = null } = {}
+) {
+  const numeric = (values || [])
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value))
+    .sort((a, b) => a - b);
+
+  if (Number.isFinite(Number(fallbackValue))) numeric.push(Number(fallbackValue));
+  if (!numeric.length) return { min: 0, max: 1 };
+
+  const pick = (quantile) => {
+    const q = Math.max(0, Math.min(1, quantile));
+    const idx = Math.round(q * (numeric.length - 1));
+    return numeric[idx];
+  };
+
+  let min = pick(lowerQuantile);
+  let max = pick(upperQuantile);
+  if (Number.isFinite(Number(maxCap))) max = Math.min(max, Number(maxCap));
+
+  if (Number.isFinite(Number(fallbackValue))) {
+    const fv = Number(fallbackValue);
+    min = Math.min(min, fv);
+    max = Math.max(max, fv);
+  }
+
+  min = Math.max(0, min);
+  if (max - min < 1e-9) return { min: min - 0.5, max: max + 0.5 };
+  const pad = (max - min) * 0.08;
+  return { min: Math.max(0, min - pad), max: max + pad };
+}
+
+const ROMANIAN_COAST_BBOX = {
+  minLat: 43.7,
+  maxLat: 45.25,
+  minLon: 28.45,
+  maxLon: 30.15,
+};
+
+function normalizeBbox(rawBbox) {
+  const minLat = Number(rawBbox?.minLat);
+  const maxLat = Number(rawBbox?.maxLat);
+  const minLon = Number(rawBbox?.minLon);
+  const maxLon = Number(rawBbox?.maxLon);
+  if (![minLat, maxLat, minLon, maxLon].every((value) => Number.isFinite(value))) return null;
+  if (minLat >= maxLat || minLon >= maxLon) return null;
+  return { minLat, maxLat, minLon, maxLon };
+}
+
 function destinationPoint(latDeg, lonDeg, bearingDeg, distanceKm) {
   const R = 6371;
   const lat1 = (latDeg * Math.PI) / 180;
@@ -317,7 +368,15 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
   const scalarValues = activeGridPoints.map((point) => Number(point.value)).filter((v) => Number.isFinite(v));
   const vectorValues = currentVectors.map((point) => Number(point.speed)).filter((v) => Number.isFinite(v));
   const rangeValues = activeLayer === "currents" ? vectorValues : scalarValues;
-  const layerRange = computeRange(rangeValues, activeValue);
+  const layerRange =
+    activeLayer === "bathymetry"
+      ? computePercentileRange(rangeValues, {
+          fallbackValue: activeValue,
+          lowerQuantile: 0.08,
+          upperQuantile: 0.86,
+          maxCap: 70,
+        })
+      : computeRange(rangeValues, activeValue);
   const palette = activeLayer === "bathymetry" ? bathymetryPalette() : defaultPalette();
   const activeColor = colorForValue(activeValue, layerRange, palette);
 
@@ -340,6 +399,11 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
   const stationLng = Number(station?.lng ?? station?.lon ?? 28.65);
   const mapCenter = [stationLat, stationLng];
   const vectorTo = hasSingleCurrentVector ? destinationPoint(stationLat, stationLng, currentDirection, vectorDistanceKm) : mapCenter;
+  const mapBbox = normalizeBbox(layerSnapshot?.bbox) || normalizeBbox(station?.bbox) || ROMANIAN_COAST_BBOX;
+  const mapBounds = [
+    [mapBbox.minLat, mapBbox.minLon],
+    [mapBbox.maxLat, mapBbox.maxLon],
+  ];
 
   const showScalarGrid = activeLayer !== "currents" && activeGridPoints.length > 0;
   const showCurrentVectorGrid = activeLayer === "currents" && currentVectors.length > 0;
@@ -384,18 +448,29 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
           <div style={{ height: 10, borderRadius: 999, background: gradientBar, border: "1px solid #cbd5e1" }} />
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#475569" }}>
             <span>
-              Min: {formatNumber(activeLayer === "bathymetry" ? bathymetryData.minValue ?? layerRange.min : layerRange.min, 2)} {activeTab.unit}
+              Min: {formatNumber(layerRange.min, 2)} {activeTab.unit}
             </span>
             <span>
-              Max: {formatNumber(activeLayer === "bathymetry" ? bathymetryData.maxValue ?? layerRange.max : layerRange.max, 2)} {activeTab.unit}
+              Max: {formatNumber(layerRange.max, 2)} {activeTab.unit}
             </span>
           </div>
+          {activeLayer === "bathymetry" && (
+            <div style={{ fontSize: 12, color: "#64748b" }}>
+              Scala batimetriei este calibrata pe litoralul Romaniei (Sulina-Vama Veche), nu pe intreaga Mare Neagra.
+            </div>
+          )}
         </div>
       </div>
 
       <div style={{ padding: "0 12px 12px 12px" }}>
         <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #cbd5e1" }}>
-          <MapContainer center={mapCenter} zoom={9} style={{ height: 360, width: "100%" }}>
+          <MapContainer
+            center={mapCenter}
+            zoom={9}
+            bounds={mapBounds}
+            boundsOptions={{ padding: [18, 18] }}
+            style={{ height: 360, width: "100%" }}
+          >
             <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             <MapClickCapture onMapClick={setClickedPoint} />
 

@@ -8,10 +8,10 @@ export const CONSTANTA_MARINE_STATION = {
   lng: 28.65,
   displayName: "Constanta - Marea Neagra",
   bbox: {
-    minLat: 44.0,
-    maxLat: 44.4,
-    minLon: 28.4,
-    maxLon: 28.9,
+    minLat: 43.7,
+    maxLat: 45.25,
+    minLon: 28.45,
+    maxLon: 30.15,
   },
 };
 
