@@ -427,6 +427,63 @@ def _sample_current_vectors(
     return vectors
 
 
+def _sample_wave_points(
+    height_2d: np.ndarray,
+    direction_2d: Optional[np.ndarray],
+    period_2d: Optional[np.ndarray],
+    lat_2d: np.ndarray,
+    lon_2d: np.ndarray,
+    *,
+    max_points: int = GRID_MAX_POINTS,
+) -> List[Dict[str, float]]:
+    if height_2d.shape != lat_2d.shape or height_2d.shape != lon_2d.shape:
+        return []
+    if direction_2d is not None and direction_2d.shape != height_2d.shape:
+        return []
+    if period_2d is not None and period_2d.shape != height_2d.shape:
+        return []
+
+    valid = np.isfinite(height_2d) & np.isfinite(lat_2d) & np.isfinite(lon_2d) & _bbox_mask(lat_2d, lon_2d)
+    if direction_2d is not None:
+        valid = valid & np.isfinite(direction_2d)
+    if period_2d is not None:
+        valid = valid & np.isfinite(period_2d)
+
+    candidates = int(np.count_nonzero(valid))
+    if candidates <= 0:
+        return []
+
+    stride = max(1, int(math.ceil(math.sqrt(candidates / max(1, max_points)))))
+    ny, nx = height_2d.shape
+    points: List[Dict[str, float]] = []
+
+    for j in range(0, ny, stride):
+        for i in range(0, nx, stride):
+            if not valid[j, i]:
+                continue
+            h = float(height_2d[j, i])
+            if not math.isfinite(h) or h > 1e20:
+                continue
+            payload: Dict[str, float] = {
+                "lat": round(float(lat_2d[j, i]), 5),
+                "lon": round(float(lon_2d[j, i]), 5),
+                "value": round(h, 4),
+            }
+            if direction_2d is not None:
+                d = float(direction_2d[j, i])
+                if math.isfinite(d):
+                    payload["direction"] = round(d % 360.0, 2)
+            if period_2d is not None:
+                p = float(period_2d[j, i])
+                if math.isfinite(p):
+                    payload["period"] = round(p, 3)
+            points.append(payload)
+            if len(points) >= max_points:
+                return points
+
+    return points
+
+
 def _extract_grid_snapshot(
     *,
     temp_nc: Path,
@@ -466,6 +523,10 @@ def _extract_grid_snapshot(
         temp_values, temp_ts = _latest_2d_field(temp_ds, var_name="thetao", lat_name=temp_lat_name, lon_name=temp_lon_name)
         sal_values, sal_ts = _latest_2d_field(sal_ds, var_name="so", lat_name=sal_lat_name, lon_name=sal_lon_name)
         wave_values, wave_ts = _latest_2d_field(wav_ds, var_name="VHM0", lat_name=wav_lat_name, lon_name=wav_lon_name)
+        wave_dir_values, wave_dir_ts = _latest_2d_field(wav_ds, var_name="VMDR", lat_name=wav_lat_name, lon_name=wav_lon_name)
+        wave_period_values, wave_period_ts = _latest_2d_field(
+            wav_ds, var_name="VTPK", lat_name=wav_lat_name, lon_name=wav_lon_name
+        )
         u_values, u_ts = _latest_2d_field(cur_ds, var_name="uo", lat_name=cur_lat_name, lon_name=cur_lon_name)
         v_values, v_ts = _latest_2d_field(cur_ds, var_name="vo", lat_name=cur_lat_name, lon_name=cur_lon_name)
 
@@ -480,7 +541,14 @@ def _extract_grid_snapshot(
             else []
         )
         wave_points = (
-            _sample_scalar_points(wave_values, wav_lat_2d, wav_lon_2d, max_points=GRID_MAX_POINTS)
+            _sample_wave_points(
+                wave_values,
+                wave_dir_values,
+                wave_period_values,
+                wav_lat_2d,
+                wav_lon_2d,
+                max_points=GRID_MAX_POINTS,
+            )
             if wave_values is not None
             else []
         )
@@ -490,7 +558,7 @@ def _extract_grid_snapshot(
             else []
         )
 
-        all_timestamps = [ts for ts in (temp_ts, sal_ts, wave_ts, u_ts, v_ts) if ts]
+        all_timestamps = [ts for ts in (temp_ts, sal_ts, wave_ts, wave_dir_ts, wave_period_ts, u_ts, v_ts) if ts]
         snapshot_ts = max(all_timestamps) if all_timestamps else _iso_z(dt.datetime.now(tz=dt.timezone.utc))
 
         return {

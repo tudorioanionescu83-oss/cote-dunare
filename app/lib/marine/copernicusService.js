@@ -124,11 +124,18 @@ export async function getConstantaMarineForecast(days = 5) {
 function sanitizePointList(points) {
   if (!Array.isArray(points)) return [];
   return points
-    .map((point) => ({
-      lat: toFiniteNumber(point?.lat),
-      lon: toFiniteNumber(point?.lon),
-      value: toFiniteNumber(point?.value),
-    }))
+    .map((point) => {
+      const sanitized = {
+        lat: toFiniteNumber(point?.lat),
+        lon: toFiniteNumber(point?.lon),
+        value: toFiniteNumber(point?.value),
+      };
+      const direction = toFiniteNumber(point?.direction);
+      const period = toFiniteNumber(point?.period);
+      if (direction !== null) sanitized.direction = direction;
+      if (period !== null) sanitized.period = period;
+      return sanitized;
+    })
     .filter((point) => point.lat !== null && point.lon !== null && point.value !== null);
 }
 

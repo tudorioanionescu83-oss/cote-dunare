@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Circle, CircleMarker, MapContainer, Marker, Pane, Polyline, Popup, TileLayer, useMapEvents } from "react-leaflet";
@@ -6,7 +6,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 const TAB_CONFIG = [
-  { id: "temperature", label: "Temperatura", unit: "°C" },
+  { id: "temperature", label: "Temperatura", unit: "\u00B0C" },
   { id: "salinity", label: "Salinitate", unit: "PSU" },
   { id: "currents", label: "Curenti", unit: "m/s" },
   { id: "waves", label: "Valuri", unit: "m" },
@@ -151,7 +151,7 @@ function valueByTimePoint(point, layerId) {
   return null;
 }
 
-function nearestGridPointValue(latlng, points) {
+function nearestGridPoint(latlng, points) {
   if (!latlng || !Array.isArray(points) || points.length === 0) return null;
   let best = null;
   let bestDist = Infinity;
@@ -164,7 +164,23 @@ function nearestGridPointValue(latlng, points) {
       best = point;
     }
   }
-  return best?.value ?? null;
+  return best;
+}
+
+function degreesToCardinal(degrees) {
+  const value = Number(degrees);
+  if (!Number.isFinite(value)) return "-";
+  const normalized = ((value % 360) + 360) % 360;
+  const points = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSV", "SV", "VSV", "V", "VNV", "NV", "NNV"];
+  const idx = Math.round(normalized / 22.5) % 16;
+  return points[idx];
+}
+
+function formatDirection(degrees) {
+  const value = Number(degrees);
+  if (!Number.isFinite(value)) return "-";
+  const rounded = Math.round(((value % 360) + 360) % 360);
+  return `${rounded}\u00B0 (${degreesToCardinal(rounded)})`;
 }
 
 export default function MarineMapsPanel({ station, current, timeseries, forecast, layers = { layers: [] } }) {
@@ -258,9 +274,45 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
     layerSnapshot,
   ]);
 
+  const waveVectors = useMemo(() => {
+    if (activeLayer !== "waves") return [];
+    const list = layerSnapshot?.wavePoints || [];
+    return list
+      .map((point) => ({
+        lat: Number(point?.lat),
+        lon: Number(point?.lon),
+        value: Number(point?.value),
+        direction: Number(point?.direction),
+        period: Number(point?.period),
+      }))
+      .filter((point) => Number.isFinite(point.lat) && Number.isFinite(point.lon) && Number.isFinite(point.value) && Number.isFinite(point.direction));
+  }, [activeLayer, layerSnapshot]);
+
   const timelineValue = valueByTimePoint(selectedPoint || current, activeLayer);
-  const clickedGridValue = useMemo(() => nearestGridPointValue(clickedPoint, activeGridPoints), [clickedPoint, activeGridPoints]);
-  const activeValue = clickedGridValue ?? timelineValue;
+  const clickedScalarPoint = useMemo(() => nearestGridPoint(clickedPoint, activeGridPoints), [clickedPoint, activeGridPoints]);
+  const clickedCurrentVector = useMemo(() => nearestGridPoint(clickedPoint, currentVectors), [clickedPoint, currentVectors]);
+
+  const activeValue = useMemo(() => {
+    if (activeLayer === "currents") return clickedCurrentVector?.speed ?? timelineValue;
+    return clickedScalarPoint?.value ?? timelineValue;
+  }, [activeLayer, clickedCurrentVector, clickedScalarPoint, timelineValue]);
+
+  const activeDirectionText = useMemo(() => {
+    if (activeLayer === "currents") {
+      return formatDirection(clickedCurrentVector?.direction ?? selectedPoint?.currentDirection ?? current?.currentDirection);
+    }
+    if (activeLayer === "waves") {
+      return formatDirection(clickedScalarPoint?.direction ?? selectedPoint?.waveDirection ?? current?.waveDirection);
+    }
+    return null;
+  }, [activeLayer, clickedCurrentVector, clickedScalarPoint, selectedPoint, current]);
+
+  const activePeriodText = useMemo(() => {
+    if (activeLayer !== "waves") return null;
+    const p = clickedScalarPoint?.period ?? selectedPoint?.wavePeriod ?? current?.wavePeriod;
+    if (!Number.isFinite(Number(p))) return null;
+    return `${formatNumber(p, 2)} s`;
+  }, [activeLayer, clickedScalarPoint, selectedPoint, current]);
 
   const scalarValues = activeGridPoints.map((point) => Number(point.value)).filter((v) => Number.isFinite(v));
   const vectorValues = currentVectors.map((point) => Number(point.speed)).filter((v) => Number.isFinite(v));
@@ -290,8 +342,9 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
   const vectorTo = hasSingleCurrentVector ? destinationPoint(stationLat, stationLng, currentDirection, vectorDistanceKm) : mapCenter;
 
   const showScalarGrid = activeLayer !== "currents" && activeGridPoints.length > 0;
-  const showVectorGrid = activeLayer === "currents" && currentVectors.length > 0;
-  const showLegacyCircles = !showScalarGrid && !showVectorGrid;
+  const showCurrentVectorGrid = activeLayer === "currents" && currentVectors.length > 0;
+  const showWaveVectorGrid = activeLayer === "waves" && waveVectors.length > 0;
+  const showLegacyCircles = !showScalarGrid && !showCurrentVectorGrid;
   const hasPlayback = activeLayer !== "bathymetry";
 
   const gradientBar =
@@ -312,6 +365,8 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
         <div style={{ fontSize: 18, fontWeight: 900, color: "#0f172a" }}>Harti interactive si predictii marine</div>
         <div style={{ marginTop: 6, color: "#334155", fontSize: 13 }}>
           Layer activ: <b>{layerMeta?.label || activeTab.label}</b> | Valoare punctuala: <b>{formatNumber(activeValue, 2)} {activeTab.unit}</b>
+          {activeDirectionText ? ` | Directie: ${activeDirectionText}` : ""}
+          {activePeriodText ? ` | Perioada: ${activePeriodText}` : ""}
         </div>
       </div>
 
@@ -365,16 +420,33 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
               </Pane>
             )}
 
-            {showVectorGrid && (
-              <Pane name="marine-grid-vectors" style={{ zIndex: 450 }}>
+            {showCurrentVectorGrid && (
+              <Pane name="marine-grid-vectors-current" style={{ zIndex: 450 }}>
                 {currentVectors.map((vector, index) => {
                   const end = destinationPoint(vector.lat, vector.lon, vector.direction, Math.max(0.45, Math.min(3.8, vector.speed * 9)));
                   const color = colorForValue(vector.speed, layerRange, defaultPalette());
                   return (
                     <Polyline
-                      key={`vec-${index}`}
+                      key={`cur-vec-${index}`}
                       positions={[[vector.lat, vector.lon], end]}
                       pathOptions={{ color, weight: 1.6, opacity: 0.85 }}
+                    />
+                  );
+                })}
+              </Pane>
+            )}
+
+            {showWaveVectorGrid && (
+              <Pane name="marine-grid-vectors-wave" style={{ zIndex: 448 }}>
+                {waveVectors.map((vector, index) => {
+                  const dist = Math.max(0.25, Math.min(2.5, vector.value * 4));
+                  const end = destinationPoint(vector.lat, vector.lon, vector.direction, dist);
+                  const color = colorForValue(vector.value, layerRange, defaultPalette());
+                  return (
+                    <Polyline
+                      key={`wav-vec-${index}`}
+                      positions={[[vector.lat, vector.lon], end]}
+                      pathOptions={{ color, weight: 1.2, opacity: 0.72 }}
                     />
                   );
                 })}
@@ -389,7 +461,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
               </Pane>
             )}
 
-            {!showVectorGrid && hasSingleCurrentVector && (
+            {!showCurrentVectorGrid && hasSingleCurrentVector && (
               <Pane name="marine-current-vector-single" style={{ zIndex: 500 }}>
                 <Polyline positions={[mapCenter, vectorTo]} pathOptions={{ color: activeColor, weight: 3, opacity: 0.9 }} />
               </Pane>
@@ -397,11 +469,13 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
 
             <Marker position={mapCenter} icon={markerIcon}>
               <Popup>
-                <div style={{ minWidth: 180 }}>
+                <div style={{ minWidth: 220 }}>
                   <div style={{ fontWeight: 800, marginBottom: 6 }}>{station?.displayName || station?.name || "Constanta"}</div>
                   <div>
                     {activeTab.label}: <b>{formatNumber(activeValue, 2)} {activeTab.unit}</b>
                   </div>
+                  {activeDirectionText && <div>Directie: <b>{activeDirectionText}</b></div>}
+                  {activePeriodText && <div>Perioada: <b>{activePeriodText}</b></div>}
                   <div style={{ marginTop: 6, color: "#64748b", fontSize: 12 }}>
                     Timp: {formatTimestamp(selectedPoint?.timestamp || layerSnapshot?.timestamp || current?.timestamp)}
                   </div>
@@ -418,7 +492,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
           <div style={{ display: "grid", gap: 4, fontSize: 13, color: "#334155" }}>
             <div>Punct albastru: statia Constanta (marina)</div>
             <div>Puncte colorate: camp scalar Copernicus (temperatura / salinitate / valuri / batimetrie)</div>
-            <div>Linii colorate: vectori curenti Copernicus (directie + viteza)</div>
+            <div>Linii colorate: vectori curenti si directia valurilor</div>
             <div>Click pe harta: citire valoare din cel mai apropiat punct de grila</div>
             {bathymetryData.loading && activeLayer === "bathymetry" && <div>Se incarca batimetria...</div>}
             {clickedPoint && (
@@ -517,7 +591,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                   {forecast.points.slice(0, 32).map((point) => (
                     <tr key={point.timestamp} style={{ borderBottom: "1px solid #f1f5f9" }}>
                       <td style={{ padding: "6px 4px" }}>{formatTimestamp(point.timestamp)}</td>
-                      <td style={{ padding: "6px 4px" }}>{formatNumber(point.waterTemperature, 1)} °C</td>
+                      <td style={{ padding: "6px 4px" }}>{formatNumber(point.waterTemperature, 1)} \u00B0C</td>
                       <td style={{ padding: "6px 4px" }}>{formatNumber(point.currentSpeed, 2)} m/s</td>
                       <td style={{ padding: "6px 4px" }}>{formatNumber(point.waveHeight, 2)} m</td>
                       <td style={{ padding: "6px 4px" }}>{formatNumber(point.salinity, 2)} PSU</td>
