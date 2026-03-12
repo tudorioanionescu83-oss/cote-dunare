@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Circle, MapContainer, Marker, Pane, Polyline, Popup, TileLayer, useMapEvents } from "react-leaflet";
@@ -6,7 +6,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 const TAB_CONFIG = [
-  { id: "temperature", label: "Temperatura", unit: "degC" },
+  { id: "temperature", label: "Temperatura", unit: "\u00B0C" },
   { id: "salinity", label: "Salinitate", unit: "PSU" },
   { id: "currents", label: "Curenti", unit: "m/s" },
   { id: "waves", label: "Valuri", unit: "m" },
@@ -18,6 +18,8 @@ const SPEED_PRESETS = [
   { id: "normal", label: "1x", intervalMs: 1100 },
   { id: "fast", label: "2x", intervalMs: 650 },
 ];
+
+const ROMANIA_TZ = "Europe/Bucharest";
 
 function valueByLayer(point, layerId) {
   if (!point) return null;
@@ -37,7 +39,19 @@ function formatTimestamp(value) {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
-  return date.toISOString().replace(".000Z", "Z");
+
+  const parts = new Intl.DateTimeFormat("ro-RO", {
+    timeZone: ROMANIA_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+
+  const part = (type) => parts.find((item) => item.type === type)?.value || "";
+  return `${part("day")}.${part("month")}.${part("year")}, ora ${part("hour")}:${part("minute")}`;
 }
 
 function toHex(value) {
@@ -372,7 +386,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
                   <tr style={{ textAlign: "left", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>
-                    <th style={{ padding: "6px 4px" }}>Timp (UTC)</th>
+                    <th style={{ padding: "6px 4px" }}>Timp (RO)</th>
                     <th style={{ padding: "6px 4px" }}>Temp apa</th>
                     <th style={{ padding: "6px 4px" }}>Curent</th>
                     <th style={{ padding: "6px 4px" }}>Val</th>
@@ -383,7 +397,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                   {forecast.points.slice(0, 32).map((point) => (
                     <tr key={point.timestamp} style={{ borderBottom: "1px solid #f1f5f9" }}>
                       <td style={{ padding: "6px 4px" }}>{formatTimestamp(point.timestamp)}</td>
-                      <td style={{ padding: "6px 4px" }}>{formatNumber(point.waterTemperature, 1)} degC</td>
+                      <td style={{ padding: "6px 4px" }}>{formatNumber(point.waterTemperature, 1)} \u00B0C</td>
                       <td style={{ padding: "6px 4px" }}>{formatNumber(point.currentSpeed, 2)} m/s</td>
                       <td style={{ padding: "6px 4px" }}>{formatNumber(point.waveHeight, 2)} m</td>
                       <td style={{ padding: "6px 4px" }}>{formatNumber(point.salinity, 2)} PSU</td>
