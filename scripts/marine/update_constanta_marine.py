@@ -337,11 +337,12 @@ def download_subsets(username: str, password: str, output_dir: Path) -> Dict[str
 
 
 def build_normalized_rows(temp_path: Path, cur_path: Path, sal_path: Path, waves_path: Path) -> List[Dict[str, Any]]:
+    # Force netcdf4 backend in CI to avoid optional h5netcdf/h5py issues.
     with (
-        xr.open_dataset(temp_path) as ds_temp,
-        xr.open_dataset(cur_path) as ds_cur,
-        xr.open_dataset(sal_path) as ds_sal,
-        xr.open_dataset(waves_path) as ds_wav,
+        xr.open_dataset(temp_path, engine="netcdf4") as ds_temp,
+        xr.open_dataset(cur_path, engine="netcdf4") as ds_cur,
+        xr.open_dataset(sal_path, engine="netcdf4") as ds_sal,
+        xr.open_dataset(waves_path, engine="netcdf4") as ds_wav,
     ):
         var_thetao = first_existing_var(ds_temp, ["thetao"])
         var_uo = first_existing_var(ds_cur, ["uo"])
