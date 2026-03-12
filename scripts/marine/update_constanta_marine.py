@@ -134,7 +134,17 @@ def scalar_float(value: Any) -> Optional[float]:
     if value is None:
         return None
     try:
-        val = float(value)
+        arr = np.asarray(value)
+        if arr.size == 0:
+            return None
+        if arr.size == 1:
+            val = float(arr.reshape(-1)[0])
+        else:
+            # Fallback for unresolved spatial dims: use finite mean.
+            finite = arr[np.isfinite(arr)]
+            if finite.size == 0:
+                return None
+            val = float(finite.mean())
     except Exception:  # noqa: BLE001
         return None
     if math.isnan(val) or math.isinf(val):
@@ -169,24 +179,40 @@ def normalize_time_value(value: Any) -> Optional[str]:
 def extract_series(ds: xr.Dataset, variable_name: str, lat: float, lon: float) -> Dict[str, Optional[float]]:
     da = ds[variable_name]
 
-    lat_coord = next((name for name in ("latitude", "lat", "y") if name in da.coords), None)
-    lon_coord = next((name for name in ("longitude", "lon", "x") if name in da.coords), None)
+    time_name = next(
+        (name for name in ("time", "valid_time", "time_counter") if name in da.coords or name in da.dims),
+        None,
+    )
+    if not time_name:
+        return {}
 
-    if lat_coord and lon_coord:
-        da = da.sel({lat_coord: lat, lon_coord: lon}, method="nearest")
-    elif lat_coord:
-        da = da.sel({lat_coord: lat}, method="nearest")
-    elif lon_coord:
-        da = da.sel({lon_coord: lon}, method="nearest")
+    # Prefer nearest selection on standard coord names.
+    lat_name = next((name for name in ("latitude", "lat", "y", "nav_lat") if name in da.dims), None)
+    lon_name = next((name for name in ("longitude", "lon", "x", "nav_lon") if name in da.dims), None)
 
-    for dim_name in ("depth", "depthu", "depthv", "depthw", "lev", "z", "sigma"):
+    if lat_name:
+        if lat_name in da.coords:
+            idx_lat = int(np.abs(da[lat_name].values - lat).argmin())
+            da = da.isel({lat_name: idx_lat})
+        else:
+            da = da.isel({lat_name: da.sizes[lat_name] // 2})
+
+    if lon_name:
+        if lon_name in da.coords:
+            idx_lon = int(np.abs(da[lon_name].values - lon).argmin())
+            da = da.isel({lon_name: idx_lon})
+        else:
+            da = da.isel({lon_name: da.sizes[lon_name] // 2})
+
+    for dim_name in ("depth", "depthu", "depthv", "depthw", "lev", "z", "sigma", "deptht"):
         if dim_name in da.dims:
             da = da.isel({dim_name: 0})
 
-    if "time" not in da.coords and "time" not in da.dims:
-        return {}
+    # Collapse any residual non-time dimensions deterministically.
+    residual_dims = [dim for dim in da.dims if dim != time_name]
+    for dim_name in residual_dims:
+        da = da.isel({dim_name: 0})
 
-    time_name = "time" if "time" in da.coords else "time"
     times = da[time_name].values
     values = da.values
 
