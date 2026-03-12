@@ -20,6 +20,13 @@ const SPEED_PRESETS = [
   { id: "fast", label: "2x", intervalMs: 650 },
 ];
 
+const FORECAST_FAN_OPTIONS = [
+  { id: "temperature", label: "Prognoza temperatura" },
+  { id: "currents", label: "Prognoza curenti" },
+  { id: "waves", label: "Prognoza valuri" },
+  { id: "salinity", label: "Prognoza salinitate" },
+];
+
 const ROMANIA_TZ = "Europe/Bucharest";
 
 function formatNumber(value, digits = 2) {
@@ -186,6 +193,22 @@ function layerButtonStyle(active) {
   };
 }
 
+function forecastFanButtonStyle(active, index) {
+  return {
+    border: "1px solid #cbd5e1",
+    borderRadius: 12,
+    padding: "8px 10px",
+    fontWeight: 800,
+    fontSize: 12,
+    cursor: "pointer",
+    textAlign: "left",
+    background: active ? "linear-gradient(135deg, #0ea5e9, #0284c7)" : "white",
+    color: active ? "white" : "#0f172a",
+    marginLeft: `${index * 8}px`,
+    boxShadow: active ? "0 8px 18px rgba(14,165,233,.25)" : "none",
+  };
+}
+
 function MapClickCapture({ onMapClick }) {
   useMapEvents({
     click: (event) => onMapClick(event.latlng),
@@ -236,6 +259,7 @@ function formatDirection(degrees) {
 
 export default function MarineMapsPanel({ station, current, timeseries, forecast, layers = { layers: [] } }) {
   const [activeLayer, setActiveLayer] = useState("temperature");
+  const [forecastMetric, setForecastMetric] = useState("temperature");
   const [clickedPoint, setClickedPoint] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -246,6 +270,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
   const layerList = layerPayload?.layers || [];
   const layerSnapshot = layerPayload?.snapshot || null;
   const bathymetryMeta = layerPayload?.bathymetry || null;
+  const resolvedLayer = activeLayer === "forecast" ? forecastMetric : activeLayer;
 
   useEffect(() => {
     let cancelled = false;
@@ -310,23 +335,26 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
   }, [isPlaying, points.length, speedMode, activeLayer]);
 
   const activeTab = TAB_CONFIG.find((item) => item.id === activeLayer) || TAB_CONFIG[0];
+  const resolvedTab = TAB_CONFIG.find((item) => item.id === resolvedLayer) || activeTab;
   const layerMeta = layerList.find((layer) => layer.id === activeLayer);
+  const activeLayerLabel =
+    activeLayer === "forecast" ? `Prognoza - ${resolvedTab.label}` : layerMeta?.label || activeTab.label;
 
   const activeGridPoints = useMemo(() => {
-    if (activeLayer === "temperature") return layerSnapshot?.temperaturePoints || [];
-    if (activeLayer === "salinity") return layerSnapshot?.salinityPoints || [];
-    if (activeLayer === "waves" || activeLayer === "forecast") return layerSnapshot?.wavePoints || [];
-    if (activeLayer === "bathymetry") return bathymetryData.points || [];
+    if (resolvedLayer === "temperature") return layerSnapshot?.temperaturePoints || [];
+    if (resolvedLayer === "salinity") return layerSnapshot?.salinityPoints || [];
+    if (resolvedLayer === "waves") return layerSnapshot?.wavePoints || [];
+    if (resolvedLayer === "bathymetry") return bathymetryData.points || [];
     return [];
-  }, [activeLayer, layerSnapshot, bathymetryData.points]);
+  }, [resolvedLayer, layerSnapshot, bathymetryData.points]);
 
-  const currentVectors = useMemo(() => (activeLayer === "currents" ? layerSnapshot?.currentVectors || [] : []), [
-    activeLayer,
+  const currentVectors = useMemo(() => (resolvedLayer === "currents" ? layerSnapshot?.currentVectors || [] : []), [
+    resolvedLayer,
     layerSnapshot,
   ]);
 
   const waveVectors = useMemo(() => {
-    if (activeLayer !== "waves") return [];
+    if (resolvedLayer !== "waves") return [];
     const list = layerSnapshot?.wavePoints || [];
     return list
       .map((point) => ({
@@ -337,39 +365,39 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
         period: Number(point?.period),
       }))
       .filter((point) => Number.isFinite(point.lat) && Number.isFinite(point.lon) && Number.isFinite(point.value) && Number.isFinite(point.direction));
-  }, [activeLayer, layerSnapshot]);
+  }, [resolvedLayer, layerSnapshot]);
 
-  const timelineValue = valueByTimePoint(selectedPoint || current, activeLayer);
+  const timelineValue = valueByTimePoint(selectedPoint || current, resolvedLayer);
   const clickedScalarPoint = useMemo(() => nearestGridPoint(clickedPoint, activeGridPoints), [clickedPoint, activeGridPoints]);
   const clickedCurrentVector = useMemo(() => nearestGridPoint(clickedPoint, currentVectors), [clickedPoint, currentVectors]);
 
   const activeValue = useMemo(() => {
-    if (activeLayer === "currents") return clickedCurrentVector?.speed ?? timelineValue;
+    if (resolvedLayer === "currents") return clickedCurrentVector?.speed ?? timelineValue;
     return clickedScalarPoint?.value ?? timelineValue;
-  }, [activeLayer, clickedCurrentVector, clickedScalarPoint, timelineValue]);
+  }, [resolvedLayer, clickedCurrentVector, clickedScalarPoint, timelineValue]);
 
   const activeDirectionText = useMemo(() => {
-    if (activeLayer === "currents") {
+    if (resolvedLayer === "currents") {
       return formatDirection(clickedCurrentVector?.direction ?? selectedPoint?.currentDirection ?? current?.currentDirection);
     }
-    if (activeLayer === "waves") {
+    if (resolvedLayer === "waves") {
       return formatDirection(clickedScalarPoint?.direction ?? selectedPoint?.waveDirection ?? current?.waveDirection);
     }
     return null;
-  }, [activeLayer, clickedCurrentVector, clickedScalarPoint, selectedPoint, current]);
+  }, [resolvedLayer, clickedCurrentVector, clickedScalarPoint, selectedPoint, current]);
 
   const activePeriodText = useMemo(() => {
-    if (activeLayer !== "waves") return null;
+    if (resolvedLayer !== "waves") return null;
     const p = clickedScalarPoint?.period ?? selectedPoint?.wavePeriod ?? current?.wavePeriod;
     if (!Number.isFinite(Number(p))) return null;
     return `${formatNumber(p, 2)} s`;
-  }, [activeLayer, clickedScalarPoint, selectedPoint, current]);
+  }, [resolvedLayer, clickedScalarPoint, selectedPoint, current]);
 
   const scalarValues = activeGridPoints.map((point) => Number(point.value)).filter((v) => Number.isFinite(v));
   const vectorValues = currentVectors.map((point) => Number(point.speed)).filter((v) => Number.isFinite(v));
-  const rangeValues = activeLayer === "currents" ? vectorValues : scalarValues;
+  const rangeValues = resolvedLayer === "currents" ? vectorValues : scalarValues;
   const layerRange =
-    activeLayer === "bathymetry"
+    resolvedLayer === "bathymetry"
       ? computePercentileRange(rangeValues, {
           fallbackValue: activeValue,
           lowerQuantile: 0.08,
@@ -377,7 +405,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
           maxCap: 70,
         })
       : computeRange(rangeValues, activeValue);
-  const palette = activeLayer === "bathymetry" ? bathymetryPalette() : defaultPalette();
+  const palette = resolvedLayer === "bathymetry" ? bathymetryPalette() : defaultPalette();
   const activeColor = colorForValue(activeValue, layerRange, palette);
 
   const markerIcon = useMemo(
@@ -405,14 +433,14 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
     [mapBbox.maxLat, mapBbox.maxLon],
   ];
 
-  const showScalarGrid = activeLayer !== "currents" && activeGridPoints.length > 0;
-  const showCurrentVectorGrid = activeLayer === "currents" && currentVectors.length > 0;
-  const showWaveVectorGrid = activeLayer === "waves" && waveVectors.length > 0;
+  const showScalarGrid = resolvedLayer !== "currents" && activeGridPoints.length > 0;
+  const showCurrentVectorGrid = resolvedLayer === "currents" && currentVectors.length > 0;
+  const showWaveVectorGrid = resolvedLayer === "waves" && waveVectors.length > 0;
   const showLegacyCircles = !showScalarGrid && !showCurrentVectorGrid;
-  const hasPlayback = activeLayer !== "bathymetry";
+  const hasPlayback = resolvedLayer !== "bathymetry";
 
   const gradientBar =
-    activeLayer === "bathymetry"
+    resolvedLayer === "bathymetry"
       ? "linear-gradient(90deg,#bfdbfe 0%,#7dd3fc 22%,#38bdf8 44%,#0e7490 66%,#0f172a 100%)"
       : "linear-gradient(90deg,#1e40af 0%,#0ea5e9 22%,#10b981 44%,#facc15 66%,#f97316 83%,#dc2626 100%)";
 
@@ -428,7 +456,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
       <div style={{ padding: 14, borderBottom: "1px solid #dbeafe" }}>
         <div style={{ fontSize: 18, fontWeight: 900, color: "#0f172a" }}>Harti interactive si predictii marine</div>
         <div style={{ marginTop: 6, color: "#334155", fontSize: 13 }}>
-          Layer activ: <b>{layerMeta?.label || activeTab.label}</b> | Valoare punctuala: <b>{formatNumber(activeValue, 2)} {activeTab.unit}</b>
+          Layer activ: <b>{activeLayerLabel}</b> | Valoare punctuala: <b>{formatNumber(activeValue, 2)} {resolvedTab.unit}</b>
           {activeDirectionText ? ` | Directie: ${activeDirectionText}` : ""}
           {activePeriodText ? ` | Perioada: ${activePeriodText}` : ""}
         </div>
@@ -442,19 +470,45 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
             </button>
           ))}
         </div>
+        {activeLayer === "forecast" && (
+          <div
+            style={{
+              border: "1px dashed #bae6fd",
+              borderRadius: 12,
+              padding: 10,
+              background: "linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%)",
+            }}
+          >
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#0f172a", marginBottom: 8 }}>
+              Evantai prognoze (vertical)
+            </div>
+            <div style={{ display: "grid", gap: 8, maxWidth: 260 }}>
+              {FORECAST_FAN_OPTIONS.map((option, index) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setForecastMetric(option.id)}
+                  style={forecastFanButtonStyle(forecastMetric === option.id, index)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div style={{ display: "grid", gap: 8 }}>
           <div style={{ fontWeight: 800, color: "#0f172a", fontSize: 13 }}>Legenda dinamica layer</div>
           <div style={{ height: 10, borderRadius: 999, background: gradientBar, border: "1px solid #cbd5e1" }} />
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#475569" }}>
             <span>
-              Min: {formatNumber(layerRange.min, 2)} {activeTab.unit}
+              Min: {formatNumber(layerRange.min, 2)} {resolvedTab.unit}
             </span>
             <span>
-              Max: {formatNumber(layerRange.max, 2)} {activeTab.unit}
+              Max: {formatNumber(layerRange.max, 2)} {resolvedTab.unit}
             </span>
           </div>
-          {activeLayer === "bathymetry" && (
+          {resolvedLayer === "bathymetry" && (
             <div style={{ fontSize: 12, color: "#64748b" }}>
               Scala batimetriei este calibrata pe litoralul Romaniei (Sulina-Vama Veche), nu pe intreaga Mare Neagra.
             </div>
@@ -547,7 +601,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                 <div style={{ minWidth: 220 }}>
                   <div style={{ fontWeight: 800, marginBottom: 6 }}>{station?.displayName || station?.name || "Constanta"}</div>
                   <div>
-                    {activeTab.label}: <b>{formatNumber(activeValue, 2)} {activeTab.unit}</b>
+                    {activeLayerLabel}: <b>{formatNumber(activeValue, 2)} {resolvedTab.unit}</b>
                   </div>
                   {activeDirectionText && <div>Directie: <b>{activeDirectionText}</b></div>}
                   {activePeriodText && <div>Perioada: <b>{activePeriodText}</b></div>}

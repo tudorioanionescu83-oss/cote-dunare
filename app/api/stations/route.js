@@ -45,7 +45,7 @@ const STATIONS = [
     lng: 28.65,
     displayName: "Constanta - Marea Neagra",
     wikiTitle: "Constanța",
-    photoUrl: "/stations/placeholder.jpg",
+    photoUrl: "/stations/constanta.jpg",
     icao: "LRCK",
   }
 ];

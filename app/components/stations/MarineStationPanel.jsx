@@ -243,12 +243,28 @@ export default function MarineStationPanel({
               alignItems: "stretch",
             }}
           >
-            <div style={{ border: "1px solid #dbeafe", borderRadius: 12, overflow: "hidden", background: "#f8fafc", minHeight: 210 }}>
+            <div
+              style={{
+                border: "1px solid #dbeafe",
+                borderRadius: 12,
+                overflow: "hidden",
+                background: "#f8fafc",
+                minHeight: 170,
+                maxHeight: 190,
+              }}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={activeImage}
                 alt={station?.displayName || station?.name || "Constanta"}
-                style={{ width: "100%", height: "100%", minHeight: 210, objectFit: "cover", display: "block" }}
+                style={{
+                  width: "100%",
+                  height: "clamp(170px, 18vw, 190px)",
+                  minHeight: 170,
+                  maxHeight: 190,
+                  objectFit: "cover",
+                  display: "block",
+                }}
                 onError={() => {
                   if (hasImageFallback) setImageIndex((prev) => prev + 1);
                 }}
