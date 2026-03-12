@@ -1,8 +1,27 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import MarineSummaryCards from "./MarineSummaryCards";
-import MarineMapsPanel from "./MarineMapsPanel";
 import MarineMeteoSection from "./MarineMeteoSection";
+
+const MarineMapsPanel = dynamic(() => import("./MarineMapsPanel"), {
+  ssr: false,
+  loading: () => (
+    <div
+      style={{
+        border: "1px solid #dbeafe",
+        borderRadius: 12,
+        background: "linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%)",
+        padding: 14,
+        color: "#64748b",
+        fontSize: 13,
+        fontWeight: 700,
+      }}
+    >
+      Se incarca harta marina...
+    </div>
+  ),
+});
 
 function formatTimestamp(value) {
   if (!value) return "—";
