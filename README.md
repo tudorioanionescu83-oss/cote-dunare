@@ -28,3 +28,25 @@ Platformă web pentru monitorizarea în timp real a cotelor Dunării de la toate
 ## Deploy
 
 Deployed on Vercel at: cote.sturgeons.eu
+
+## Marine station (Constanta)
+
+New marine station support was added for `constanta_marine` using only Copernicus Marine data.
+
+Internal endpoints:
+
+- `GET /api/stations/constanta/current`
+- `GET /api/stations/constanta/timeseries?hours=168`
+- `GET /api/stations/constanta/forecast?days=5`
+- `GET /api/stations/constanta/layers`
+
+Automatic refresh:
+
+- GitHub Actions workflow: `.github/workflows/update-constanta-marine.yml`
+- Schedule: every 6 hours (`0 */6 * * *`)
+- Updater script: `scripts/marine/update_constanta_marine.py`
+
+Supabase:
+
+- Migration: `supabase/migrations/20260312090000_create_marine_station_data.sql`
+- Cache table: `marine_station_data`
