@@ -35,11 +35,16 @@ BBOX = {
     "maximum_longitude": 28.9,
 }
 
-DATASET_PHY = "BLKSEA_ANALYSISFORECAST_PHY_007_001"
-DATASET_WAV = "BLKSEA_ANALYSISFORECAST_WAV_007_003"
+DATASET_TEMP = os.getenv("COPERNICUS_DATASET_TEMP", "cmems_mod_blk_phy-temp_anfc_2.5km_PT1H-m")
+DATASET_CUR = os.getenv("COPERNICUS_DATASET_CUR", "cmems_mod_blk_phy-cur_anfc_2.5km_PT1H-m")
+DATASET_SAL = os.getenv("COPERNICUS_DATASET_SAL", "cmems_mod_blk_phy-sal_anfc_2.5km_PT1H-m")
+DATASET_WAV = os.getenv("COPERNICUS_DATASET_WAV", "cmems_mod_blk_wav_anfc_2.5km_PT1H-i")
 
-VARIABLES_PHY = ["thetao", "uo", "vo", "so"]
-VARIABLES_WAV = ["VHM0", "VMDR", "VTPK"]
+VAR_TEMP = "thetao"
+VAR_U = "uo"
+VAR_V = "vo"
+VAR_SAL = "so"
+VARS_WAV = ["VHM0", "VMDR", "VTPK"]
 
 
 def read_env(name: str, default: Optional[str] = None) -> str:
@@ -261,16 +266,46 @@ def download_subsets(username: str, password: str, output_dir: Path) -> Dict[str
 
     print(f"Subset time window: {to_iso(start)} -> {to_iso(end)}")
 
-    phy_name = "constanta_phy.nc"
+    temp_name = "constanta_temp.nc"
+    cur_name = "constanta_cur.nc"
+    sal_name = "constanta_sal.nc"
     wav_name = "constanta_wav.nc"
 
-    phy_result = safe_subset(
-        dataset_id=DATASET_PHY,
-        variables=VARIABLES_PHY,
+    temp_result = safe_subset(
+        dataset_id=DATASET_TEMP,
+        variables=[VAR_TEMP],
         start_datetime=to_iso(start),
         end_datetime=to_iso(end),
         output_directory=str(output_dir),
-        output_filename=phy_name,
+        output_filename=temp_name,
+        username=username,
+        password=password,
+        minimum_depth=0.0,
+        maximum_depth=1.0,
+        **BBOX,
+    )
+
+    cur_result = safe_subset(
+        dataset_id=DATASET_CUR,
+        variables=[VAR_U, VAR_V],
+        start_datetime=to_iso(start),
+        end_datetime=to_iso(end),
+        output_directory=str(output_dir),
+        output_filename=cur_name,
+        username=username,
+        password=password,
+        minimum_depth=0.0,
+        maximum_depth=1.0,
+        **BBOX,
+    )
+
+    sal_result = safe_subset(
+        dataset_id=DATASET_SAL,
+        variables=[VAR_SAL],
+        start_datetime=to_iso(start),
+        end_datetime=to_iso(end),
+        output_directory=str(output_dir),
+        output_filename=sal_name,
         username=username,
         password=password,
         minimum_depth=0.0,
@@ -280,7 +315,7 @@ def download_subsets(username: str, password: str, output_dir: Path) -> Dict[str
 
     wav_result = safe_subset(
         dataset_id=DATASET_WAV,
-        variables=VARIABLES_WAV,
+        variables=VARS_WAV,
         start_datetime=to_iso(start),
         end_datetime=to_iso(end),
         output_directory=str(output_dir),
@@ -290,19 +325,28 @@ def download_subsets(username: str, password: str, output_dir: Path) -> Dict[str
         **BBOX,
     )
 
-    phy_path = resolve_subset_path(phy_result, output_dir, phy_name)
+    temp_path = resolve_subset_path(temp_result, output_dir, temp_name)
+    cur_path = resolve_subset_path(cur_result, output_dir, cur_name)
+    sal_path = resolve_subset_path(sal_result, output_dir, sal_name)
     wav_path = resolve_subset_path(wav_result, output_dir, wav_name)
-    print(f"Downloaded physical subset: {phy_path}")
+    print(f"Downloaded temp subset: {temp_path}")
+    print(f"Downloaded current subset: {cur_path}")
+    print(f"Downloaded salinity subset: {sal_path}")
     print(f"Downloaded wave subset: {wav_path}")
-    return {"physical": phy_path, "waves": wav_path}
+    return {"temp": temp_path, "cur": cur_path, "sal": sal_path, "waves": wav_path}
 
 
-def build_normalized_rows(physical_path: Path, waves_path: Path) -> List[Dict[str, Any]]:
-    with xr.open_dataset(physical_path) as ds_phy, xr.open_dataset(waves_path) as ds_wav:
-        var_thetao = first_existing_var(ds_phy, ["thetao"])
-        var_uo = first_existing_var(ds_phy, ["uo"])
-        var_vo = first_existing_var(ds_phy, ["vo"])
-        var_so = first_existing_var(ds_phy, ["so"])
+def build_normalized_rows(temp_path: Path, cur_path: Path, sal_path: Path, waves_path: Path) -> List[Dict[str, Any]]:
+    with (
+        xr.open_dataset(temp_path) as ds_temp,
+        xr.open_dataset(cur_path) as ds_cur,
+        xr.open_dataset(sal_path) as ds_sal,
+        xr.open_dataset(waves_path) as ds_wav,
+    ):
+        var_thetao = first_existing_var(ds_temp, ["thetao"])
+        var_uo = first_existing_var(ds_cur, ["uo"])
+        var_vo = first_existing_var(ds_cur, ["vo"])
+        var_so = first_existing_var(ds_sal, ["so"])
 
         var_vhm0 = first_existing_var(ds_wav, ["VHM0", "vhm0"])
         var_vmdr = first_existing_var(ds_wav, ["VMDR", "vmdr"])
@@ -310,13 +354,13 @@ def build_normalized_rows(physical_path: Path, waves_path: Path) -> List[Dict[st
 
         series_map: Dict[str, Dict[str, Optional[float]]] = {}
         if var_thetao:
-            series_map["water_temperature"] = extract_series(ds_phy, var_thetao, CONST_LAT, CONST_LON)
+            series_map["water_temperature"] = extract_series(ds_temp, var_thetao, CONST_LAT, CONST_LON)
         if var_uo:
-            series_map["current_u"] = extract_series(ds_phy, var_uo, CONST_LAT, CONST_LON)
+            series_map["current_u"] = extract_series(ds_cur, var_uo, CONST_LAT, CONST_LON)
         if var_vo:
-            series_map["current_v"] = extract_series(ds_phy, var_vo, CONST_LAT, CONST_LON)
+            series_map["current_v"] = extract_series(ds_cur, var_vo, CONST_LAT, CONST_LON)
         if var_so:
-            series_map["salinity"] = extract_series(ds_phy, var_so, CONST_LAT, CONST_LON)
+            series_map["salinity"] = extract_series(ds_sal, var_so, CONST_LAT, CONST_LON)
         if var_vhm0:
             series_map["wave_height"] = extract_series(ds_wav, var_vhm0, CONST_LAT, CONST_LON)
         if var_vmdr:
@@ -380,7 +424,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="copernicus_constanta_") as tmp_dir:
         output_dir = Path(tmp_dir)
         paths = download_subsets(username=username, password=password, output_dir=output_dir)
-        rows = build_normalized_rows(paths["physical"], paths["waves"])
+        rows = build_normalized_rows(paths["temp"], paths["cur"], paths["sal"], paths["waves"])
         upsert_rows(rows, supabase_url=supabase_url, supabase_key=supabase_key)
 
     print("Constanta marine update finished successfully.")
