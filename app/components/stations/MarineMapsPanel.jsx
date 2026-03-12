@@ -27,6 +27,12 @@ const FORECAST_FAN_OPTIONS = [
   { id: "salinity", label: "Prognoza salinitate" },
 ];
 
+const BASEMAP_OPTIONS = [
+  { id: "normal", label: "Harta color" },
+  { id: "semi", label: "Semi alb-negru" },
+  { id: "mono", label: "Alb-negru" },
+];
+
 const ROMANIA_TZ = "Europe/Bucharest";
 
 function formatNumber(value, digits = 2) {
@@ -250,16 +256,23 @@ function degreesToCardinal(degrees) {
   return points[idx];
 }
 
+function normalizeDegrees(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  return ((numeric % 360) + 360) % 360;
+}
+
 function formatDirection(degrees) {
-  const value = Number(degrees);
-  if (!Number.isFinite(value)) return "-";
-  const rounded = Math.round(((value % 360) + 360) % 360);
+  const normalized = normalizeDegrees(degrees);
+  if (normalized === null) return "-";
+  const rounded = Math.round(normalized);
   return `${rounded}\u00B0 (${degreesToCardinal(rounded)})`;
 }
 
 export default function MarineMapsPanel({ station, current, timeseries, forecast, layers = { layers: [] } }) {
   const [activeLayer, setActiveLayer] = useState("temperature");
   const [forecastMetric, setForecastMetric] = useState("temperature");
+  const [basemapMode, setBasemapMode] = useState("normal");
   const [clickedPoint, setClickedPoint] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -317,6 +330,11 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
     return points[safeIndex];
   }, [points, selectedIndex]);
 
+  const referencePoint = useMemo(() => {
+    if (!points.length) return null;
+    return points[points.length - 1];
+  }, [points]);
+
   useEffect(() => {
     if (!points.length) {
       setSelectedIndex(0);
@@ -340,7 +358,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
   const activeLayerLabel =
     activeLayer === "forecast" ? `Prognoza - ${resolvedTab.label}` : layerMeta?.label || activeTab.label;
 
-  const activeGridPoints = useMemo(() => {
+  const sourceGridPoints = useMemo(() => {
     if (resolvedLayer === "temperature") return layerSnapshot?.temperaturePoints || [];
     if (resolvedLayer === "salinity") return layerSnapshot?.salinityPoints || [];
     if (resolvedLayer === "waves") return layerSnapshot?.wavePoints || [];
@@ -348,14 +366,94 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
     return [];
   }, [resolvedLayer, layerSnapshot, bathymetryData.points]);
 
-  const currentVectors = useMemo(() => (resolvedLayer === "currents" ? layerSnapshot?.currentVectors || [] : []), [
+  const sourceCurrentVectors = useMemo(() => (resolvedLayer === "currents" ? layerSnapshot?.currentVectors || [] : []), [
     resolvedLayer,
     layerSnapshot,
   ]);
 
+  const playbackDelta = useMemo(() => {
+    const temperatureDelta = Number(selectedPoint?.waterTemperature) - Number(referencePoint?.waterTemperature);
+    const salinityDelta = Number(selectedPoint?.salinity) - Number(referencePoint?.salinity);
+    const waveHeightDelta = Number(selectedPoint?.waveHeight) - Number(referencePoint?.waveHeight);
+    const waveDirectionDelta = Number(selectedPoint?.waveDirection) - Number(referencePoint?.waveDirection);
+    const currentDirectionDelta = Number(selectedPoint?.currentDirection) - Number(referencePoint?.currentDirection);
+    const selectedCurrentSpeed = Number(selectedPoint?.currentSpeed);
+    const referenceCurrentSpeed = Number(referencePoint?.currentSpeed);
+    const currentSpeedRatio =
+      Number.isFinite(selectedCurrentSpeed) && Number.isFinite(referenceCurrentSpeed) && Math.abs(referenceCurrentSpeed) > 1e-6
+        ? selectedCurrentSpeed / referenceCurrentSpeed
+        : 1;
+
+    return {
+      temperatureDelta: Number.isFinite(temperatureDelta) ? temperatureDelta : 0,
+      salinityDelta: Number.isFinite(salinityDelta) ? salinityDelta : 0,
+      waveHeightDelta: Number.isFinite(waveHeightDelta) ? waveHeightDelta : 0,
+      waveDirectionDelta: Number.isFinite(waveDirectionDelta) ? waveDirectionDelta : 0,
+      currentDirectionDelta: Number.isFinite(currentDirectionDelta) ? currentDirectionDelta : 0,
+      currentSpeedRatio: Number.isFinite(currentSpeedRatio) ? Math.max(0.15, Math.min(3.5, currentSpeedRatio)) : 1,
+    };
+  }, [selectedPoint, referencePoint]);
+
+  const shouldAnimateSpatial = Boolean(
+    selectedPoint &&
+      referencePoint &&
+      points.length > 1 &&
+      resolvedLayer !== "bathymetry" &&
+      (activeLayer === "forecast" || activeLayer === "temperature" || activeLayer === "salinity" || activeLayer === "waves" || activeLayer === "currents")
+  );
+
+  const activeGridPoints = useMemo(() => {
+    if (!shouldAnimateSpatial || resolvedLayer === "bathymetry") return sourceGridPoints;
+    const isWaveLayer = resolvedLayer === "waves";
+    const scalarDelta =
+      resolvedLayer === "temperature"
+        ? playbackDelta.temperatureDelta
+        : resolvedLayer === "salinity"
+        ? playbackDelta.salinityDelta
+        : isWaveLayer
+        ? playbackDelta.waveHeightDelta
+        : 0;
+    if (!Number.isFinite(scalarDelta) || Math.abs(scalarDelta) < 1e-9) return sourceGridPoints;
+
+    return sourceGridPoints.map((point) => {
+      const currentValue = Number(point?.value);
+      const shifted = Number.isFinite(currentValue) ? currentValue + scalarDelta : currentValue;
+      const nextValue = resolvedLayer === "salinity" || isWaveLayer ? Math.max(0, shifted) : shifted;
+      const direction = Number(point?.direction);
+      const nextDirection = isWaveLayer && Number.isFinite(direction) ? normalizeDegrees(direction + playbackDelta.waveDirectionDelta) : direction;
+      return {
+        ...point,
+        value: nextValue,
+        ...(Number.isFinite(nextDirection) ? { direction: nextDirection } : {}),
+      };
+    });
+  }, [shouldAnimateSpatial, resolvedLayer, sourceGridPoints, playbackDelta]);
+
+  const currentVectors = useMemo(() => {
+    if (resolvedLayer !== "currents") return [];
+    if (!shouldAnimateSpatial) return sourceCurrentVectors;
+
+    return sourceCurrentVectors.map((vector) => {
+      const speed = Number(vector?.speed);
+      const direction = Number(vector?.direction);
+      const nextSpeed = Number.isFinite(speed) ? Math.max(0, speed * playbackDelta.currentSpeedRatio) : speed;
+      const nextDirection = Number.isFinite(direction) ? normalizeDegrees(direction + playbackDelta.currentDirectionDelta) : direction;
+      const radians = ((nextDirection || 0) * Math.PI) / 180;
+      const u = Number.isFinite(nextSpeed) ? Math.sin(radians) * nextSpeed : Number(vector?.u);
+      const v = Number.isFinite(nextSpeed) ? Math.cos(radians) * nextSpeed : Number(vector?.v);
+      return {
+        ...vector,
+        speed: nextSpeed,
+        direction: Number.isFinite(nextDirection) ? nextDirection : direction,
+        u: Number.isFinite(u) ? u : vector?.u,
+        v: Number.isFinite(v) ? v : vector?.v,
+      };
+    });
+  }, [resolvedLayer, shouldAnimateSpatial, sourceCurrentVectors, playbackDelta]);
+
   const waveVectors = useMemo(() => {
     if (resolvedLayer !== "waves") return [];
-    const list = layerSnapshot?.wavePoints || [];
+    const list = activeGridPoints || [];
     return list
       .map((point) => ({
         lat: Number(point?.lat),
@@ -364,8 +462,14 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
         direction: Number(point?.direction),
         period: Number(point?.period),
       }))
-      .filter((point) => Number.isFinite(point.lat) && Number.isFinite(point.lon) && Number.isFinite(point.value) && Number.isFinite(point.direction));
-  }, [resolvedLayer, layerSnapshot]);
+      .filter(
+        (point) =>
+          Number.isFinite(point.lat) &&
+          Number.isFinite(point.lon) &&
+          Number.isFinite(point.value) &&
+          Number.isFinite(point.direction)
+      );
+  }, [resolvedLayer, activeGridPoints]);
 
   const timelineValue = valueByTimePoint(selectedPoint || current, resolvedLayer);
   const clickedScalarPoint = useMemo(() => nearestGridPoint(clickedPoint, activeGridPoints), [clickedPoint, activeGridPoints]);
@@ -392,6 +496,16 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
     if (!Number.isFinite(Number(p))) return null;
     return `${formatNumber(p, 2)} s`;
   }, [resolvedLayer, clickedScalarPoint, selectedPoint, current]);
+
+  const activeDirectionDegrees = useMemo(() => {
+    if (resolvedLayer === "currents") {
+      return normalizeDegrees(clickedCurrentVector?.direction ?? selectedPoint?.currentDirection ?? current?.currentDirection);
+    }
+    if (resolvedLayer === "waves") {
+      return normalizeDegrees(clickedScalarPoint?.direction ?? selectedPoint?.waveDirection ?? current?.waveDirection);
+    }
+    return normalizeDegrees(selectedPoint?.currentDirection ?? current?.currentDirection);
+  }, [resolvedLayer, clickedCurrentVector, clickedScalarPoint, selectedPoint, current]);
 
   const scalarValues = activeGridPoints.map((point) => Number(point.value)).filter((v) => Number.isFinite(v));
   const vectorValues = currentVectors.map((point) => Number(point.speed)).filter((v) => Number.isFinite(v));
@@ -470,6 +584,28 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
             </button>
           ))}
         </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <span style={{ fontSize: 12, fontWeight: 800, color: "#334155" }}>Fundal harta:</span>
+          {BASEMAP_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => setBasemapMode(option.id)}
+              style={{
+                border: "1px solid #cbd5e1",
+                borderRadius: 999,
+                padding: "6px 10px",
+                background: basemapMode === option.id ? "#0ea5e9" : "white",
+                color: basemapMode === option.id ? "white" : "#0f172a",
+                fontWeight: 700,
+                fontSize: 12,
+                cursor: "pointer",
+              }}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
         {activeLayer === "forecast" && (
           <div
             style={{
@@ -517,7 +653,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
       </div>
 
       <div style={{ padding: "0 12px 12px 12px" }}>
-        <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #cbd5e1" }}>
+        <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #cbd5e1", position: "relative" }}>
           <MapContainer
             center={mapCenter}
             zoom={9}
@@ -525,7 +661,22 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
             boundsOptions={{ padding: [18, 18] }}
             style={{ height: 360, width: "100%" }}
           >
-            <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            {basemapMode !== "mono" && (
+              <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            )}
+            {basemapMode === "mono" && (
+              <TileLayer
+                attribution="&copy; OpenStreetMap contributors &copy; CARTO"
+                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+              />
+            )}
+            {basemapMode === "semi" && (
+              <TileLayer
+                attribution="&copy; CARTO"
+                url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
+                opacity={0.58}
+              />
+            )}
             <MapClickCapture onMapClick={setClickedPoint} />
 
             {showScalarGrid && (
@@ -612,6 +763,67 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
               </Popup>
             </Marker>
           </MapContainer>
+          <div
+            style={{
+              position: "absolute",
+              top: 10,
+              right: 10,
+              zIndex: 900,
+              background: "rgba(255,255,255,0.9)",
+              border: "1px solid #cbd5e1",
+              borderRadius: 10,
+              padding: "8px 8px 6px 8px",
+              minWidth: 92,
+              pointerEvents: "none",
+              boxShadow: "0 6px 16px rgba(15,23,42,0.15)",
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 800, color: "#334155", textAlign: "center" }}>Compas</div>
+            <div
+              style={{
+                position: "relative",
+                width: 68,
+                height: 68,
+                margin: "6px auto 4px auto",
+                borderRadius: "50%",
+                border: "2px solid #94a3b8",
+                background: "radial-gradient(circle at center, #ffffff 0%, #f8fafc 70%, #e2e8f0 100%)",
+              }}
+            >
+              <div style={{ position: "absolute", top: 2, left: "50%", transform: "translateX(-50%)", fontSize: 10, fontWeight: 800 }}>N</div>
+              <div style={{ position: "absolute", bottom: 2, left: "50%", transform: "translateX(-50%)", fontSize: 10, fontWeight: 800 }}>S</div>
+              <div style={{ position: "absolute", top: "50%", right: 3, transform: "translateY(-50%)", fontSize: 10, fontWeight: 800 }}>E</div>
+              <div style={{ position: "absolute", top: "50%", left: 3, transform: "translateY(-50%)", fontSize: 10, fontWeight: 800 }}>V</div>
+              <div
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  top: "50%",
+                  width: 2,
+                  height: 24,
+                  background: "#ef4444",
+                  transform: `translate(-50%, -100%) rotate(${activeDirectionDegrees || 0}deg)`,
+                  transformOrigin: "50% 100%",
+                  borderRadius: 999,
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  top: "50%",
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: "#0f172a",
+                  transform: "translate(-50%, -50%)",
+                }}
+              />
+            </div>
+            <div style={{ fontSize: 11, textAlign: "center", color: "#0f172a", fontWeight: 700 }}>
+              {activeDirectionDegrees === null ? "-" : `${Math.round(activeDirectionDegrees)}\u00B0 ${degreesToCardinal(activeDirectionDegrees)}`}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -717,15 +929,24 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                   </tr>
                 </thead>
                 <tbody>
-                  {forecast.points.slice(0, 32).map((point) => (
-                    <tr key={point.timestamp} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                  {forecast.points.slice(0, 32).map((point) => {
+                    const isSelected = point.timestamp === selectedPoint?.timestamp;
+                    return (
+                    <tr
+                      key={point.timestamp}
+                      style={{
+                        borderBottom: "1px solid #f1f5f9",
+                        background: isSelected ? "linear-gradient(90deg, rgba(14,165,233,.15), rgba(14,165,233,.05))" : "transparent",
+                      }}
+                    >
                       <td style={{ padding: "6px 4px" }}>{formatTimestamp(point.timestamp)}</td>
                       <td style={{ padding: "6px 4px" }}>{formatNumber(point.waterTemperature, 1)} \u00B0C</td>
                       <td style={{ padding: "6px 4px" }}>{formatNumber(point.currentSpeed, 2)} m/s</td>
                       <td style={{ padding: "6px 4px" }}>{formatNumber(point.waveHeight, 2)} m</td>
                       <td style={{ padding: "6px 4px" }}>{formatNumber(point.salinity, 2)} PSU</td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
