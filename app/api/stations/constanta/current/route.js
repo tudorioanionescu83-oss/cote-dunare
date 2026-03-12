@@ -1,0 +1,26 @@
+import { NextResponse } from "next/server";
+import { getConstantaMarineCurrent } from "../../../../lib/marine/copernicusService";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export async function GET() {
+  try {
+    const payload = await getConstantaMarineCurrent();
+    return NextResponse.json(payload, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: error?.message || "Failed to read marine current data",
+        stationId: "constanta_marine",
+      },
+      { status: 500 }
+    );
+  }
+}

@@ -32,7 +32,22 @@ const STATIONS = [
 
   { name: "Isaccea", km: 103, lat: 45.2697, lng: 28.4597, wikiTitle: "Isaccea", photoUrl: "/stations/placeholder.jpg" },
   { name: "Tulcea", km: 71, lat: 45.1787, lng: 28.8050, wikiTitle: "Tulcea", photoUrl: "/stations/placeholder.jpg", icao: "LRTC" },
-  { name: "Sulina", km: 0, lat: 45.1567, lng: 29.6596, wikiTitle: "Sulina", photoUrl: "/stations/placeholder.jpg" }
+  { name: "Sulina", km: 0, lat: 45.1567, lng: 29.6596, wikiTitle: "Sulina", photoUrl: "/stations/placeholder.jpg" },
+
+  // Station marine branch (Copernicus only)
+  {
+    id: "constanta_marine",
+    name: "Constanta",
+    kind: "marine",
+    sourceType: "copernicus",
+    lat: 44.17,
+    lon: 28.65,
+    lng: 28.65,
+    displayName: "Constanta - Marea Neagra",
+    wikiTitle: "Constanța",
+    photoUrl: "/stations/placeholder.jpg",
+    icao: "LRCK",
+  }
 ];
 
 export async function GET() {
