@@ -262,6 +262,33 @@ function normalizeDegrees(value) {
   return ((numeric % 360) + 360) % 360;
 }
 
+function cardinalToDegrees(cardinal) {
+  const value = String(cardinal || "").trim().toUpperCase();
+  if (!value) return null;
+  const map = {
+    N: 0,
+    NNE: 22.5,
+    NE: 45,
+    ENE: 67.5,
+    E: 90,
+    ESE: 112.5,
+    SE: 135,
+    SSE: 157.5,
+    S: 180,
+    SSV: 202.5,
+    SV: 225,
+    VSV: 247.5,
+    V: 270,
+    VNV: 292.5,
+    NV: 315,
+    NNV: 337.5,
+    W: 270,
+    SW: 225,
+    NW: 315,
+  };
+  return map[value] ?? null;
+}
+
 function formatDirection(degrees) {
   const normalized = normalizeDegrees(degrees);
   if (normalized === null) return "-";
@@ -273,17 +300,26 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
   const [activeLayer, setActiveLayer] = useState("temperature");
   const [forecastMetric, setForecastMetric] = useState("temperature");
   const [basemapMode, setBasemapMode] = useState("normal");
+  const [showBasemapMenu, setShowBasemapMenu] = useState(false);
   const [clickedPoint, setClickedPoint] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speedMode, setSpeedMode] = useState("normal");
   const [bathymetryData, setBathymetryData] = useState({ loading: false, points: [], minValue: null, maxValue: null });
+  const [weatherWind, setWeatherWind] = useState({
+    loading: true,
+    speedKmh: null,
+    directionCardinal: null,
+    directionDeg: null,
+  });
 
   const layerPayload = useMemo(() => (Array.isArray(layers) ? { layers } : layers || { layers: [] }), [layers]);
   const layerList = layerPayload?.layers || [];
   const layerSnapshot = layerPayload?.snapshot || null;
   const bathymetryMeta = layerPayload?.bathymetry || null;
   const resolvedLayer = activeLayer === "forecast" ? forecastMetric : activeLayer;
+  const stationLat = Number(station?.lat ?? 44.17);
+  const stationLng = Number(station?.lng ?? station?.lon ?? 28.65);
 
   useEffect(() => {
     let cancelled = false;
@@ -318,6 +354,48 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
       cancelled = true;
     };
   }, [bathymetryMeta?.pointsUrl]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadWeather() {
+      if (!Number.isFinite(stationLat) || !Number.isFinite(stationLng)) {
+        if (!cancelled) {
+          setWeatherWind({ loading: false, speedKmh: null, directionCardinal: null, directionDeg: null });
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/weather?lat=${encodeURIComponent(stationLat)}&lon=${encodeURIComponent(stationLng)}`,
+          { cache: "no-store" }
+        );
+        const payload = await response.json();
+        if (cancelled) return;
+
+        const dirCardinal = payload?.current?.wind_dir || null;
+        const speed = Number(payload?.current?.wind_kmh);
+        setWeatherWind({
+          loading: false,
+          speedKmh: Number.isFinite(speed) ? speed : null,
+          directionCardinal: dirCardinal,
+          directionDeg: cardinalToDegrees(dirCardinal),
+        });
+      } catch {
+        if (!cancelled) {
+          setWeatherWind({ loading: false, speedKmh: null, directionCardinal: null, directionDeg: null });
+        }
+      }
+    }
+
+    loadWeather();
+    const timer = setInterval(loadWeather, 6 * 60 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [stationLat, stationLng]);
 
   const points = useMemo(() => {
     if (activeLayer === "forecast") return forecast?.points || [];
@@ -537,8 +615,6 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
   const currentSpeed = Number(selectedPoint?.currentSpeed ?? current?.currentSpeed);
   const hasSingleCurrentVector = Number.isFinite(currentDirection) && Number.isFinite(currentSpeed);
   const vectorDistanceKm = Math.max(1.1, Math.min(12, (Number.isFinite(currentSpeed) ? currentSpeed : 0.2) * 20));
-  const stationLat = Number(station?.lat ?? 44.17);
-  const stationLng = Number(station?.lng ?? station?.lon ?? 28.65);
   const mapCenter = [stationLat, stationLng];
   const vectorTo = hasSingleCurrentVector ? destinationPoint(stationLat, stationLng, currentDirection, vectorDistanceKm) : mapCenter;
   const mapBbox = normalizeBbox(layerSnapshot?.bbox) || normalizeBbox(station?.bbox) || ROMANIAN_COAST_BBOX;
@@ -552,6 +628,12 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
   const showWaveVectorGrid = resolvedLayer === "waves" && waveVectors.length > 0;
   const showLegacyCircles = !showScalarGrid && !showCurrentVectorGrid;
   const hasPlayback = resolvedLayer !== "bathymetry";
+  const showLayerCompass = resolvedLayer === "currents" || resolvedLayer === "waves";
+  const layerCompassLabel = resolvedLayer === "currents" ? "Curenti" : resolvedLayer === "waves" ? "Val" : "";
+  const windDirectionDeg = normalizeDegrees(weatherWind.directionDeg);
+  const windDirectionLabel =
+    windDirectionDeg === null ? "-" : `${Math.round(windDirectionDeg)}\u00B0 ${degreesToCardinal(windDirectionDeg)}`;
+  const windSpeedLabel = Number.isFinite(Number(weatherWind.speedKmh)) ? `${formatNumber(weatherWind.speedKmh, 1)} km/h` : "-";
 
   const gradientBar =
     resolvedLayer === "bathymetry"
@@ -581,28 +663,6 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
           {TAB_CONFIG.map((tab) => (
             <button key={tab.id} type="button" onClick={() => setActiveLayer(tab.id)} style={layerButtonStyle(tab.id === activeLayer)}>
               {tab.label}
-            </button>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <span style={{ fontSize: 12, fontWeight: 800, color: "#334155" }}>Fundal harta:</span>
-          {BASEMAP_OPTIONS.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => setBasemapMode(option.id)}
-              style={{
-                border: "1px solid #cbd5e1",
-                borderRadius: 999,
-                padding: "6px 10px",
-                background: basemapMode === option.id ? "#0ea5e9" : "white",
-                color: basemapMode === option.id ? "white" : "#0f172a",
-                fontWeight: 700,
-                fontSize: 12,
-                cursor: "pointer",
-              }}
-            >
-              {option.label}
             </button>
           ))}
         </div>
@@ -656,9 +716,9 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
         <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #cbd5e1", position: "relative" }}>
           <MapContainer
             center={mapCenter}
-            zoom={9}
+            zoom={8}
             bounds={mapBounds}
-            boundsOptions={{ padding: [18, 18] }}
+            boundsOptions={{ padding: [84, 84] }}
             style={{ height: 360, width: "100%" }}
           >
             {basemapMode !== "mono" && (
@@ -677,7 +737,12 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                 opacity={0.58}
               />
             )}
-            <MapClickCapture onMapClick={setClickedPoint} />
+            <MapClickCapture
+              onMapClick={(latlng) => {
+                setClickedPoint(latlng);
+                setShowBasemapMenu(false);
+              }}
+            />
 
             {showScalarGrid && (
               <Pane name="marine-grid-scalars" style={{ zIndex: 430 }}>
@@ -703,14 +768,20 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
             {showCurrentVectorGrid && (
               <Pane name="marine-grid-vectors-current" style={{ zIndex: 450 }}>
                 {currentVectors.map((vector, index) => {
-                  const end = destinationPoint(vector.lat, vector.lon, vector.direction, Math.max(0.45, Math.min(3.8, vector.speed * 9)));
+                  const segmentDistance = Math.max(0.55, Math.min(4.5, vector.speed * 9.5));
+                  const end = destinationPoint(vector.lat, vector.lon, vector.direction, segmentDistance);
+                  const arrowLeft = destinationPoint(end[0], end[1], vector.direction + 152, Math.max(0.08, segmentDistance * 0.16));
+                  const arrowRight = destinationPoint(end[0], end[1], vector.direction - 152, Math.max(0.08, segmentDistance * 0.16));
                   const color = colorForValue(vector.speed, layerRange, defaultPalette());
                   return (
-                    <Polyline
-                      key={`cur-vec-${index}`}
-                      positions={[[vector.lat, vector.lon], end]}
-                      pathOptions={{ color, weight: 1.6, opacity: 0.85 }}
-                    />
+                    <React.Fragment key={`cur-vec-${index}`}>
+                      <Polyline
+                        positions={[[vector.lat, vector.lon], end]}
+                        pathOptions={{ color, weight: 2.6, opacity: 0.92 }}
+                      />
+                      <Polyline positions={[end, arrowLeft]} pathOptions={{ color, weight: 2.2, opacity: 0.92 }} />
+                      <Polyline positions={[end, arrowRight]} pathOptions={{ color, weight: 2.2, opacity: 0.92 }} />
+                    </React.Fragment>
                   );
                 })}
               </Pane>
@@ -763,31 +834,95 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
               </Popup>
             </Marker>
           </MapContainer>
+          <div style={{ position: "absolute", top: 10, left: 10, zIndex: 900 }}>
+            <button
+              type="button"
+              onClick={() => setShowBasemapMenu((prev) => !prev)}
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 8,
+                border: "1px solid rgba(15,23,42,.25)",
+                background: "rgba(255,255,255,.92)",
+                cursor: "pointer",
+                display: "grid",
+                placeItems: "center",
+                boxShadow: "0 4px 12px rgba(15,23,42,.22)",
+              }}
+              title="Layere harta"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z" fill="#cbd5e1" stroke="#475569" strokeWidth="1" />
+                <path d="M12 9l9 4.5-9 4.5-9-4.5L12 9z" fill="#e2e8f0" stroke="#475569" strokeWidth="1" />
+                <path d="M12 15l9 4.5-9 4.5-9-4.5L12 15z" fill="#f1f5f9" stroke="#475569" strokeWidth="1" />
+              </svg>
+            </button>
+            {showBasemapMenu && (
+              <div
+                style={{
+                  marginTop: 8,
+                  minWidth: 170,
+                  borderRadius: 10,
+                  border: "1px solid rgba(15,23,42,.2)",
+                  background: "rgba(255,255,255,.95)",
+                  boxShadow: "0 8px 20px rgba(15,23,42,.22)",
+                  padding: 8,
+                  display: "grid",
+                  gap: 6,
+                }}
+              >
+                {BASEMAP_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => {
+                      setBasemapMode(option.id);
+                      setShowBasemapMenu(false);
+                    }}
+                    style={{
+                      border: "1px solid #cbd5e1",
+                      borderRadius: 8,
+                      padding: "7px 10px",
+                      textAlign: "left",
+                      fontWeight: 700,
+                      fontSize: 12,
+                      color: basemapMode === option.id ? "white" : "#0f172a",
+                      background: basemapMode === option.id ? "linear-gradient(135deg,#0ea5e9,#0284c7)" : "white",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div
             style={{
               position: "absolute",
-              top: 10,
-              right: 10,
-              zIndex: 900,
-              background: "rgba(255,255,255,0.9)",
-              border: "1px solid #cbd5e1",
+              top: 62,
+              left: 10,
+              zIndex: 890,
+              background: "rgba(255,255,255,0.3)",
+              border: "1px solid rgba(148,163,184,.55)",
               borderRadius: 10,
               padding: "8px 8px 6px 8px",
-              minWidth: 92,
+              minWidth: 102,
+              backdropFilter: "blur(1.2px)",
               pointerEvents: "none",
-              boxShadow: "0 6px 16px rgba(15,23,42,0.15)",
             }}
           >
-            <div style={{ fontSize: 11, fontWeight: 800, color: "#334155", textAlign: "center" }}>Compas</div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: "#0f172a", textAlign: "center" }}>Vant</div>
             <div
               style={{
                 position: "relative",
-                width: 68,
-                height: 68,
+                width: 70,
+                height: 70,
                 margin: "6px auto 4px auto",
                 borderRadius: "50%",
-                border: "2px solid #94a3b8",
-                background: "radial-gradient(circle at center, #ffffff 0%, #f8fafc 70%, #e2e8f0 100%)",
+                border: "2px solid rgba(100,116,139,.85)",
+                background: "radial-gradient(circle at center, rgba(255,255,255,.65) 0%, rgba(255,255,255,.2) 70%, rgba(148,163,184,.15) 100%)",
               }}
             >
               <div style={{ position: "absolute", top: 2, left: "50%", transform: "translateX(-50%)", fontSize: 10, fontWeight: 800 }}>N</div>
@@ -799,14 +934,28 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                   position: "absolute",
                   left: "50%",
                   top: "50%",
-                  width: 2,
-                  height: 24,
+                  width: 2.4,
+                  height: 25,
                   background: "#ef4444",
-                  transform: `translate(-50%, -100%) rotate(${activeDirectionDegrees || 0}deg)`,
+                  transform: `translate(-50%, -100%) rotate(${windDirectionDeg || 0}deg)`,
                   transformOrigin: "50% 100%",
                   borderRadius: 999,
                 }}
-              />
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    left: "50%",
+                    top: -8,
+                    transform: "translateX(-50%)",
+                    width: 0,
+                    height: 0,
+                    borderLeft: "5px solid transparent",
+                    borderRight: "5px solid transparent",
+                    borderBottom: "9px solid #ef4444",
+                  }}
+                />
+              </div>
               <div
                 style={{
                   position: "absolute",
@@ -821,9 +970,88 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
               />
             </div>
             <div style={{ fontSize: 11, textAlign: "center", color: "#0f172a", fontWeight: 700 }}>
-              {activeDirectionDegrees === null ? "-" : `${Math.round(activeDirectionDegrees)}\u00B0 ${degreesToCardinal(activeDirectionDegrees)}`}
+              {weatherWind.loading ? "..." : windDirectionLabel}
             </div>
+            <div style={{ fontSize: 11, textAlign: "center", color: "#0f172a", fontWeight: 700 }}>{windSpeedLabel}</div>
           </div>
+
+          {showLayerCompass && (
+            <div
+              style={{
+                position: "absolute",
+                top: 10,
+                right: 10,
+                zIndex: 900,
+                background: "rgba(255,255,255,0.28)",
+                border: "1px solid rgba(148,163,184,.55)",
+                borderRadius: 10,
+                padding: "8px 8px 6px 8px",
+                minWidth: 92,
+                backdropFilter: "blur(1.2px)",
+                pointerEvents: "none",
+              }}
+            >
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#0f172a", textAlign: "center" }}>{layerCompassLabel}</div>
+              <div
+                style={{
+                  position: "relative",
+                  width: 68,
+                  height: 68,
+                  margin: "6px auto 4px auto",
+                  borderRadius: "50%",
+                  border: "2px solid rgba(100,116,139,.85)",
+                  background: "radial-gradient(circle at center, rgba(255,255,255,.62) 0%, rgba(255,255,255,.18) 70%, rgba(148,163,184,.12) 100%)",
+                }}
+              >
+                <div style={{ position: "absolute", top: 2, left: "50%", transform: "translateX(-50%)", fontSize: 10, fontWeight: 800 }}>N</div>
+                <div style={{ position: "absolute", bottom: 2, left: "50%", transform: "translateX(-50%)", fontSize: 10, fontWeight: 800 }}>S</div>
+                <div style={{ position: "absolute", top: "50%", right: 3, transform: "translateY(-50%)", fontSize: 10, fontWeight: 800 }}>E</div>
+                <div style={{ position: "absolute", top: "50%", left: 3, transform: "translateY(-50%)", fontSize: 10, fontWeight: 800 }}>V</div>
+                <div
+                  style={{
+                    position: "absolute",
+                    left: "50%",
+                    top: "50%",
+                    width: 2.2,
+                    height: 24,
+                    background: "#ef4444",
+                    transform: `translate(-50%, -100%) rotate(${activeDirectionDegrees || 0}deg)`,
+                    transformOrigin: "50% 100%",
+                    borderRadius: 999,
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: "50%",
+                      top: -8,
+                      transform: "translateX(-50%)",
+                      width: 0,
+                      height: 0,
+                      borderLeft: "5px solid transparent",
+                      borderRight: "5px solid transparent",
+                      borderBottom: "8px solid #ef4444",
+                    }}
+                  />
+                </div>
+                <div
+                  style={{
+                    position: "absolute",
+                    left: "50%",
+                    top: "50%",
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    background: "#0f172a",
+                    transform: "translate(-50%, -50%)",
+                  }}
+                />
+              </div>
+              <div style={{ fontSize: 11, textAlign: "center", color: "#0f172a", fontWeight: 700 }}>
+                {activeDirectionDegrees === null ? "-" : `${Math.round(activeDirectionDegrees)}\u00B0 ${degreesToCardinal(activeDirectionDegrees)}`}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -834,6 +1062,8 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
             <div>Punct albastru: statia Constanta (marina)</div>
             <div>Puncte colorate: camp scalar Copernicus (temperatura / salinitate / valuri / batimetrie)</div>
             <div>Linii colorate: vectori curenti si directia valurilor</div>
+            <div>Buton stanga-sus (icon layere): schimbare fundal harta (color / semi alb-negru / alb-negru)</div>
+            <div>Roza vant stanga: directia + viteza vant (date meteo)</div>
             <div>Click pe harta: citire valoare din cel mai apropiat punct de grila</div>
             {bathymetryData.loading && activeLayer === "bathymetry" && <div>Se incarca batimetria...</div>}
             {clickedPoint && (
