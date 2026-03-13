@@ -719,6 +719,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
             zoom={8}
             bounds={mapBounds}
             boundsOptions={{ padding: [84, 84] }}
+            zoomControl={false}
             style={{ height: 360, width: "100%" }}
           >
             {basemapMode !== "mono" && (
@@ -834,7 +835,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
               </Popup>
             </Marker>
           </MapContainer>
-          <div style={{ position: "absolute", top: 10, left: 10, zIndex: 900 }}>
+          <div style={{ position: "absolute", top: 10, left: 10, zIndex: 5000 }}>
             <button
               type="button"
               onClick={() => setShowBasemapMenu((prev) => !prev)}
@@ -901,9 +902,9 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
           <div
             style={{
               position: "absolute",
-              top: 62,
+              top: 58,
               left: 10,
-              zIndex: 890,
+              zIndex: 4900,
               background: "rgba(255,255,255,0.3)",
               border: "1px solid rgba(148,163,184,.55)",
               borderRadius: 10,
@@ -981,7 +982,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                 position: "absolute",
                 top: 10,
                 right: 10,
-                zIndex: 900,
+                zIndex: 5000,
                 background: "rgba(255,255,255,0.28)",
                 border: "1px solid rgba(148,163,184,.55)",
                 borderRadius: 10,
