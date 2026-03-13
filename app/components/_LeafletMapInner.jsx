@@ -133,6 +133,21 @@ const RIVER_LAYER_STYLE = {
   weight: 2.1,
   opacity: 0.92,
 };
+const RIVER_HIT_STYLE = {
+  color: "#000000",
+  weight: 14,
+  opacity: 0.001,
+};
+const RIVER_TOOLTIP_OPTIONS = {
+  sticky: true,
+  direction: "top",
+  opacity: 0.95,
+};
+
+function getRiverName(feature) {
+  const properties = feature?.properties || {};
+  return String(properties?.name || properties?.NAME || properties?.name_ro || properties?.NAME_RO || "").trim();
+}
 
 // ===== CUSTOM MAP CONTROLS =====
 function MapControls({ defaultCenter, defaultZoom, onLockToggle, isLocked }) {
@@ -439,10 +454,24 @@ export default function LeafletMapInner({
           <LayersControl.Overlay checked name="Râuri">
             <>
               {riversGeoJson && (
-                <GeoJSON
-                  data={riversGeoJson}
-                  style={() => RIVER_LAYER_STYLE}
-                />
+                <>
+                  <GeoJSON
+                    data={riversGeoJson}
+                    style={() => RIVER_LAYER_STYLE}
+                    interactive={false}
+                  />
+                  <GeoJSON
+                    data={riversGeoJson}
+                    style={() => RIVER_HIT_STYLE}
+                    onEachFeature={(feature, layer) => {
+                      const riverName = getRiverName(feature);
+                      if (!riverName) return;
+                      layer.bindTooltip(riverName, RIVER_TOOLTIP_OPTIONS);
+                      layer.on("mouseover", () => layer.openTooltip());
+                      layer.on("mouseout", () => layer.closeTooltip());
+                    }}
+                  />
+                </>
               )}
             </>
           </LayersControl.Overlay>

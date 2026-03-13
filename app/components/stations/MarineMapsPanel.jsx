@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Circle, CircleMarker, GeoJSON, MapContainer, Marker, Pane, Polyline, Popup, TileLayer, useMapEvents } from "react-leaflet";
+import { Circle, CircleMarker, GeoJSON, MapContainer, Marker, Pane, Polyline, Popup, TileLayer, ZoomControl, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -39,8 +39,47 @@ const RIVER_LAYER_STYLE = {
   weight: 2.1,
   opacity: 0.9,
 };
+const RIVER_HIT_STYLE = {
+  color: "#000000",
+  weight: 14,
+  opacity: 0.001,
+};
+const RIVER_TOOLTIP_OPTIONS = {
+  sticky: true,
+  direction: "top",
+  opacity: 0.95,
+};
+const COMPASS_TICK_DEGREES = [0, 45, 90, 135, 180, 225, 270, 315];
 
 const ROMANIA_TZ = "Europe/Bucharest";
+
+function getRiverName(feature) {
+  const properties = feature?.properties || {};
+  return String(properties?.name || properties?.NAME || properties?.name_ro || properties?.NAME_RO || "").trim();
+}
+
+function renderCompassTicks(size) {
+  const radius = Math.max(10, size / 2 - 4);
+  return COMPASS_TICK_DEGREES.map((deg) => {
+    const major = deg % 90 === 0;
+    return (
+      <div
+        key={`tick-${deg}`}
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          width: major ? 2 : 1.4,
+          height: major ? 8 : 6,
+          background: "rgba(15,23,42,.58)",
+          borderRadius: 999,
+          transform: `translate(-50%, -50%) rotate(${deg}deg) translateY(-${radius}px)`,
+          transformOrigin: "50% 50%",
+        }}
+      />
+    );
+  });
+}
 
 function formatNumber(value, digits = 2) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return "-";
@@ -810,6 +849,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
             zoomControl={false}
             style={{ height: isMobile ? 320 : 360, width: "100%" }}
           >
+            <ZoomControl position="topright" />
             {(basemapMode === "normal" || basemapMode === "semi") && (
               <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             )}
@@ -833,12 +873,28 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
               />
             )}
             {showRiversLayer && riversGeoJson && (
-              <Pane name="marine-rivers" style={{ zIndex: 418 }}>
-                <GeoJSON
-                  data={riversGeoJson}
-                  style={() => RIVER_LAYER_STYLE}
-                />
-              </Pane>
+              <>
+                <Pane name="marine-rivers" style={{ zIndex: 418 }}>
+                  <GeoJSON
+                    data={riversGeoJson}
+                    style={() => RIVER_LAYER_STYLE}
+                    interactive={false}
+                  />
+                </Pane>
+                <Pane name="marine-rivers-hit" style={{ zIndex: 419 }}>
+                  <GeoJSON
+                    data={riversGeoJson}
+                    style={() => RIVER_HIT_STYLE}
+                    onEachFeature={(feature, layer) => {
+                      const riverName = getRiverName(feature);
+                      if (!riverName) return;
+                      layer.bindTooltip(riverName, RIVER_TOOLTIP_OPTIONS);
+                      layer.on("mouseover", () => layer.openTooltip());
+                      layer.on("mouseout", () => layer.closeTooltip());
+                    }}
+                  />
+                </Pane>
+              </>
             )}
             <MapClickCapture
               onMapClick={(latlng) => {
@@ -1032,7 +1088,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
               border: "1px solid rgba(148,163,184,.55)",
               borderRadius: 10,
               padding: "8px 8px 6px 8px",
-              minWidth: isMobile ? 86 : 102,
+              minWidth: isMobile ? 80 : 92,
               backdropFilter: "blur(1.2px)",
               pointerEvents: "none",
             }}
@@ -1041,18 +1097,15 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
             <div
               style={{
                 position: "relative",
-                width: isMobile ? 58 : 70,
-                height: isMobile ? 58 : 70,
+                width: isMobile ? 56 : 68,
+                height: isMobile ? 56 : 68,
                 margin: "6px auto 4px auto",
                 borderRadius: "50%",
                 border: "2px solid rgba(100,116,139,.85)",
                 background: "radial-gradient(circle at center, rgba(255,255,255,.65) 0%, rgba(255,255,255,.2) 70%, rgba(148,163,184,.15) 100%)",
               }}
             >
-              <div style={{ position: "absolute", top: 2, left: "50%", transform: "translateX(-50%)", fontSize: 10, fontWeight: 800 }}>N</div>
-              <div style={{ position: "absolute", bottom: 2, left: "50%", transform: "translateX(-50%)", fontSize: 10, fontWeight: 800 }}>S</div>
-              <div style={{ position: "absolute", top: "50%", right: 3, transform: "translateY(-50%)", fontSize: 10, fontWeight: 800 }}>E</div>
-              <div style={{ position: "absolute", top: "50%", left: 3, transform: "translateY(-50%)", fontSize: 10, fontWeight: 800 }}>V</div>
+              {renderCompassTicks(isMobile ? 56 : 68)}
               <div
                 style={{
                   position: "absolute",
@@ -1127,10 +1180,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                   background: "radial-gradient(circle at center, rgba(255,255,255,.62) 0%, rgba(255,255,255,.18) 70%, rgba(148,163,184,.12) 100%)",
                 }}
               >
-                <div style={{ position: "absolute", top: 2, left: "50%", transform: "translateX(-50%)", fontSize: 10, fontWeight: 800 }}>N</div>
-                <div style={{ position: "absolute", bottom: 2, left: "50%", transform: "translateX(-50%)", fontSize: 10, fontWeight: 800 }}>S</div>
-                <div style={{ position: "absolute", top: "50%", right: 3, transform: "translateY(-50%)", fontSize: 10, fontWeight: 800 }}>E</div>
-                <div style={{ position: "absolute", top: "50%", left: 3, transform: "translateY(-50%)", fontSize: 10, fontWeight: 800 }}>V</div>
+                {renderCompassTicks(isMobile ? 56 : 68)}
                 <div
                   style={{
                     position: "absolute",
