@@ -67,6 +67,11 @@ export default function MarineStationPanel({
     image: null,
   });
   const [imageIndex, setImageIndex] = useState(0);
+  const isConstantaMarine =
+    station?.id === "constanta_marine" ||
+    String(station?.name || "").toLowerCase() === "constanta";
+  const calibratedPhotoPosition =
+    isConstantaMarine ? "center 38%" : station?.photoObjectPosition || "center 42%";
 
   useEffect(() => {
     let cancelled = false;
@@ -123,17 +128,19 @@ export default function MarineStationPanel({
   const imageCandidates = useMemo(() => {
     const list = [];
 
+    const explicitConstantaPhoto = isConstantaMarine ? "/stations/constanta.jpg" : "";
     const stationPhoto = typeof station?.photoUrl === "string" ? station.photoUrl.trim() : "";
+    const preferredPhoto = explicitConstantaPhoto || stationPhoto;
     const wikiPhoto = typeof wiki?.image === "string" ? wiki.image.trim() : "";
 
-    if (stationPhoto && stationPhoto !== PLACEHOLDER_STATION_IMAGE) list.push(stationPhoto);
+    if (preferredPhoto && preferredPhoto !== PLACEHOLDER_STATION_IMAGE) list.push(preferredPhoto);
     if (wikiPhoto) list.push(wikiPhoto);
-    if (stationPhoto) list.push(stationPhoto);
+    if (preferredPhoto) list.push(preferredPhoto);
 
     list.push(DEFAULT_STATION_IMAGE);
 
     return list.filter((value, index) => value && list.indexOf(value) === index);
-  }, [station?.photoUrl, wiki?.image]);
+  }, [isConstantaMarine, station?.photoUrl, wiki?.image]);
 
   useEffect(() => {
     setImageIndex(0);
@@ -249,8 +256,11 @@ export default function MarineStationPanel({
                 borderRadius: 12,
                 overflow: "hidden",
                 background: "#f8fafc",
-                minHeight: 170,
-                maxHeight: 190,
+                minHeight: 180,
+                maxHeight: 220,
+                maxWidth: 820,
+                width: "100%",
+                justifySelf: "start",
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -259,10 +269,11 @@ export default function MarineStationPanel({
                 alt={station?.displayName || station?.name || "Constanta"}
                 style={{
                   width: "100%",
-                  height: "clamp(170px, 18vw, 190px)",
-                  minHeight: 170,
-                  maxHeight: 190,
+                  height: "clamp(180px, 20vw, 220px)",
+                  minHeight: 180,
+                  maxHeight: 220,
                   objectFit: "cover",
+                  objectPosition: calibratedPhotoPosition,
                   display: "block",
                 }}
                 onError={() => {
