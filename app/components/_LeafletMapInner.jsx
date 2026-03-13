@@ -10,6 +10,7 @@ import {
   useMap,
   ScaleControl,
   LayersControl,
+  GeoJSON,
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -125,6 +126,13 @@ function createMarineIcon(isSelected = false) {
     popupAnchor: [0, -size / 2],
   });
 }
+
+const RIVERS_GEOJSON_URL = "/layers/river_names_ro.geojson";
+const RIVER_LAYER_STYLE = {
+  color: "#38bdf8",
+  weight: 2.1,
+  opacity: 0.92,
+};
 
 // ===== CUSTOM MAP CONTROLS =====
 function MapControls({ defaultCenter, defaultZoom, onLockToggle, isLocked }) {
@@ -293,6 +301,7 @@ export default function LeafletMapInner({
   fullscreen = false,
 }) {
   const [isLocked, setIsLocked] = useState(false);
+  const [riversGeoJson, setRiversGeoJson] = useState(null);
   
   const DEFAULT_CENTER = [45.5, 25.5];
   const DEFAULT_ZOOM = 6;
@@ -353,6 +362,29 @@ export default function LeafletMapInner({
     return DEFAULT_CENTER;
   }, [pts, riverPts, marinePts, selectedStation]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRiversGeoJson() {
+      try {
+        const response = await fetch(RIVERS_GEOJSON_URL, { cache: "force-cache" });
+        if (!response.ok) return;
+        const payload = await response.json();
+        if (cancelled) return;
+        if (payload?.type === "FeatureCollection" && Array.isArray(payload?.features)) {
+          setRiversGeoJson(payload);
+        }
+      } catch {
+        // silent fallback: overlay ramane indisponibil daca fisierul lipseste
+      }
+    }
+
+    loadRiversGeoJson();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div style={{ width: "100%", borderRadius: fullscreen ? 0 : 16, overflow: "hidden", position: "relative" }}>
       {/* CSS pentru Safari/iOS touch fix */}
@@ -405,10 +437,14 @@ export default function LeafletMapInner({
           </LayersControl.BaseLayer>
 
           <LayersControl.Overlay checked name="Râuri">
-            <TileLayer
-              url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
-              opacity={0.7}
-            />
+            <>
+              {riversGeoJson && (
+                <GeoJSON
+                  data={riversGeoJson}
+                  style={() => RIVER_LAYER_STYLE}
+                />
+              )}
+            </>
           </LayersControl.Overlay>
         </LayersControl>
 
