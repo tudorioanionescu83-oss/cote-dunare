@@ -62,11 +62,24 @@ function rowToPoint(row) {
 }
 
 export async function getConstantaMarineCurrent() {
-  const rows = await readMarineRows({
+  const nowIso = new Date().toISOString();
+
+  let rows = await readMarineRows({
     stationId: CONSTANTA_MARINE_STATION.id,
+    to: nowIso,
     ascending: false,
     limit: 1,
   });
+
+  // Fallback de siguranta: daca nu exista punct <= now, folosim cel mai recent punct disponibil.
+  if (!rows.length) {
+    rows = await readMarineRows({
+      stationId: CONSTANTA_MARINE_STATION.id,
+      ascending: false,
+      limit: 1,
+    });
+  }
+
   if (!rows.length) {
     throw new Error("No marine data in cache for constanta_marine.");
   }
