@@ -404,7 +404,7 @@ export default function LeafletMapInner({
             />
           </LayersControl.BaseLayer>
 
-          <LayersControl.Overlay checked name="Râuri și Ape">
+          <LayersControl.Overlay checked name="Râuri">
             <TileLayer
               url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
               opacity={0.7}

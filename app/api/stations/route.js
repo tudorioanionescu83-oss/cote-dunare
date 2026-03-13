@@ -44,8 +44,8 @@ const STATIONS = [
     lon: 28.65,
     lng: 28.65,
     displayName: "Constanta - Marea Neagra",
-    wikiTitle: "Constanța",
-    photoUrl: "/stations/constanta.jpg",
+    wikiTitle: "Cazinoul din Constanța",
+    photoUrl: "/stations/placeholder.jpg",
     icao: "LRCK",
   }
 ];

@@ -31,6 +31,7 @@ const BASEMAP_OPTIONS = [
   { id: "normal", label: "Harta color" },
   { id: "semi", label: "Semi alb-negru" },
   { id: "mono", label: "Alb-negru" },
+  { id: "satellite", label: "Satelitar" },
 ];
 
 const ROMANIA_TZ = "Europe/Bucharest";
@@ -186,31 +187,33 @@ function destinationPoint(latDeg, lonDeg, bearingDeg, distanceKm) {
   return [(lat2 * 180) / Math.PI, (lon2 * 180) / Math.PI];
 }
 
-function layerButtonStyle(active) {
+function layerButtonStyle(active, compact = false) {
   return {
     border: "1px solid #cbd5e1",
     borderRadius: 999,
-    padding: "7px 12px",
+    padding: compact ? "6px 10px" : "7px 12px",
     fontWeight: 800,
-    fontSize: 12,
+    fontSize: compact ? 11 : 12,
     cursor: "pointer",
     background: active ? "linear-gradient(135deg, #0ea5e9, #0284c7)" : "white",
     color: active ? "white" : "#0f172a",
+    whiteSpace: "nowrap",
+    flex: "0 0 auto",
   };
 }
 
-function forecastFanButtonStyle(active, index) {
+function forecastFanButtonStyle(active, index, compact = false) {
   return {
     border: "1px solid #cbd5e1",
     borderRadius: 12,
-    padding: "8px 10px",
+    padding: compact ? "7px 9px" : "8px 10px",
     fontWeight: 800,
-    fontSize: 12,
+    fontSize: compact ? 11 : 12,
     cursor: "pointer",
     textAlign: "left",
     background: active ? "linear-gradient(135deg, #0ea5e9, #0284c7)" : "white",
     color: active ? "white" : "#0f172a",
-    marginLeft: `${index * 8}px`,
+    marginLeft: `${index * (compact ? 5 : 8)}px`,
     boxShadow: active ? "0 8px 18px rgba(14,165,233,.25)" : "none",
   };
 }
@@ -300,7 +303,9 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
   const [activeLayer, setActiveLayer] = useState("temperature");
   const [forecastMetric, setForecastMetric] = useState("temperature");
   const [basemapMode, setBasemapMode] = useState("normal");
+  const [showRiversLayer, setShowRiversLayer] = useState(true);
   const [showBasemapMenu, setShowBasemapMenu] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [clickedPoint, setClickedPoint] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -320,6 +325,21 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
   const resolvedLayer = activeLayer === "forecast" ? forecastMetric : activeLayer;
   const stationLat = Number(station?.lat ?? 44.17);
   const stationLng = Number(station?.lng ?? station?.lon ?? 28.65);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const query = window.matchMedia("(max-width: 768px)");
+    const apply = () => setIsMobile(query.matches);
+    apply();
+
+    if (typeof query.addEventListener === "function") {
+      query.addEventListener("change", apply);
+      return () => query.removeEventListener("change", apply);
+    }
+
+    query.addListener(apply);
+    return () => query.removeListener(apply);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -650,8 +670,33 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
       }}
     >
       <div style={{ padding: 14, borderBottom: "1px solid #dbeafe" }}>
-        <div style={{ fontSize: 18, fontWeight: 900, color: "#0f172a" }}>Harti interactive si predictii marine</div>
-        <div style={{ marginTop: 6, color: "#334155", fontSize: 13 }}>
+        <div
+          style={{
+            display: "inline-flex",
+            borderRadius: 10,
+            padding: "7px 12px",
+            fontSize: isMobile ? 16 : 18,
+            fontWeight: 900,
+            color: "#0f172a",
+            background: "linear-gradient(135deg, rgba(14,165,233,.18), rgba(59,130,246,.12))",
+            border: "1px solid #bae6fd",
+            boxShadow: "0 4px 12px rgba(14,165,233,.12)",
+          }}
+        >
+          Harti interactive si predictii marine
+        </div>
+        <div
+          style={{
+            marginTop: 8,
+            color: "#1e293b",
+            fontSize: isMobile ? 12 : 13,
+            background: "linear-gradient(135deg, rgba(226,232,240,.7), rgba(219,234,254,.65))",
+            border: "1px solid #bfdbfe",
+            borderRadius: 10,
+            padding: "8px 10px",
+            fontWeight: 600,
+          }}
+        >
           Layer activ: <b>{activeLayerLabel}</b> | Valoare punctuala: <b>{formatNumber(activeValue, 2)} {resolvedTab.unit}</b>
           {activeDirectionText ? ` | Directie: ${activeDirectionText}` : ""}
           {activePeriodText ? ` | Perioada: ${activePeriodText}` : ""}
@@ -659,9 +704,22 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
       </div>
 
       <div style={{ padding: 12, display: "grid", gap: 10 }}>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: isMobile ? 6 : 8,
+            flexWrap: isMobile ? "nowrap" : "wrap",
+            overflowX: isMobile ? "auto" : "visible",
+            paddingBottom: isMobile ? 2 : 0,
+          }}
+        >
           {TAB_CONFIG.map((tab) => (
-            <button key={tab.id} type="button" onClick={() => setActiveLayer(tab.id)} style={layerButtonStyle(tab.id === activeLayer)}>
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveLayer(tab.id)}
+              style={layerButtonStyle(tab.id === activeLayer, isMobile)}
+            >
               {tab.label}
             </button>
           ))}
@@ -678,13 +736,13 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
             <div style={{ fontSize: 12, fontWeight: 800, color: "#0f172a", marginBottom: 8 }}>
               Evantai prognoze (vertical)
             </div>
-            <div style={{ display: "grid", gap: 8, maxWidth: 260 }}>
+            <div style={{ display: "grid", gap: 8, maxWidth: isMobile ? 230 : 260 }}>
               {FORECAST_FAN_OPTIONS.map((option, index) => (
                 <button
                   key={option.id}
                   type="button"
                   onClick={() => setForecastMetric(option.id)}
-                  style={forecastFanButtonStyle(forecastMetric === option.id, index)}
+                  style={forecastFanButtonStyle(forecastMetric === option.id, index, isMobile)}
                 >
                   {option.label}
                 </button>
@@ -718,12 +776,18 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
             center={mapCenter}
             zoom={8}
             bounds={mapBounds}
-            boundsOptions={{ padding: [84, 84] }}
+            boundsOptions={{ padding: isMobile ? [52, 52] : [84, 84] }}
             zoomControl={false}
-            style={{ height: 360, width: "100%" }}
+            style={{ height: isMobile ? 320 : 360, width: "100%" }}
           >
-            {basemapMode !== "mono" && (
+            {(basemapMode === "normal" || basemapMode === "semi") && (
               <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            )}
+            {basemapMode === "satellite" && (
+              <TileLayer
+                attribution="&copy; Esri"
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              />
             )}
             {basemapMode === "mono" && (
               <TileLayer
@@ -736,6 +800,13 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                 attribution="&copy; CARTO"
                 url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
                 opacity={0.58}
+              />
+            )}
+            {showRiversLayer && (
+              <TileLayer
+                attribution="&copy; OpenSeaMap"
+                url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
+                opacity={0.68}
               />
             )}
             <MapClickCapture
@@ -862,7 +933,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
               <div
                 style={{
                   marginTop: 8,
-                  minWidth: 170,
+                  minWidth: 185,
                   borderRadius: 10,
                   border: "1px solid rgba(15,23,42,.2)",
                   background: "rgba(255,255,255,.95)",
@@ -872,6 +943,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                   gap: 6,
                 }}
               >
+                <div style={{ fontSize: 11, fontWeight: 800, color: "#334155", padding: "2px 4px 0 4px" }}>Fundal harta</div>
                 {BASEMAP_OPTIONS.map((option) => (
                   <button
                     key={option.id}
@@ -895,6 +967,26 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                     {option.label}
                   </button>
                 ))}
+                <div style={{ borderTop: "1px dashed #cbd5e1", marginTop: 4, paddingTop: 6 }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowRiversLayer((prev) => !prev)}
+                    style={{
+                      width: "100%",
+                      border: "1px solid #cbd5e1",
+                      borderRadius: 8,
+                      padding: "7px 10px",
+                      textAlign: "left",
+                      fontWeight: 700,
+                      fontSize: 12,
+                      color: showRiversLayer ? "white" : "#0f172a",
+                      background: showRiversLayer ? "linear-gradient(135deg,#0ea5e9,#0284c7)" : "white",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {showRiversLayer ? "Râuri: ON" : "Râuri: OFF"}
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -902,14 +994,14 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
           <div
             style={{
               position: "absolute",
-              top: 58,
+              bottom: isMobile ? 8 : 10,
               left: 10,
               zIndex: 4900,
-              background: "rgba(255,255,255,0.3)",
+              background: "rgba(255,255,255,0.19)",
               border: "1px solid rgba(148,163,184,.55)",
               borderRadius: 10,
               padding: "8px 8px 6px 8px",
-              minWidth: 102,
+              minWidth: isMobile ? 86 : 102,
               backdropFilter: "blur(1.2px)",
               pointerEvents: "none",
             }}
@@ -918,8 +1010,8 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
             <div
               style={{
                 position: "relative",
-                width: 70,
-                height: 70,
+                width: isMobile ? 58 : 70,
+                height: isMobile ? 58 : 70,
                 margin: "6px auto 4px auto",
                 borderRadius: "50%",
                 border: "2px solid rgba(100,116,139,.85)",
@@ -935,8 +1027,8 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                   position: "absolute",
                   left: "50%",
                   top: "50%",
-                  width: 2.4,
-                  height: 25,
+                  width: isMobile ? 2 : 2.4,
+                  height: isMobile ? 21 : 25,
                   background: "#ef4444",
                   transform: `translate(-50%, -100%) rotate(${windDirectionDeg || 0}deg)`,
                   transformOrigin: "50% 100%",
@@ -947,13 +1039,13 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                   style={{
                     position: "absolute",
                     left: "50%",
-                    top: -8,
+                    top: isMobile ? -7 : -8,
                     transform: "translateX(-50%)",
                     width: 0,
                     height: 0,
-                    borderLeft: "5px solid transparent",
-                    borderRight: "5px solid transparent",
-                    borderBottom: "9px solid #ef4444",
+                    borderLeft: `${isMobile ? 4 : 5}px solid transparent`,
+                    borderRight: `${isMobile ? 4 : 5}px solid transparent`,
+                    borderBottom: `${isMobile ? 7 : 9}px solid #ef4444`,
                   }}
                 />
               </div>
@@ -978,26 +1070,26 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
 
           {showLayerCompass && (
             <div
-              style={{
-                position: "absolute",
-                top: 10,
-                right: 10,
-                zIndex: 5000,
-                background: "rgba(255,255,255,0.28)",
-                border: "1px solid rgba(148,163,184,.55)",
-                borderRadius: 10,
-                padding: "8px 8px 6px 8px",
-                minWidth: 92,
-                backdropFilter: "blur(1.2px)",
-                pointerEvents: "none",
-              }}
+            style={{
+              position: "absolute",
+              bottom: isMobile ? 8 : 10,
+              right: 10,
+              zIndex: 5000,
+              background: "rgba(255,255,255,0.19)",
+              border: "1px solid rgba(148,163,184,.55)",
+              borderRadius: 10,
+              padding: "8px 8px 6px 8px",
+              minWidth: isMobile ? 80 : 92,
+              backdropFilter: "blur(1.2px)",
+              pointerEvents: "none",
+            }}
             >
               <div style={{ fontSize: 11, fontWeight: 800, color: "#0f172a", textAlign: "center" }}>{layerCompassLabel}</div>
               <div
                 style={{
                   position: "relative",
-                  width: 68,
-                  height: 68,
+                  width: isMobile ? 56 : 68,
+                  height: isMobile ? 56 : 68,
                   margin: "6px auto 4px auto",
                   borderRadius: "50%",
                   border: "2px solid rgba(100,116,139,.85)",
@@ -1013,8 +1105,8 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                     position: "absolute",
                     left: "50%",
                     top: "50%",
-                    width: 2.2,
-                    height: 24,
+                    width: isMobile ? 2 : 2.2,
+                    height: isMobile ? 20 : 24,
                     background: "#ef4444",
                     transform: `translate(-50%, -100%) rotate(${activeDirectionDegrees || 0}deg)`,
                     transformOrigin: "50% 100%",
@@ -1025,13 +1117,13 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
                     style={{
                       position: "absolute",
                       left: "50%",
-                      top: -8,
+                      top: isMobile ? -7 : -8,
                       transform: "translateX(-50%)",
                       width: 0,
                       height: 0,
-                      borderLeft: "5px solid transparent",
-                      borderRight: "5px solid transparent",
-                      borderBottom: "8px solid #ef4444",
+                      borderLeft: `${isMobile ? 4 : 5}px solid transparent`,
+                      borderRight: `${isMobile ? 4 : 5}px solid transparent`,
+                      borderBottom: `${isMobile ? 7 : 8}px solid #ef4444`,
                     }}
                   />
                 </div>
@@ -1063,7 +1155,7 @@ export default function MarineMapsPanel({ station, current, timeseries, forecast
             <div>Punct albastru: statia Constanta (marina)</div>
             <div>Puncte colorate: camp scalar Copernicus (temperatura / salinitate / valuri / batimetrie)</div>
             <div>Linii colorate: vectori curenti si directia valurilor</div>
-            <div>Buton stanga-sus (icon layere): schimbare fundal harta (color / semi alb-negru / alb-negru)</div>
+            <div>Buton stanga-sus (icon layere): fundal harta (color / semi alb-negru / alb-negru / satelitar) + layer râuri</div>
             <div>Roza vant stanga: directia + viteza vant (date meteo)</div>
             <div>Click pe harta: citire valoare din cel mai apropiat punct de grila</div>
             {bathymetryData.loading && activeLayer === "bathymetry" && <div>Se incarca batimetria...</div>}
