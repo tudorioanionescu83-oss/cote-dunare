@@ -170,6 +170,13 @@ img{
   box-shadow: 0 6px 18px rgba(6, 182, 212, 0.34);
 }
 
+@media (max-width: 768px){
+  .enc-navigation-toggle{
+    right: 12px;
+    bottom: 96px;
+  }
+}
+
 /* =========================================================
    INPUT / SELECT polish
    ========================================================= */

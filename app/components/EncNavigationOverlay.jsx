@@ -23,16 +23,33 @@ function toNumber(value) {
 
 function formatDistanceValue(value) {
   if (value === null) return null;
-  return Number.isInteger(value) ? String(value) : String(value);
+  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
 }
 
-function hasMarineMilesHint(properties = {}) {
-  const text = `${properties.OBJNAM || ""} ${properties.INFORM || ""}`;
-  return /mm|mile|mil[aă]/i.test(text);
+function isMaritimeCandidate(lng, lat) {
+  const isWithinLatitudeBand = lat >= 44.2 && lat <= 45.8;
+  const isDownstreamFromGalati = (lng >= 28.15 && lat <= 45.45) || lng >= 28.35;
+  return isWithinLatitudeBand && isDownstreamFromGalati;
 }
 
-function isMaritimeSulinaGalati(lng, lat) {
-  return lng >= 28 && lng <= 30.5 && lat >= 44.2 && lat <= 45.85;
+function isBrailaGalatiKmSector(lng, lat, wtwdis) {
+  return (
+    lng >= 27.7 &&
+    lng <= 28.35 &&
+    lat >= 45.05 &&
+    lat <= 45.55 &&
+    wtwdis >= 145 &&
+    wtwdis <= 230
+  );
+}
+
+function normalizeMaritimeMileValue(wtwdis) {
+  if (wtwdis >= 0 && wtwdis <= 180) return wtwdis;
+  if (wtwdis > 180 && wtwdis <= 1800) {
+    const value = wtwdis / 10;
+    return value >= 0 && value <= 180 ? value : null;
+  }
+  return null;
 }
 
 function getPointCoordinates(feature) {
@@ -43,39 +60,121 @@ function getPointCoordinates(feature) {
   return { lng, lat };
 }
 
-function normalizeDistance(feature) {
+function normalizeDistanceMark(feature) {
   const properties = feature?.properties || {};
   const rawValue = toNumber(properties.wtwdis);
   const coordinates = getPointCoordinates(feature);
-  const isMaritime =
-    hasMarineMilesHint(properties) ||
-    Boolean(coordinates && isMaritimeSulinaGalati(coordinates.lng, coordinates.lat));
+  const catdis = toNumber(properties.catdis);
+  const srcUnitHint = properties.SRC_UNIT_HINT || null;
+  const objnam = properties.OBJNAM || null;
+  const inform = properties.INFORM || null;
 
-  if (rawValue === null) {
+  if (rawValue === null || !coordinates) {
     return {
       unit: "unknown",
       value: null,
       label: null,
       canLabel: false,
+      reason: "Unknown",
+      rawValue,
+      catdis,
+      srcUnitHint,
+      objnam,
+      inform,
     };
   }
 
-  if (isMaritime) {
-    const value = rawValue > 150 ? rawValue / 10 : rawValue;
+  if (srcUnitHint === "Mm") {
+    const value = normalizeMaritimeMileValue(rawValue);
+    if (value !== null) {
+      return {
+        unit: "Mm",
+        value,
+        label: `Mm ${formatDistanceValue(value)}`,
+        canLabel: catdis === 1 || catdis === 3,
+        reason: "SourceHintMm",
+        rawValue,
+        catdis,
+        srcUnitHint,
+        objnam,
+        inform,
+      };
+    }
+  }
+
+  if (srcUnitHint === "Km") {
+    return {
+      unit: "Km",
+      value: rawValue,
+      label: `Km ${formatDistanceValue(rawValue)}`,
+      canLabel: catdis === 1 && rawValue <= 1075,
+      reason: "SourceHintKm",
+      rawValue,
+      catdis,
+      srcUnitHint,
+      objnam,
+      inform,
+    };
+  }
+
+  if (isBrailaGalatiKmSector(coordinates.lng, coordinates.lat, rawValue)) {
+    return {
+      unit: "Km",
+      value: rawValue,
+      label: `Km ${formatDistanceValue(rawValue)}`,
+      canLabel: catdis === 1,
+      reason: "BrailaGalatiKm",
+      rawValue,
+      catdis,
+      srcUnitHint,
+      objnam,
+      inform,
+    };
+  }
+
+  if (isMaritimeCandidate(coordinates.lng, coordinates.lat) && catdis === 3) {
+    const value = normalizeMaritimeMileValue(rawValue);
+    if (value === null) {
+      return {
+        unit: "unknown",
+        value: null,
+        label: null,
+        canLabel: false,
+        reason: "Unknown",
+        rawValue,
+        catdis,
+        srcUnitHint,
+        objnam,
+        inform,
+      };
+    }
+
     return {
       unit: "Mm",
       value,
       label: `Mm ${formatDistanceValue(value)}`,
-      canLabel: Number(properties.catdis) === 1,
+      canLabel: true,
+      reason: "MaritimeCatdis3",
+      rawValue,
+      catdis,
+      srcUnitHint,
+      objnam,
+      inform,
     };
   }
 
-  if (Number(properties.catdis) === 1 && rawValue <= 1075) {
+  if (catdis === 1 && rawValue <= 1075) {
     return {
       unit: "Km",
       value: rawValue,
       label: `Km ${formatDistanceValue(rawValue)}`,
       canLabel: true,
+      reason: "NormalKm",
+      rawValue,
+      catdis,
+      srcUnitHint,
+      objnam,
+      inform,
     };
   }
 
@@ -84,6 +183,12 @@ function normalizeDistance(feature) {
     value: rawValue,
     label: null,
     canLabel: false,
+    reason: "Unknown",
+    rawValue,
+    catdis,
+    srcUnitHint,
+    objnam,
+    inform,
   };
 }
 
@@ -98,7 +203,7 @@ function escapeHtml(value) {
 
 function buildDistancePopup(feature) {
   const properties = feature?.properties || {};
-  const normalized = normalizeDistance(feature);
+  const normalized = normalizeDistanceMark(feature);
   const title = normalized.label || "Marcaj ENC";
   const rawWtwdis =
     properties.wtwdis === null || properties.wtwdis === undefined || properties.wtwdis === ""
@@ -114,6 +219,12 @@ function buildDistancePopup(feature) {
       <strong>${escapeHtml(title)}</strong><br />
       wtwdis: ${escapeHtml(rawWtwdis)}<br />
       catdis: ${escapeHtml(catdis)}<br />
+      SRC_FOLDER: ${escapeHtml(properties.SRC_FOLDER || "-")}<br />
+      SRC_CELL: ${escapeHtml(properties.SRC_CELL || "-")}<br />
+      SRC_UNIT_HINT: ${escapeHtml(properties.SRC_UNIT_HINT || "-")}<br />
+      unit normalizată: ${escapeHtml(normalized.unit)}<br />
+      label final: ${escapeHtml(normalized.label || "-")}<br />
+      motiv: ${escapeHtml(normalized.reason)}<br />
       Sursă: ENC<br />
       Valoare informativă
     </div>
@@ -193,16 +304,23 @@ function getLabelInterval(unit, zoom) {
   return null;
 }
 
-function buildRepresentativeMajorFeatures(features = []) {
+function getPermanentLabel(normalized, zoom) {
+  if (!normalized.canLabel || !normalized.label) return null;
+  if (normalized.unit === "Mm" && !Number.isInteger(normalized.value) && zoom < 16) {
+    return null;
+  }
+  return normalized.label;
+}
+
+function buildRepresentativeLabelFeatures(features = [], zoom) {
   const seenByNormalizedLabel = new Set();
   const representativeFeatures = [];
 
   for (const feature of features) {
     const properties = feature?.properties || {};
-    if (Number(properties.catdis) !== 1) continue;
-
-    const normalized = normalizeDistance(feature);
-    if (!normalized.canLabel || !normalized.label) continue;
+    const normalized = normalizeDistanceMark(feature);
+    const permanentLabel = getPermanentLabel(normalized, zoom);
+    if (!permanentLabel) continue;
 
     const key = `${normalized.unit}:${normalized.value}`;
     if (seenByNormalizedLabel.has(key)) continue;
@@ -214,7 +332,8 @@ function buildRepresentativeMajorFeatures(features = []) {
         ...properties,
         __encUnit: normalized.unit,
         __encValue: normalized.value,
-        __encLabel: normalized.label,
+        __encLabel: permanentLabel,
+        __encReason: normalized.reason,
       },
     });
   }
@@ -279,8 +398,11 @@ export default function EncNavigationOverlay() {
     const visibleAllPointFeatures = allFeatures.filter((feature) =>
       isFeatureInBounds(feature, viewState.bounds)
     );
-    const visibleRepresentativeMajorFeatures = buildRepresentativeMajorFeatures(visibleAllPointFeatures);
-    const labelFeatures = visibleRepresentativeMajorFeatures.filter((feature) => {
+    const visibleRepresentativeLabelFeatures = buildRepresentativeLabelFeatures(
+      visibleAllPointFeatures,
+      viewState.zoom
+    );
+    const labelFeatures = visibleRepresentativeLabelFeatures.filter((feature) => {
       const interval = getLabelInterval(feature.properties.__encUnit, viewState.zoom);
       if (interval === "all") return true;
       if (interval === null) return false;
@@ -288,7 +410,6 @@ export default function EncNavigationOverlay() {
     });
 
     return {
-      representativeMajorPoints: toFeatureCollection(visibleRepresentativeMajorFeatures),
       allVisiblePoints: toFeatureCollection(visibleAllPointFeatures),
       visibleLabels: toFeatureCollection(labelFeatures),
     };
@@ -297,7 +418,6 @@ export default function EncNavigationOverlay() {
   const { zoom } = viewState;
   const showFairway = zoom >= 7;
   const showLabels = zoom >= 8;
-  const showRepresentativeMajorPoints = zoom >= 12 && zoom <= 14;
   const showAllPoints = zoom > 14;
 
   return (
@@ -310,31 +430,6 @@ export default function EncNavigationOverlay() {
           onEachFeature={(_, layer) => {
             layer.on("click", () => {
               layer.bindPopup(buildFairwayPopup(), { className: "enc-navigation-popup" }).openPopup();
-            });
-          }}
-        />
-      )}
-
-      {showRepresentativeMajorPoints && (
-        <GeoJSON
-          key={`enc-major-points-${viewState.zoom}-${viewState.bounds.toBBoxString()}`}
-          data={featureSets.representativeMajorPoints}
-          pointToLayer={(_, latlng) =>
-            L.circleMarker(latlng, {
-              radius: 2.4,
-              fillColor: "#00E5FF",
-              color: "#FFFFFF",
-              weight: 0.9,
-              opacity: 0.95,
-              fillOpacity: 0.88,
-              renderer: pointRenderer,
-            })
-          }
-          onEachFeature={(feature, layer) => {
-            layer.on("click", () => {
-              layer.bindPopup(buildDistancePopup(feature), {
-                className: "enc-navigation-popup",
-              }).openPopup();
             });
           }}
         />
