@@ -1,0 +1,34 @@
+warning: in the working copy of 'app/components/EncNavigationOverlay.jsx', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/app/components/EncNavigationOverlay.jsx b/app/components/EncNavigationOverlay.jsx[m
+[1mindex 8e7e25c..2fe7a66 100644[m
+[1m--- a/app/components/EncNavigationOverlay.jsx[m
+[1m+++ b/app/components/EncNavigationOverlay.jsx[m
+[36m@@ -88,9 +88,9 @@[m [mfunction normalizeDistanceMark(feature) {[m
+     const value = normalizeMaritimeMileValue(rawValue);[m
+     if (value !== null) {[m
+       return {[m
+[31m-        unit: "Mm",[m
+[32m+[m[32m        unit: "Km",[m
+         value,[m
+[31m-        label: `Mm ${formatDistanceValue(value)}`,[m
+[32m+[m[32m        label: `Km ${formatDistanceValue(value)}`,[m
+         canLabel: catdis === 1 || catdis === 3,[m
+         reason: "SourceHintMm",[m
+         rawValue,[m
+[36m@@ -150,9 +150,9 @@[m [mfunction normalizeDistanceMark(feature) {[m
+     }[m
+ [m
+     return {[m
+[31m-      unit: "Mm",[m
+[32m+[m[32m      unit: "Km",[m
+       value,[m
+[31m-      label: `Mm ${formatDistanceValue(value)}`,[m
+[32m+[m[32m      label: `Km ${formatDistanceValue(value)}`,[m
+       canLabel: true,[m
+       reason: "MaritimeCatdis3",[m
+       rawValue,[m
+[36m@@ -483,3 +483,4 @@[m [mexport default function EncNavigationOverlay() {[m
+   );[m
+ }[m
+ [m
+[41m+[m

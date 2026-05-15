@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { GeoJSON, LayerGroup, useMap } from "react-leaflet";
 import L from "leaflet";
 
-const DISTANCE_MARKS_URL = "/layers/danube_km_fairway_v2.geojson";
+const DISTANCE_MARKS_URL = "/layers/danube_km_fairway_v3.geojson";
 const FAIRWAY_URL = "/layers/danube_fairway.geojson";
 
 const LABEL_TOOLTIP_OPTIONS = {
@@ -482,5 +482,6 @@ export default function EncNavigationOverlay() {
     </LayerGroup>
   );
 }
+
 
 
