@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import { GeoJSON, LayerGroup, useMap } from "react-leaflet";
 import L from "leaflet";
 
-const DISTANCE_MARKS_URL = "/layers/danube_km_fairway.geojson";
+const DISTANCE_MARKS_URL = "/layers/danube_km_fairway_v2.geojson";
 const FAIRWAY_URL = "/layers/danube_fairway.geojson";
 
 const LABEL_TOOLTIP_OPTIONS = {
@@ -222,11 +222,11 @@ function buildDistancePopup(feature) {
       SRC_FOLDER: ${escapeHtml(properties.SRC_FOLDER || "-")}<br />
       SRC_CELL: ${escapeHtml(properties.SRC_CELL || "-")}<br />
       SRC_UNIT_HINT: ${escapeHtml(properties.SRC_UNIT_HINT || "-")}<br />
-      unit normalizată: ${escapeHtml(normalized.unit)}<br />
+      unit normalizatÄ: ${escapeHtml(normalized.unit)}<br />
       label final: ${escapeHtml(normalized.label || "-")}<br />
       motiv: ${escapeHtml(normalized.reason)}<br />
-      Sursă: ENC<br />
-      Valoare informativă
+      SursÄ: ENC<br />
+      Valoare informativÄ
     </div>
   `;
 }
@@ -234,9 +234,9 @@ function buildDistancePopup(feature) {
 function buildFairwayPopup() {
   return `
     <div class="enc-navigation-popup__content">
-      <strong>Șenal navigabil</strong><br />
-      Sursă: ENC<br />
-      Valoare informativă. Nu înlocuiește hărțile oficiale de navigație.
+      <strong>Čenal navigabil</strong><br />
+      SursÄ: ENC<br />
+      Valoare informativÄ. Nu Ă®nlocuieČ™te hÄrČ›ile oficiale de navigaČ›ie.
     </div>
   `;
 }
@@ -482,3 +482,4 @@ export default function EncNavigationOverlay() {
     </LayerGroup>
   );
 }
+
