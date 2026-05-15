@@ -14,6 +14,7 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import EncNavigationOverlay from "./EncNavigationOverlay";
 
 // ===== UTILITY FUNCTIONS =====
 function pick(obj, keys, fallback = null) {
@@ -474,6 +475,10 @@ export default function LeafletMapInner({
                 </>
               )}
             </>
+          </LayersControl.Overlay>
+
+          <LayersControl.Overlay name="Navigație ENC">
+            <EncNavigationOverlay />
           </LayersControl.Overlay>
         </LayersControl>
 

@@ -111,6 +111,35 @@ img{
 .leaflet-popup-pane{ z-index: 700; }
 
 /* =========================================================
+   ENC NAVIGATION OVERLAY
+   ========================================================= */
+.enc-navigation-label{
+  color: #effffb !important;
+  background: rgba(0, 52, 66, 0.78) !important;
+  border: 1px solid rgba(167, 255, 230, 0.75) !important;
+  border-radius: 999px !important;
+  padding: 2px 6px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+  box-shadow: 0 2px 8px rgba(0, 35, 44, 0.22) !important;
+  white-space: nowrap !important;
+}
+
+.leaflet-tooltip.enc-navigation-label::before{
+  display: none !important;
+}
+
+.enc-navigation-popup .leaflet-popup-content-wrapper{
+  border-radius: 12px;
+}
+
+.enc-navigation-popup__content{
+  line-height: 1.45;
+}
+
+/* =========================================================
    INPUT / SELECT polish
    ========================================================= */
 input, select{
