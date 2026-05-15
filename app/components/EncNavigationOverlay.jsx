@@ -88,9 +88,9 @@ function normalizeDistanceMark(feature) {
     const value = normalizeMaritimeMileValue(rawValue);
     if (value !== null) {
       return {
-        unit: "Mm",
+        unit: "Km",
         value,
-        label: `Mm ${formatDistanceValue(value)}`,
+        label: `Km ${formatDistanceValue(value)}`,
         canLabel: catdis === 1 || catdis === 3,
         reason: "SourceHintMm",
         rawValue,
@@ -150,9 +150,9 @@ function normalizeDistanceMark(feature) {
     }
 
     return {
-      unit: "Mm",
+      unit: "Km",
       value,
-      label: `Mm ${formatDistanceValue(value)}`,
+      label: `Km ${formatDistanceValue(value)}`,
       canLabel: true,
       reason: "MaritimeCatdis3",
       rawValue,
@@ -482,4 +482,5 @@ export default function EncNavigationOverlay() {
     </LayerGroup>
   );
 }
+
 
