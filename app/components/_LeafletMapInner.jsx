@@ -317,6 +317,7 @@ export default function LeafletMapInner({
   fullscreen = false,
 }) {
   const [isLocked, setIsLocked] = useState(false);
+  const [isEncNavigationEnabled, setIsEncNavigationEnabled] = useState(false);
   const [riversGeoJson, setRiversGeoJson] = useState(null);
   
   const DEFAULT_CENTER = [45.5, 25.5];
@@ -477,10 +478,9 @@ export default function LeafletMapInner({
             </>
           </LayersControl.Overlay>
 
-          <LayersControl.Overlay name="Navigație ENC">
-            <EncNavigationOverlay />
-          </LayersControl.Overlay>
         </LayersControl>
+
+        {isEncNavigationEnabled && <EncNavigationOverlay />}
 
         {/* Scara */}
         <ScaleControl position="bottomleft" imperial={false} />
@@ -724,6 +724,16 @@ export default function LeafletMapInner({
           );
         })}
       </MapContainer>
+
+      <button
+        type="button"
+        className={`enc-navigation-toggle${isEncNavigationEnabled ? " is-active" : ""}`}
+        onClick={() => setIsEncNavigationEnabled((current) => !current)}
+        aria-pressed={isEncNavigationEnabled}
+        title="Activează sau dezactivează navigația ENC"
+      >
+        Navig Dunăre
+      </button>
 
       {/* Indicator blocare - STÂNGA JOS (lângă scală) */}
       {isLocked && (

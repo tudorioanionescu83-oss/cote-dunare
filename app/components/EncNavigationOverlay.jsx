@@ -31,19 +31,60 @@ function hasMarineMilesHint(properties = {}) {
   return /mm|mile|mil[aă]/i.test(text);
 }
 
-function getSafeDistanceLabel(properties = {}) {
+function isMaritimeSulinaGalati(lng, lat) {
+  return lng >= 28 && lng <= 30.5 && lat >= 44.2 && lat <= 45.85;
+}
+
+function getPointCoordinates(feature) {
+  const coordinates = feature?.geometry?.coordinates;
+  if (feature?.geometry?.type !== "Point" || !Array.isArray(coordinates)) return null;
+  const [lng, lat] = coordinates;
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+  return { lng, lat };
+}
+
+function normalizeDistance(feature) {
+  const properties = feature?.properties || {};
   const rawValue = toNumber(properties.wtwdis);
-  if (rawValue === null || rawValue > 1075) return null;
+  const coordinates = getPointCoordinates(feature);
+  const isMaritime =
+    hasMarineMilesHint(properties) ||
+    Boolean(coordinates && isMaritimeSulinaGalati(coordinates.lng, coordinates.lat));
 
-  if (hasMarineMilesHint(properties)) {
-    return `Mm ${formatDistanceValue(rawValue)}`;
+  if (rawValue === null) {
+    return {
+      unit: "unknown",
+      value: null,
+      label: null,
+      canLabel: false,
+    };
   }
 
-  if (Number(properties.catdis) === 1) {
-    return `Km ${formatDistanceValue(rawValue)}`;
+  if (isMaritime) {
+    const value = rawValue > 150 ? rawValue / 10 : rawValue;
+    return {
+      unit: "Mm",
+      value,
+      label: `Mm ${formatDistanceValue(value)}`,
+      canLabel: Number(properties.catdis) === 1,
+    };
   }
 
-  return null;
+  if (Number(properties.catdis) === 1 && rawValue <= 1075) {
+    return {
+      unit: "Km",
+      value: rawValue,
+      label: `Km ${formatDistanceValue(rawValue)}`,
+      canLabel: true,
+    };
+  }
+
+  return {
+    unit: "unknown",
+    value: rawValue,
+    label: null,
+    canLabel: false,
+  };
 }
 
 function escapeHtml(value) {
@@ -55,9 +96,10 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function buildDistancePopup(properties = {}) {
-  const safeLabel = getSafeDistanceLabel(properties);
-  const title = safeLabel || "Marcaj ENC";
+function buildDistancePopup(feature) {
+  const properties = feature?.properties || {};
+  const normalized = normalizeDistance(feature);
+  const title = normalized.label || "Marcaj ENC";
   const rawWtwdis =
     properties.wtwdis === null || properties.wtwdis === undefined || properties.wtwdis === ""
       ? "-"
@@ -100,11 +142,8 @@ function toFeatureCollection(features = []) {
 }
 
 function getPointLatLng(feature) {
-  const coordinates = feature?.geometry?.coordinates;
-  if (feature?.geometry?.type !== "Point" || !Array.isArray(coordinates)) return null;
-  const [lng, lat] = coordinates;
-  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
-  return L.latLng(lat, lng);
+  const coordinates = getPointCoordinates(feature);
+  return coordinates ? L.latLng(coordinates.lat, coordinates.lng) : null;
 }
 
 function isFeatureInBounds(feature, bounds) {
@@ -113,33 +152,71 @@ function isFeatureInBounds(feature, bounds) {
 }
 
 function getFairwayStyle(zoom) {
+  const isVeryLowZoom = zoom < 8;
   const isLowZoom = zoom < 10;
   const isHighZoom = zoom >= 14;
 
   return {
     fillColor: "#35D399",
     color: "#A7FFE6",
-    fillOpacity: isLowZoom ? 0.12 : isHighZoom ? 0.22 : 0.18,
-    opacity: isLowZoom ? 0.5 : 0.65,
+    fillOpacity: isVeryLowZoom ? 0.1 : isLowZoom ? 0.12 : isHighZoom ? 0.22 : 0.18,
+    opacity: isVeryLowZoom ? 0.45 : isLowZoom ? 0.5 : 0.65,
     weight: isLowZoom ? 0.8 : isHighZoom ? 1.2 : 1,
   };
 }
 
+function isMultipleOf(value, interval) {
+  if (!Number.isFinite(value) || !Number.isFinite(interval) || interval <= 0) return false;
+  const quotient = value / interval;
+  return Math.abs(quotient - Math.round(quotient)) < 1e-9;
+}
+
+function getLabelInterval(unit, zoom) {
+  if (unit === "Km") {
+    if (zoom < 8) return null;
+    if (zoom < 9) return 100;
+    if (zoom < 10) return 50;
+    if (zoom < 11.5) return 20;
+    if (zoom < 13) return 10;
+    if (zoom <= 14) return 5;
+    return "all";
+  }
+
+  if (unit === "Mm") {
+    if (zoom < 8) return null;
+    if (zoom < 10) return 20;
+    if (zoom < 12) return 10;
+    if (zoom <= 14) return 5;
+    return "all";
+  }
+
+  return null;
+}
+
 function buildRepresentativeMajorFeatures(features = []) {
-  const seenByWtwdis = new Set();
+  const seenByNormalizedLabel = new Set();
   const representativeFeatures = [];
 
   for (const feature of features) {
     const properties = feature?.properties || {};
-    const rawWtwdis = properties.wtwdis;
     if (Number(properties.catdis) !== 1) continue;
-    if (rawWtwdis === null || rawWtwdis === undefined || rawWtwdis === "") continue;
 
-    const key = String(rawWtwdis);
-    if (seenByWtwdis.has(key)) continue;
+    const normalized = normalizeDistance(feature);
+    if (!normalized.canLabel || !normalized.label) continue;
 
-    seenByWtwdis.add(key);
-    representativeFeatures.push(feature);
+    const key = `${normalized.unit}:${normalized.value}`;
+    if (seenByNormalizedLabel.has(key)) continue;
+
+    seenByNormalizedLabel.add(key);
+    representativeFeatures.push({
+      ...feature,
+      properties: {
+        ...properties,
+        __encUnit: normalized.unit,
+        __encValue: normalized.value,
+        __encLabel: normalized.label,
+      },
+    });
   }
 
   return representativeFeatures;
@@ -149,6 +226,7 @@ export default function EncNavigationOverlay() {
   const map = useMap();
   const [distanceMarks, setDistanceMarks] = useState(null);
   const [fairway, setFairway] = useState(null);
+  const pointRenderer = useMemo(() => L.canvas({ padding: 0.2 }), []);
   const [viewState, setViewState] = useState(() => ({
     zoom: map.getZoom(),
     bounds: map.getBounds().pad(0.15),
@@ -198,79 +276,41 @@ export default function EncNavigationOverlay() {
 
   const featureSets = useMemo(() => {
     const allFeatures = distanceMarks?.features || [];
-    const representativeMajorFeatures = buildRepresentativeMajorFeatures(allFeatures);
-
-    const visibleRepresentativeMajorFeatures = representativeMajorFeatures.filter((feature) =>
-      isFeatureInBounds(feature, viewState.bounds)
-    );
     const visibleAllPointFeatures = allFeatures.filter((feature) =>
       isFeatureInBounds(feature, viewState.bounds)
     );
-
-    const labelFeaturesEvery10 = visibleRepresentativeMajorFeatures
-      .filter((feature) => {
-        const rawValue = toNumber(feature?.properties?.wtwdis);
-        return rawValue !== null && rawValue <= 1075 && rawValue % 10 === 0;
-      })
-      .map((feature) => ({
-        ...feature,
-        properties: {
-          ...feature.properties,
-          __encLabel: getSafeDistanceLabel(feature.properties),
-        },
-      }))
-      .filter((feature) => feature.properties.__encLabel);
-
-    const labelFeaturesEvery5 = visibleRepresentativeMajorFeatures
-      .filter((feature) => {
-        const rawValue = toNumber(feature?.properties?.wtwdis);
-        return rawValue !== null && rawValue <= 1075 && rawValue % 5 === 0;
-      })
-      .map((feature) => ({
-        ...feature,
-        properties: {
-          ...feature.properties,
-          __encLabel: getSafeDistanceLabel(feature.properties),
-        },
-      }))
-      .filter((feature) => feature.properties.__encLabel);
-
-    const labelFeaturesAllMajor = visibleRepresentativeMajorFeatures
-      .map((feature) => ({
-        ...feature,
-        properties: {
-          ...feature.properties,
-          __encLabel: getSafeDistanceLabel(feature.properties),
-        },
-      }))
-      .filter((feature) => feature.properties.__encLabel);
+    const visibleRepresentativeMajorFeatures = buildRepresentativeMajorFeatures(visibleAllPointFeatures);
+    const labelFeatures = visibleRepresentativeMajorFeatures.filter((feature) => {
+      const interval = getLabelInterval(feature.properties.__encUnit, viewState.zoom);
+      if (interval === "all") return true;
+      if (interval === null) return false;
+      return isMultipleOf(feature.properties.__encValue, interval);
+    });
 
     return {
       representativeMajorPoints: toFeatureCollection(visibleRepresentativeMajorFeatures),
       allVisiblePoints: toFeatureCollection(visibleAllPointFeatures),
-      labelsEvery10: toFeatureCollection(labelFeaturesEvery10),
-      labelsEvery5: toFeatureCollection(labelFeaturesEvery5),
-      labelsAllMajor: toFeatureCollection(labelFeaturesAllMajor),
+      visibleLabels: toFeatureCollection(labelFeatures),
     };
-  }, [distanceMarks, viewState.bounds]);
+  }, [distanceMarks, viewState.bounds, viewState.zoom]);
 
   const { zoom } = viewState;
-  const showFairway = zoom >= 8;
-  const showMajorLabelsEvery10 = zoom >= 10 && zoom < 12;
-  const showMajorLabelsEvery5 = zoom >= 12 && zoom < 14;
-  const showRepresentativeMajorPoints = zoom >= 12 && zoom < 14;
-  const showAllPoints = zoom >= 14;
-  const showAllMajorLabels = zoom >= 14;
+  const showFairway = zoom >= 7;
+  const showLabels = zoom >= 8;
+  const showRepresentativeMajorPoints = zoom >= 12 && zoom <= 14;
+  const showAllPoints = zoom > 14;
 
   return (
     <LayerGroup>
       {showFairway && fairway && (
         <GeoJSON
-          key={`enc-fairway-${zoom < 10 ? "low" : zoom < 14 ? "mid" : "high"}`}
+          key={`enc-fairway-${zoom < 8 ? "very-low" : zoom < 10 ? "low" : zoom <= 14 ? "mid" : "high"}`}
           data={fairway}
           style={() => getFairwayStyle(zoom)}
           onEachFeature={(_, layer) => {
-            layer.bindPopup(buildFairwayPopup(), { className: "enc-navigation-popup" });
+            layer.on("click", () => {
+              layer.bindPopup(buildFairwayPopup(), { className: "enc-navigation-popup" }).openPopup();
+            });
           }}
         />
       )}
@@ -287,11 +327,14 @@ export default function EncNavigationOverlay() {
               weight: 0.9,
               opacity: 0.95,
               fillOpacity: 0.88,
+              renderer: pointRenderer,
             })
           }
           onEachFeature={(feature, layer) => {
-            layer.bindPopup(buildDistancePopup(feature?.properties), {
-              className: "enc-navigation-popup",
+            layer.on("click", () => {
+              layer.bindPopup(buildDistancePopup(feature), {
+                className: "enc-navigation-popup",
+              }).openPopup();
             });
           }}
         />
@@ -310,62 +353,30 @@ export default function EncNavigationOverlay() {
               weight: 1.15,
               opacity: 1,
               fillOpacity: 0.95,
+              renderer: pointRenderer,
             });
           }}
           onEachFeature={(feature, layer) => {
-            layer.bindPopup(buildDistancePopup(feature?.properties), {
-              className: "enc-navigation-popup",
+            layer.on("click", () => {
+              layer.bindPopup(buildDistancePopup(feature), {
+                className: "enc-navigation-popup",
+              }).openPopup();
             });
           }}
         />
       )}
 
-      {showMajorLabelsEvery10 && (
+      {showLabels && (
         <GeoJSON
-          key={`enc-labels-10-${viewState.zoom}-${viewState.bounds.toBBoxString()}`}
-          data={featureSets.labelsEvery10}
+          key={`enc-labels-${viewState.zoom}-${viewState.bounds.toBBoxString()}`}
+          data={featureSets.visibleLabels}
           pointToLayer={(_, latlng) =>
             L.circleMarker(latlng, {
               radius: 0,
               opacity: 0,
               fillOpacity: 0,
               interactive: false,
-            })
-          }
-          onEachFeature={(feature, layer) => {
-            layer.bindTooltip(feature.properties.__encLabel, LABEL_TOOLTIP_OPTIONS);
-          }}
-        />
-      )}
-
-      {showMajorLabelsEvery5 && (
-        <GeoJSON
-          key={`enc-labels-5-${viewState.zoom}-${viewState.bounds.toBBoxString()}`}
-          data={featureSets.labelsEvery5}
-          pointToLayer={(_, latlng) =>
-            L.circleMarker(latlng, {
-              radius: 0,
-              opacity: 0,
-              fillOpacity: 0,
-              interactive: false,
-            })
-          }
-          onEachFeature={(feature, layer) => {
-            layer.bindTooltip(feature.properties.__encLabel, LABEL_TOOLTIP_OPTIONS);
-          }}
-        />
-      )}
-
-      {showAllMajorLabels && (
-        <GeoJSON
-          key={`enc-labels-all-${viewState.zoom}-${viewState.bounds.toBBoxString()}`}
-          data={featureSets.labelsAllMajor}
-          pointToLayer={(_, latlng) =>
-            L.circleMarker(latlng, {
-              radius: 0,
-              opacity: 0,
-              fillOpacity: 0,
-              interactive: false,
+              renderer: pointRenderer,
             })
           }
           onEachFeature={(feature, layer) => {
