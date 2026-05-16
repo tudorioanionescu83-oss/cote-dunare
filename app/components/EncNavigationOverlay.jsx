@@ -164,17 +164,28 @@ function getLabelInterval(unit, zoom) {
   return null;
 }
 
-function isMultipleOf(value, interval) {
-  if (interval === null || !Number.isFinite(value)) return false;
-  if (interval === 1) return true;
-  if (!Number.isInteger(value)) return false;
-  return value % interval === 0;
+const LOCAL_KM_MN_CONFLICT_DISTANCE_METERS = 400;
+const LOCAL_BUCKET_DUPLICATE_DISTANCE_METERS = 700;
+
+function getBucketTolerance(interval) {
+  if (interval === null) return null;
+  if (interval === 1) return 0.8;
+  if (interval === 2) return 1;
+  return 1.5;
 }
 
-const LOCAL_KM_MN_CONFLICT_DISTANCE_METERS = 400;
+function getLabelBucket(value, interval) {
+  if (interval === null || !Number.isFinite(value)) return null;
 
-function getRoundedValueForKey(value) {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+  const bucket = Math.round(value / interval) * interval;
+  const bucketScore = Math.abs(value - bucket);
+  const tolerance = getBucketTolerance(interval);
+  if (tolerance === null || bucketScore > tolerance) return null;
+
+  return {
+    bucket,
+    bucketScore,
+  };
 }
 
 function getFeatureDistanceMeters(firstFeature, secondFeature) {
@@ -193,6 +204,33 @@ function shouldSuppressKmNearVisibleMaritimeMile(feature, visibleMaritimeMiles) 
   );
 }
 
+function compareLabelCandidates(firstFeature, secondFeature) {
+  const firstProperties = firstFeature?.properties || {};
+  const secondProperties = secondFeature?.properties || {};
+
+  if (firstProperties.__encBucketScore !== secondProperties.__encBucketScore) {
+    return firstProperties.__encBucketScore - secondProperties.__encBucketScore;
+  }
+
+  if (firstProperties.__encUnit !== secondProperties.__encUnit) {
+    return firstProperties.__encUnit === "mn" ? -1 : 1;
+  }
+
+  return firstProperties.__encValue - secondProperties.__encValue;
+}
+
+function isNearbyDuplicateBucket(feature, selectedFeatures) {
+  const properties = feature?.properties || {};
+
+  return selectedFeatures.some((selectedFeature) => {
+    const selectedProperties = selectedFeature?.properties || {};
+    if (selectedProperties.__encUnit !== properties.__encUnit) return false;
+    if (selectedProperties.__encBucket !== properties.__encBucket) return false;
+
+    return getFeatureDistanceMeters(feature, selectedFeature) <= LOCAL_BUCKET_DUPLICATE_DISTANCE_METERS;
+  });
+}
+
 function buildRepresentativeLabelFeatures(features = [], zoom) {
   const candidateFeatures = [];
 
@@ -206,7 +244,8 @@ function buildRepresentativeLabelFeatures(features = [], zoom) {
     if (!Number.isFinite(normalized.value)) continue;
 
     const interval = getLabelInterval(normalized.unit, zoom);
-    if (!isMultipleOf(normalized.value, interval)) continue;
+    const bucket = getLabelBucket(normalized.value, interval);
+    if (!bucket) continue;
 
     candidateFeatures.push({
       ...feature,
@@ -216,25 +255,22 @@ function buildRepresentativeLabelFeatures(features = [], zoom) {
         __encValue: normalized.value,
         __encLabel: permanentLabel,
         __encReason: normalized.reason,
+        __encBucket: bucket.bucket,
+        __encBucketScore: bucket.bucketScore,
       },
     });
   }
 
+  candidateFeatures.sort(compareLabelCandidates);
+
   const visibleMaritimeMiles = candidateFeatures.filter(
     (feature) => feature?.properties?.__encUnit === "mn"
   );
-  const seenByNormalizedLabel = new Set();
   const representativeFeatures = [];
 
   for (const feature of candidateFeatures) {
-    const properties = feature?.properties || {};
     if (shouldSuppressKmNearVisibleMaritimeMile(feature, visibleMaritimeMiles)) continue;
-
-    const roundedValueForKey = getRoundedValueForKey(properties.__encValue);
-    const key = `${properties.__encUnit}:${roundedValueForKey}`;
-    if (seenByNormalizedLabel.has(key)) continue;
-
-    seenByNormalizedLabel.add(key);
+    if (isNearbyDuplicateBucket(feature, representativeFeatures)) continue;
     representativeFeatures.push(feature);
   }
 
