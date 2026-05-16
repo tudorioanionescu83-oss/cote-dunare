@@ -7,21 +7,6 @@ import L from "leaflet";
 const DISTANCE_MARKS_URL = "/layers/danube_km_fairway.geojson?v=canonical-labels-20260515";
 const FAIRWAY_URL = "/layers/danube_fairway.geojson";
 
-const LABEL_TOOLTIP_OPTIONS = {
-  permanent: true,
-  direction: "top",
-  offset: [0, -4],
-  opacity: 1,
-  className: "enc-navigation-label",
-};
-
-const LABEL_ANCHOR_ICON = L.divIcon({
-  className: "enc-navigation-label-anchor",
-  html: "",
-  iconSize: [1, 1],
-  iconAnchor: [0, 0],
-});
-
 function getPointCoordinates(feature) {
   const coordinates = feature?.geometry?.coordinates;
   if (feature?.geometry?.type !== "Point" || !Array.isArray(coordinates)) return null;
@@ -76,6 +61,13 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function buildLabelIcon(label) {
+  return L.divIcon({
+    className: "",
+    html: `<div style="display:inline-block;padding:2px 7px;border-radius:999px;background:rgba(15,76,92,0.94);color:#fff;font-weight:800;font-size:12px;line-height:1.15;white-space:nowrap;border:1px solid rgba(255,255,255,0.85);box-shadow:0 1px 5px rgba(0,0,0,0.35);text-shadow:0 1px 1px rgba(0,0,0,0.55);">${escapeHtml(label)}</div>`,
+  });
 }
 
 function buildDistancePopup(feature) {
@@ -292,16 +284,14 @@ export default function EncNavigationOverlay() {
         <GeoJSON
           key={`enc-labels-${viewState.zoom}-${viewState.bounds.toBBoxString()}`}
           data={featureSets.visibleLabels}
-          pointToLayer={(_, latlng) =>
+          pointToLayer={(feature, latlng) =>
             L.marker(latlng, {
-              icon: LABEL_ANCHOR_ICON,
+              icon: buildLabelIcon(feature?.properties?.__encLabel || ""),
               interactive: false,
               keyboard: false,
+              zIndexOffset: 1000,
             })
           }
-          onEachFeature={(feature, layer) => {
-            layer.bindTooltip(feature.properties.__encLabel, LABEL_TOOLTIP_OPTIONS).openTooltip();
-          }}
         />
       )}
     </LayerGroup>
