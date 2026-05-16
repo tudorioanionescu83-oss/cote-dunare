@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { GeoJSON, LayerGroup, useMap } from "react-leaflet";
 import L from "leaflet";
 
-const DISTANCE_MARKS_URL = "/layers/danube_km_fairway_v3.geojson";
+const DISTANCE_MARKS_URL = "/layers/danube_km_fairway.geojson";
 const FAIRWAY_URL = "/layers/danube_fairway.geojson";
 
 const LABEL_TOOLTIP_OPTIONS = {
@@ -15,43 +15,6 @@ const LABEL_TOOLTIP_OPTIONS = {
   className: "enc-navigation-label",
 };
 
-function toNumber(value) {
-  if (value === null || value === undefined || value === "") return null;
-  const parsed = Number(String(value).replace(",", "."));
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function formatDistanceValue(value) {
-  if (value === null) return null;
-  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
-}
-
-function isMaritimeCandidate(lng, lat) {
-  const isWithinLatitudeBand = lat >= 44.2 && lat <= 45.8;
-  const isDownstreamFromGalati = (lng >= 28.15 && lat <= 45.45) || lng >= 28.35;
-  return isWithinLatitudeBand && isDownstreamFromGalati;
-}
-
-function isBrailaGalatiKmSector(lng, lat, wtwdis) {
-  return (
-    lng >= 27.7 &&
-    lng <= 28.35 &&
-    lat >= 45.05 &&
-    lat <= 45.55 &&
-    wtwdis >= 145 &&
-    wtwdis <= 230
-  );
-}
-
-function normalizeMaritimeMileValue(wtwdis) {
-  if (wtwdis >= 0 && wtwdis <= 180) return wtwdis;
-  if (wtwdis > 180 && wtwdis <= 1800) {
-    const value = wtwdis / 10;
-    return value >= 0 && value <= 180 ? value : null;
-  }
-  return null;
-}
-
 function getPointCoordinates(feature) {
   const coordinates = feature?.geometry?.coordinates;
   if (feature?.geometry?.type !== "Point" || !Array.isArray(coordinates)) return null;
@@ -60,135 +23,25 @@ function getPointCoordinates(feature) {
   return { lng, lat };
 }
 
-function normalizeDistanceMark(feature) {
+function getCanonicalDistanceMark(feature) {
   const properties = feature?.properties || {};
-  const rawValue = toNumber(properties.wtwdis);
-  const coordinates = getPointCoordinates(feature);
-  const catdis = toNumber(properties.catdis);
-  const srcUnitHint = properties.SRC_UNIT_HINT || null;
-  const objnam = properties.OBJNAM || null;
-  const inform = properties.INFORM || null;
-
-  if (rawValue === null || !coordinates) {
-    return {
-      unit: "unknown",
-      value: null,
-      label: null,
-      canLabel: false,
-      reason: "Unknown",
-      rawValue,
-      catdis,
-      srcUnitHint,
-      objnam,
-      inform,
-    };
-  }
-
-  if (srcUnitHint === "Mm") {
-    const value = normalizeMaritimeMileValue(rawValue);
-    if (value !== null) {
-      return {
-        unit: "Km",
-        value,
-        label: `Km ${formatDistanceValue(value)}`,
-        canLabel: catdis === 1 || catdis === 3,
-        reason: "SourceHintMm",
-        rawValue,
-        catdis,
-        srcUnitHint,
-        objnam,
-        inform,
-      };
-    }
-  }
-
-  if (srcUnitHint === "Km") {
-    return {
-      unit: "Km",
-      value: rawValue,
-      label: `Km ${formatDistanceValue(rawValue)}`,
-      canLabel: catdis === 1 && rawValue <= 1075,
-      reason: "SourceHintKm",
-      rawValue,
-      catdis,
-      srcUnitHint,
-      objnam,
-      inform,
-    };
-  }
-
-  if (isBrailaGalatiKmSector(coordinates.lng, coordinates.lat, rawValue)) {
-    return {
-      unit: "Km",
-      value: rawValue,
-      label: `Km ${formatDistanceValue(rawValue)}`,
-      canLabel: catdis === 1,
-      reason: "BrailaGalatiKm",
-      rawValue,
-      catdis,
-      srcUnitHint,
-      objnam,
-      inform,
-    };
-  }
-
-  if (isMaritimeCandidate(coordinates.lng, coordinates.lat) && catdis === 3) {
-    const value = normalizeMaritimeMileValue(rawValue);
-    if (value === null) {
-      return {
-        unit: "unknown",
-        value: null,
-        label: null,
-        canLabel: false,
-        reason: "Unknown",
-        rawValue,
-        catdis,
-        srcUnitHint,
-        objnam,
-        inform,
-      };
-    }
-
-    return {
-      unit: "Km",
-      value,
-      label: `Km ${formatDistanceValue(value)}`,
-      canLabel: true,
-      reason: "MaritimeCatdis3",
-      rawValue,
-      catdis,
-      srcUnitHint,
-      objnam,
-      inform,
-    };
-  }
-
-  if (catdis === 1 && rawValue <= 1075) {
-    return {
-      unit: "Km",
-      value: rawValue,
-      label: `Km ${formatDistanceValue(rawValue)}`,
-      canLabel: true,
-      reason: "NormalKm",
-      rawValue,
-      catdis,
-      srcUnitHint,
-      objnam,
-      inform,
-    };
-  }
+  const unit = properties.distance_unit === "km" || properties.distance_unit === "mn" ? properties.distance_unit : null;
+  const value = Number.isFinite(properties.distance_value) ? properties.distance_value : null;
+  const rawCatdis = Number.isFinite(properties.raw_catdis)
+    ? properties.raw_catdis
+    : Number.isFinite(properties.catdis)
+      ? properties.catdis
+      : null;
 
   return {
-    unit: "unknown",
-    value: rawValue,
-    label: null,
-    canLabel: false,
-    reason: "Unknown",
-    rawValue,
-    catdis,
-    srcUnitHint,
-    objnam,
-    inform,
+    unit,
+    value,
+    label: typeof properties.distance_label === "string" ? properties.distance_label : null,
+    canLabel: Boolean(unit && value !== null && rawCatdis === 1 && properties.distance_label),
+    reason: properties.reason || null,
+    confidence: properties.confidence || null,
+    rawValue: properties.raw_wtwdis ?? properties.wtwdis ?? null,
+    rawCatdis,
   };
 }
 
@@ -203,30 +56,25 @@ function escapeHtml(value) {
 
 function buildDistancePopup(feature) {
   const properties = feature?.properties || {};
-  const normalized = normalizeDistanceMark(feature);
+  const normalized = getCanonicalDistanceMark(feature);
   const title = normalized.label || "Marcaj ENC";
-  const rawWtwdis =
-    properties.wtwdis === null || properties.wtwdis === undefined || properties.wtwdis === ""
-      ? "-"
-      : properties.wtwdis;
-  const catdis =
-    properties.catdis === null || properties.catdis === undefined || properties.catdis === ""
-      ? "-"
-      : properties.catdis;
+  const rawWtwdis = normalized.rawValue ?? "-";
+  const rawCatdis = normalized.rawCatdis ?? "-";
 
   return `
     <div class="enc-navigation-popup__content">
       <strong>${escapeHtml(title)}</strong><br />
-      wtwdis: ${escapeHtml(rawWtwdis)}<br />
-      catdis: ${escapeHtml(catdis)}<br />
-      SRC_FOLDER: ${escapeHtml(properties.SRC_FOLDER || "-")}<br />
-      SRC_CELL: ${escapeHtml(properties.SRC_CELL || "-")}<br />
-      SRC_UNIT_HINT: ${escapeHtml(properties.SRC_UNIT_HINT || "-")}<br />
-      unit normalizatÄ: ${escapeHtml(normalized.unit)}<br />
+      raw wtwdis: ${escapeHtml(rawWtwdis)}<br />
+      raw catdis: ${escapeHtml(rawCatdis)}<br />
+      source_folder: ${escapeHtml(properties.source_folder || "-")}<br />
+      source_cell: ${escapeHtml(properties.source_cell || "-")}<br />
+      distance_unit: ${escapeHtml(properties.distance_unit || "-")}<br />
+      distance_value: ${escapeHtml(properties.distance_value ?? "-")}<br />
       label final: ${escapeHtml(normalized.label || "-")}<br />
-      motiv: ${escapeHtml(normalized.reason)}<br />
-      SursÄ: ENC<br />
-      Valoare informativÄ
+      confidence: ${escapeHtml(normalized.confidence || "-")}<br />
+      reason: ${escapeHtml(normalized.reason || "-")}<br />
+      Sursă: ENC<br />
+      Valoare informativă
     </div>
   `;
 }
@@ -234,9 +82,9 @@ function buildDistancePopup(feature) {
 function buildFairwayPopup() {
   return `
     <div class="enc-navigation-popup__content">
-      <strong>Čenal navigabil</strong><br />
-      SursÄ: ENC<br />
-      Valoare informativÄ. Nu Ă®nlocuieČ™te hÄrČ›ile oficiale de navigaČ›ie.
+      <strong>Șenal navigabil</strong><br />
+      Sursă: ENC<br />
+      Valoare informativă. Nu înlocuiește hărțile oficiale de navigație.
     </div>
   `;
 }
@@ -283,7 +131,7 @@ function isMultipleOf(value, interval) {
 }
 
 function getLabelInterval(unit, zoom) {
-  if (unit === "Km") {
+  if (unit === "km") {
     if (zoom < 8) return null;
     if (zoom < 9) return 100;
     if (zoom < 10) return 50;
@@ -293,7 +141,7 @@ function getLabelInterval(unit, zoom) {
     return "all";
   }
 
-  if (unit === "Mm") {
+  if (unit === "mn") {
     if (zoom < 8) return null;
     if (zoom < 10) return 20;
     if (zoom < 12) return 10;
@@ -306,7 +154,7 @@ function getLabelInterval(unit, zoom) {
 
 function getPermanentLabel(normalized, zoom) {
   if (!normalized.canLabel || !normalized.label) return null;
-  if (normalized.unit === "Mm" && !Number.isInteger(normalized.value) && zoom < 16) {
+  if (!Number.isInteger(normalized.value) && zoom < 16) {
     return null;
   }
   return normalized.label;
@@ -318,7 +166,7 @@ function buildRepresentativeLabelFeatures(features = [], zoom) {
 
   for (const feature of features) {
     const properties = feature?.properties || {};
-    const normalized = normalizeDistanceMark(feature);
+    const normalized = getCanonicalDistanceMark(feature);
     const permanentLabel = getPermanentLabel(normalized, zoom);
     if (!permanentLabel) continue;
 
@@ -440,7 +288,7 @@ export default function EncNavigationOverlay() {
           key={`enc-all-points-${viewState.zoom}-${viewState.bounds.toBBoxString()}`}
           data={featureSets.allVisiblePoints}
           pointToLayer={(feature, latlng) => {
-            const isMajorMark = Number(feature?.properties?.catdis) === 1;
+            const isMajorMark = Number(feature?.properties?.raw_catdis ?? feature?.properties?.catdis) === 1;
             return L.circleMarker(latlng, {
               radius: isMajorMark ? 4 : 3,
               fillColor: "#00E5FF",
