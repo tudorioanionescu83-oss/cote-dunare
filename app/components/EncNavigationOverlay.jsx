@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { GeoJSON, LayerGroup, useMap } from "react-leaflet";
 import L from "leaflet";
 
-const DISTANCE_MARKS_URL = "/layers/danube_km_fairway.geojson";
+const DISTANCE_MARKS_URL = "/layers/danube_km_fairway.geojson?v=canonical-labels-20260515";
 const FAIRWAY_URL = "/layers/danube_fairway.geojson";
 
 const LABEL_TOOLTIP_OPTIONS = {
@@ -14,6 +14,13 @@ const LABEL_TOOLTIP_OPTIONS = {
   opacity: 1,
   className: "enc-navigation-label",
 };
+
+const LABEL_ANCHOR_ICON = L.divIcon({
+  className: "enc-navigation-label-anchor",
+  html: "",
+  iconSize: [1, 1],
+  iconAnchor: [0, 0],
+});
 
 function getPointCoordinates(feature) {
   const coordinates = feature?.geometry?.coordinates;
@@ -286,22 +293,21 @@ export default function EncNavigationOverlay() {
           key={`enc-labels-${viewState.zoom}-${viewState.bounds.toBBoxString()}`}
           data={featureSets.visibleLabels}
           pointToLayer={(_, latlng) =>
-            L.circleMarker(latlng, {
-              radius: 0,
-              opacity: 0,
-              fillOpacity: 0,
+            L.marker(latlng, {
+              icon: LABEL_ANCHOR_ICON,
               interactive: false,
-              renderer: pointRenderer,
+              keyboard: false,
             })
           }
           onEachFeature={(feature, layer) => {
-            layer.bindTooltip(feature.properties.__encLabel, LABEL_TOOLTIP_OPTIONS);
+            layer.bindTooltip(feature.properties.__encLabel, LABEL_TOOLTIP_OPTIONS).openTooltip();
           }}
         />
       )}
     </LayerGroup>
   );
 }
+
 
 
 
