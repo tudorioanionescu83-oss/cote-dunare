@@ -140,17 +140,75 @@ function getFairwayStyle(zoom) {
   };
 }
 
-function buildRepresentativeLabelFeatures(features = []) {
+function getLabelInterval(unit, zoom) {
+  if (unit === "km") {
+    if (zoom >= 15.5) return 1;
+    if (zoom >= 14.5) return 2;
+    if (zoom >= 13.5) return 5;
+    if (zoom >= 12.5) return 10;
+    if (zoom >= 11.5) return 20;
+    if (zoom >= 10) return 50;
+    if (zoom >= 8) return 100;
+    return null;
+  }
+
+  if (unit === "mn") {
+    if (zoom >= 15.5) return 1;
+    if (zoom >= 14) return 2;
+    if (zoom >= 12.5) return 5;
+    if (zoom >= 11) return 10;
+    if (zoom >= 9) return 20;
+    return null;
+  }
+
+  return null;
+}
+
+function isMultipleOf(value, interval) {
+  if (interval === null || !Number.isFinite(value)) return false;
+  if (interval === 1) return true;
+  if (!Number.isInteger(value)) return false;
+  return value % interval === 0;
+}
+
+function shouldSuppressKmWhereMaritimeMilesExist(feature) {
+  const properties = feature?.properties || {};
+  if (properties.distance_unit !== "km") return false;
+
+  const sourceFolder = String(properties.source_folder || "");
+  if (sourceFolder.includes("mm0-mm47")) return true;
+
+  return (
+    sourceFolder.includes("mm47-km175") &&
+    Number.isFinite(properties.distance_value) &&
+    properties.distance_value >= 0 &&
+    properties.distance_value <= 180
+  );
+}
+
+function getRoundedValueForKey(value) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function buildRepresentativeLabelFeatures(features = [], zoom) {
   const seenByNormalizedLabel = new Set();
   const representativeFeatures = [];
 
   for (const feature of features) {
     const properties = feature?.properties || {};
+    if (!properties.distance_label) continue;
+    if (shouldSuppressKmWhereMaritimeMilesExist(feature)) continue;
+
     const normalized = normalizeDistanceMark(feature);
     const permanentLabel = normalized.canLabel ? normalized.label : null;
     if (!permanentLabel) continue;
+    if (!Number.isFinite(normalized.value)) continue;
 
-    const key = `${normalized.unit ?? "unknown"}:${normalized.value ?? permanentLabel}`;
+    const interval = getLabelInterval(normalized.unit, zoom);
+    if (!isMultipleOf(normalized.value, interval)) continue;
+
+    const roundedValueForKey = getRoundedValueForKey(normalized.value);
+    const key = `${normalized.unit}:${roundedValueForKey}`;
     if (seenByNormalizedLabel.has(key)) continue;
 
     seenByNormalizedLabel.add(key);
@@ -226,7 +284,10 @@ export default function EncNavigationOverlay() {
     const visibleAllPointFeatures = allFeatures.filter((feature) =>
       isFeatureInBounds(feature, viewState.bounds)
     );
-    const visibleRepresentativeLabelFeatures = buildRepresentativeLabelFeatures(visibleAllPointFeatures);
+    const visibleRepresentativeLabelFeatures = buildRepresentativeLabelFeatures(
+      visibleAllPointFeatures,
+      viewState.zoom
+    );
 
     return {
       allVisiblePoints: toFeatureCollection(visibleAllPointFeatures),
@@ -236,7 +297,7 @@ export default function EncNavigationOverlay() {
 
   const { zoom } = viewState;
   const showFairway = zoom >= 7;
-  const showLabels = true;
+  const showLabels = zoom >= 8;
   const showAllPoints = zoom > 14;
 
   return (
