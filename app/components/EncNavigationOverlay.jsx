@@ -23,21 +23,38 @@ function getPointCoordinates(feature) {
   return { lng, lat };
 }
 
-function getCanonicalDistanceMark(feature) {
+function normalizeDistanceMark(feature) {
   const properties = feature?.properties || {};
-  const unit = properties.distance_unit === "km" || properties.distance_unit === "mn" ? properties.distance_unit : null;
-  const value = Number.isFinite(properties.distance_value) ? properties.distance_value : null;
+  const canonicalLabel =
+    typeof properties.distance_label === "string" && properties.distance_label.trim()
+      ? properties.distance_label
+      : null;
+  const canonicalUnit = properties.distance_unit ?? null;
+  const canonicalValue = properties.distance_value ?? null;
   const rawCatdis = Number.isFinite(properties.raw_catdis)
     ? properties.raw_catdis
     : Number.isFinite(properties.catdis)
       ? properties.catdis
       : null;
 
+  if (canonicalLabel) {
+    return {
+      unit: canonicalUnit,
+      value: canonicalValue,
+      label: canonicalLabel,
+      canLabel: true,
+      reason: properties.reason || "CanonicalDistanceLabel",
+      confidence: properties.confidence || null,
+      rawValue: properties.raw_wtwdis ?? properties.wtwdis ?? null,
+      rawCatdis,
+    };
+  }
+
   return {
-    unit,
-    value,
-    label: typeof properties.distance_label === "string" ? properties.distance_label : null,
-    canLabel: Boolean(unit && value !== null && rawCatdis === 1 && properties.distance_label),
+    unit: canonicalUnit,
+    value: canonicalValue,
+    label: null,
+    canLabel: false,
     reason: properties.reason || null,
     confidence: properties.confidence || null,
     rawValue: properties.raw_wtwdis ?? properties.wtwdis ?? null,
@@ -56,7 +73,7 @@ function escapeHtml(value) {
 
 function buildDistancePopup(feature) {
   const properties = feature?.properties || {};
-  const normalized = getCanonicalDistanceMark(feature);
+  const normalized = normalizeDistanceMark(feature);
   const title = normalized.label || "Marcaj ENC";
   const rawWtwdis = normalized.rawValue ?? "-";
   const rawCatdis = normalized.rawCatdis ?? "-";
@@ -124,53 +141,17 @@ function getFairwayStyle(zoom) {
   };
 }
 
-function isMultipleOf(value, interval) {
-  if (!Number.isFinite(value) || !Number.isFinite(interval) || interval <= 0) return false;
-  const quotient = value / interval;
-  return Math.abs(quotient - Math.round(quotient)) < 1e-9;
-}
-
-function getLabelInterval(unit, zoom) {
-  if (unit === "km") {
-    if (zoom < 8) return null;
-    if (zoom < 9) return 100;
-    if (zoom < 10) return 50;
-    if (zoom < 11.5) return 20;
-    if (zoom < 13) return 10;
-    if (zoom <= 14) return 5;
-    return "all";
-  }
-
-  if (unit === "mn") {
-    if (zoom < 8) return null;
-    if (zoom < 10) return 20;
-    if (zoom < 12) return 10;
-    if (zoom <= 14) return 5;
-    return "all";
-  }
-
-  return null;
-}
-
-function getPermanentLabel(normalized, zoom) {
-  if (!normalized.canLabel || !normalized.label) return null;
-  if (!Number.isInteger(normalized.value) && zoom < 16) {
-    return null;
-  }
-  return normalized.label;
-}
-
-function buildRepresentativeLabelFeatures(features = [], zoom) {
+function buildRepresentativeLabelFeatures(features = []) {
   const seenByNormalizedLabel = new Set();
   const representativeFeatures = [];
 
   for (const feature of features) {
     const properties = feature?.properties || {};
-    const normalized = getCanonicalDistanceMark(feature);
-    const permanentLabel = getPermanentLabel(normalized, zoom);
+    const normalized = normalizeDistanceMark(feature);
+    const permanentLabel = normalized.canLabel ? normalized.label : null;
     if (!permanentLabel) continue;
 
-    const key = `${normalized.unit}:${normalized.value}`;
+    const key = `${normalized.unit ?? "unknown"}:${normalized.value ?? permanentLabel}`;
     if (seenByNormalizedLabel.has(key)) continue;
 
     seenByNormalizedLabel.add(key);
@@ -246,26 +227,17 @@ export default function EncNavigationOverlay() {
     const visibleAllPointFeatures = allFeatures.filter((feature) =>
       isFeatureInBounds(feature, viewState.bounds)
     );
-    const visibleRepresentativeLabelFeatures = buildRepresentativeLabelFeatures(
-      visibleAllPointFeatures,
-      viewState.zoom
-    );
-    const labelFeatures = visibleRepresentativeLabelFeatures.filter((feature) => {
-      const interval = getLabelInterval(feature.properties.__encUnit, viewState.zoom);
-      if (interval === "all") return true;
-      if (interval === null) return false;
-      return isMultipleOf(feature.properties.__encValue, interval);
-    });
+    const visibleRepresentativeLabelFeatures = buildRepresentativeLabelFeatures(visibleAllPointFeatures);
 
     return {
       allVisiblePoints: toFeatureCollection(visibleAllPointFeatures),
-      visibleLabels: toFeatureCollection(labelFeatures),
+      visibleLabels: toFeatureCollection(visibleRepresentativeLabelFeatures),
     };
   }, [distanceMarks, viewState.bounds, viewState.zoom]);
 
   const { zoom } = viewState;
   const showFairway = zoom >= 7;
-  const showLabels = zoom >= 8;
+  const showLabels = true;
   const showAllPoints = zoom > 14;
 
   return (
