@@ -171,33 +171,34 @@ function isMultipleOf(value, interval) {
   return value % interval === 0;
 }
 
-function shouldSuppressKmWhereMaritimeMilesExist(feature) {
-  const properties = feature?.properties || {};
-  if (properties.distance_unit !== "km") return false;
-
-  const sourceFolder = String(properties.source_folder || "");
-  if (sourceFolder.includes("mm0-mm47")) return true;
-
-  return (
-    sourceFolder.includes("mm47-km175") &&
-    Number.isFinite(properties.distance_value) &&
-    properties.distance_value >= 0 &&
-    properties.distance_value <= 180
-  );
-}
+const LOCAL_KM_MN_CONFLICT_DISTANCE_METERS = 400;
 
 function getRoundedValueForKey(value) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
+function getFeatureDistanceMeters(firstFeature, secondFeature) {
+  const firstLatLng = getPointLatLng(firstFeature);
+  const secondLatLng = getPointLatLng(secondFeature);
+  if (!firstLatLng || !secondLatLng) return Number.POSITIVE_INFINITY;
+  return firstLatLng.distanceTo(secondLatLng);
+}
+
+function shouldSuppressKmNearVisibleMaritimeMile(feature, visibleMaritimeMiles) {
+  if (feature?.properties?.__encUnit !== "km") return false;
+
+  return visibleMaritimeMiles.some(
+    (maritimeMileFeature) =>
+      getFeatureDistanceMeters(feature, maritimeMileFeature) <= LOCAL_KM_MN_CONFLICT_DISTANCE_METERS
+  );
+}
+
 function buildRepresentativeLabelFeatures(features = [], zoom) {
-  const seenByNormalizedLabel = new Set();
-  const representativeFeatures = [];
+  const candidateFeatures = [];
 
   for (const feature of features) {
     const properties = feature?.properties || {};
     if (!properties.distance_label) continue;
-    if (shouldSuppressKmWhereMaritimeMilesExist(feature)) continue;
 
     const normalized = normalizeDistanceMark(feature);
     const permanentLabel = normalized.canLabel ? normalized.label : null;
@@ -207,12 +208,7 @@ function buildRepresentativeLabelFeatures(features = [], zoom) {
     const interval = getLabelInterval(normalized.unit, zoom);
     if (!isMultipleOf(normalized.value, interval)) continue;
 
-    const roundedValueForKey = getRoundedValueForKey(normalized.value);
-    const key = `${normalized.unit}:${roundedValueForKey}`;
-    if (seenByNormalizedLabel.has(key)) continue;
-
-    seenByNormalizedLabel.add(key);
-    representativeFeatures.push({
+    candidateFeatures.push({
       ...feature,
       properties: {
         ...properties,
@@ -222,6 +218,24 @@ function buildRepresentativeLabelFeatures(features = [], zoom) {
         __encReason: normalized.reason,
       },
     });
+  }
+
+  const visibleMaritimeMiles = candidateFeatures.filter(
+    (feature) => feature?.properties?.__encUnit === "mn"
+  );
+  const seenByNormalizedLabel = new Set();
+  const representativeFeatures = [];
+
+  for (const feature of candidateFeatures) {
+    const properties = feature?.properties || {};
+    if (shouldSuppressKmNearVisibleMaritimeMile(feature, visibleMaritimeMiles)) continue;
+
+    const roundedValueForKey = getRoundedValueForKey(properties.__encValue);
+    const key = `${properties.__encUnit}:${roundedValueForKey}`;
+    if (seenByNormalizedLabel.has(key)) continue;
+
+    seenByNormalizedLabel.add(key);
+    representativeFeatures.push(feature);
   }
 
   return representativeFeatures;
