@@ -89,14 +89,53 @@ function normalizeDistanceValue(rawValue, unit, folder) {
   return exceedsDeclaredRange && fitsTenthsRange ? Number(divided.toFixed(1)) : rawValue;
 }
 
+function getDistanceLabelDecision(properties, unit, rawValue, distanceValue, classificationReason) {
+  const folder = properties.SRC_FOLDER || "";
+  const cell = properties.SRC_CELL || "";
+
+  if (
+    folder === MIXED_FOLDER &&
+    MIXED_MM_CELLS.has(cell) &&
+    unit === "km" &&
+    rawValue !== null &&
+    distanceValue !== null &&
+    rawValue !== distanceValue
+  ) {
+    return {
+      shouldLabel: false,
+      reason: "mixed-folder:derived-km-hidden-in-mm-cell",
+    };
+  }
+
+  if (
+    unit === "mn" &&
+    distanceValue === 0 &&
+    String(folder).toLowerCase().includes("mm0-mm47") &&
+    cell !== "3R7D0000"
+  ) {
+    return {
+      shouldLabel: false,
+      reason: "folder:mm0-mm47:zero-hidden-outside-origin-cell",
+    };
+  }
+
+  return {
+    shouldLabel: distanceValue !== null,
+    reason: classificationReason,
+  };
+}
+
 function normalizeFeature(feature) {
   const properties = feature.properties || {};
   const rawWtwdis = toNumber(properties.wtwdis);
   const rawCatdis = toNumber(properties.catdis);
   const { unit, confidence, reason } = classifyUnit(properties);
   const distanceValue = normalizeDistanceValue(rawWtwdis, unit, properties.SRC_FOLDER);
+  const labelDecision = getDistanceLabelDecision(properties, unit, rawWtwdis, distanceValue, reason);
   const distanceLabel =
-    distanceValue === null ? null : `${unit === "mn" ? "Mm" : "Km"} ${formatDistanceValue(distanceValue)}`;
+    !labelDecision.shouldLabel || distanceValue === null
+      ? null
+      : `${unit === "mn" ? "Mm" : "Km"} ${formatDistanceValue(distanceValue)}`;
 
   return {
     ...feature,
@@ -110,7 +149,7 @@ function normalizeFeature(feature) {
       distance_value: distanceValue,
       distance_label: distanceLabel,
       confidence,
-      reason,
+      reason: labelDecision.reason,
     },
   };
 }

@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { GeoJSON, LayerGroup, useMap } from "react-leaflet";
 import L from "leaflet";
 
-const DISTANCE_MARKS_URL = "/layers/danube_km_fairway.geojson?v=canonical-labels-20260515";
+const DISTANCE_MARKS_URL = "/layers/danube_km_fairway.geojson?v=canonical-labels-20260516";
 const FAIRWAY_URL = "/layers/danube_fairway.geojson";
 
 function getPointCoordinates(feature) {
