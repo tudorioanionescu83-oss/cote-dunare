@@ -44,6 +44,7 @@ export default function FastPreviewPage() {
 
   const pcIntervals = metadata?.pc_intervals || [];
   const monitoringOverview = metadata?.monitoring_overview || null;
+  const generalNote = metadata?.general_note || "";
 
   function handleSelectPc(pcCode) {
     setSelectedPcCode(pcCode);
@@ -70,6 +71,7 @@ export default function FastPreviewPage() {
         <FastSidebar
           pcIntervals={pcIntervals}
           monitoringOverview={monitoringOverview}
+          generalNote={generalNote}
           selectedPcCode={selectedPcCode}
           onSelectPc={handleSelectPc}
           isOpen={sidebarOpen}

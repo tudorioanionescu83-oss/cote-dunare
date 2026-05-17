@@ -10,6 +10,13 @@ export default function FastLegend() {
           </span>
         </div>
         <div className="fast-legend-row">
+          <span className="fast-swatch fast-swatch-pc-planning" />
+          <span>
+            <strong>PC planning polygons</strong> — poligoane de orientare generate din
+            puncte AFDJ detaliate de pe maluri/șenal; nu sunt poligoane tehnice finale.
+          </span>
+        </div>
+        <div className="fast-legend-row">
           <span className="fast-swatch fast-swatch-pc-segment" />
           <span>
             <strong>PC km segments</strong> — reprezentare pe interval kilometric generată din
@@ -44,11 +51,11 @@ export default function FastLegend() {
         </div>
         <div className="fast-legend-row">
           <span className="fast-swatch fast-swatch-works" />
-          <span>Lucrări principale — layer opțional, dacă apare o sursă GIS clară.</span>
+          <span>Lucrări principale — metadata tehnică; layer GIS doar când există sursă clară.</span>
         </div>
         <div className="fast-legend-row">
           <span className="fast-swatch fast-swatch-disposal" />
-          <span>Zone depozitare material dragat — layer opțional, dacă apare o sursă GIS clară.</span>
+          <span>Zone depozitare material dragat — metadata tehnică; layer GIS doar când există sursă clară.</span>
         </div>
       </div>
     </section>

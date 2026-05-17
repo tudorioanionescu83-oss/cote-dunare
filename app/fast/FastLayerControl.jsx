@@ -4,6 +4,7 @@ const BASEMAP_OPTIONS = [
 ];
 
 const OVERLAY_OPTIONS = [
+  { id: "pcPlanningPolygons", label: "PC planning polygons" },
   { id: "pcKmSegments", label: "PC km segments" },
   { id: "pcPolygons", label: "PC polygons" },
   { id: "afdjKm", label: "Km AFDJ" },
@@ -63,7 +64,7 @@ export default function FastLayerControl({
                 />
                 <span>
                   {option.label}
-                  {!isAvailable ? " — not available" : ""}
+                  {!isAvailable ? " — not available as GIS layer" : ""}
                 </span>
               </label>
             );

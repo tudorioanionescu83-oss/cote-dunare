@@ -575,10 +575,24 @@ input:focus, select:focus{
   font-size: 13px;
 }
 
-.fast-pc-item__body small,
-.fast-pc-item__body em{
+.fast-pc-item__body small{
   color: rgba(8, 47, 73, 0.72);
   font-size: 11px;
+}
+
+.fast-pc-item__badges{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.fast-pc-item__badges em{
+  border-radius: 999px;
+  background: rgba(190, 18, 60, 0.1);
+  color: #9f1239;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 800;
   font-style: normal;
 }
 
@@ -611,6 +625,24 @@ input:focus, select:focus{
   line-height: 1.45;
 }
 
+.fast-pc-detail dd{
+  display: grid;
+  gap: 4px;
+}
+
+.fast-pc-detail dd strong{
+  color: #082f49;
+}
+
+.fast-pc-detail ul{
+  margin: 0;
+  padding-left: 18px;
+}
+
+.fast-pc-detail li + li{
+  margin-top: 3px;
+}
+
 .fast-legend{
   display: grid;
   gap: 8px;
@@ -633,6 +665,11 @@ input:focus, select:focus{
 .fast-swatch-fairway{
   border: 1px dashed rgba(245, 158, 11, 0.8);
   background: rgba(53, 211, 153, 0.35);
+}
+
+.fast-swatch-pc-planning{
+  border: 2px solid #7c3aed;
+  background: rgba(192, 132, 252, 0.24);
 }
 
 .fast-swatch-pc-segment{
@@ -814,6 +851,21 @@ input:focus, select:focus{
 
 .fast-popup-content strong{
   color: #075985;
+}
+
+.fast-popup-detail-button{
+  margin-top: 8px;
+  border: 1px solid rgba(2, 132, 199, 0.18);
+  border-radius: 999px;
+  background: #082f49;
+  color: #ffffff;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.fast-popup-detail-button:hover{
+  background: #0c4a6e;
 }
 
 .fast-km-label-anchor,

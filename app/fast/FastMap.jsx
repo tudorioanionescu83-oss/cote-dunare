@@ -15,6 +15,7 @@ import { buildKmPopup, buildPcPolygonPopup, buildPcPopup } from "./fastPopup";
 const LAYER_URLS = {
   afdjKm: "/fast/afdj-km.geojson",
   pcKmSegments: "/fast/pc-km-segments.geojson",
+  pcPlanningPolygons: "/fast/pc-planning-polygons.geojson",
   pcPolygons: "/fast/pc-zones.geojson",
   fairway: "/layers/danube_fairway.geojson",
   works: "/fast/works.geojson",
@@ -22,6 +23,7 @@ const LAYER_URLS = {
 };
 
 const INITIAL_LAYERS = {
+  pcPlanningPolygons: true,
   pcKmSegments: true,
   pcPolygons: false,
   afdjKm: true,
@@ -31,6 +33,7 @@ const INITIAL_LAYERS = {
 };
 
 const INITIAL_AVAILABILITY = {
+  pcPlanningPolygons: false,
   pcKmSegments: false,
   pcPolygons: false,
   afdjKm: false,
@@ -343,6 +346,17 @@ function getPcPolygonStyle() {
   };
 }
 
+function getPcPlanningPolygonStyle(feature, selectedPcCode) {
+  const isSelected = feature?.properties?.pc_code === selectedPcCode;
+  return {
+    color: isSelected ? "#be123c" : "#7c3aed",
+    weight: isSelected ? 3 : 2,
+    opacity: isSelected ? 0.98 : 0.86,
+    fillColor: isSelected ? "#fb7185" : "#c084fc",
+    fillOpacity: isSelected ? 0.28 : 0.18,
+  };
+}
+
 function getPcKmSegmentStyle(feature, selectedPcCode) {
   if (feature?.geometry?.type !== "LineString") return {};
 
@@ -378,9 +392,24 @@ function getDisposalStyle() {
 function hasMonitoringOverview(featureCollection) {
   return Boolean(
     featureCollection?.features?.some(
-      (feature) => feature?.properties?.fish_monitoring_overview
+      (feature) =>
+        feature?.properties?.monitoring_overview ||
+        feature?.properties?.fish_monitoring_overview
     )
   );
+}
+
+function bindPcPopupInteractions(layer, feature, onSelectPc) {
+  layer.bindPopup(buildPcPopup(feature), { className: "fast-popup" });
+  layer.on("click", () => onSelectPc(feature?.properties?.pc_code));
+  layer.on("popupopen", (event) => {
+    const detailButton = event.popup
+      .getElement()
+      ?.querySelector("[data-fast-pc-code]");
+    detailButton?.addEventListener("click", () => {
+      onSelectPc(feature?.properties?.pc_code);
+    });
+  });
 }
 
 export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc }) {
@@ -396,6 +425,7 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
   const [datasets, setDatasets] = useState({
     afdjKm: null,
     pcKmSegments: null,
+    pcPlanningPolygons: null,
     pcPolygons: null,
     fairway: null,
     works: null,
@@ -407,10 +437,19 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
     let cancelled = false;
 
     async function loadLayers() {
-      const [afdjKm, pcKmSegments, pcPolygons, fairway, works, disposalZones] =
+      const [
+        afdjKm,
+        pcKmSegments,
+        pcPlanningPolygons,
+        pcPolygons,
+        fairway,
+        works,
+        disposalZones,
+      ] =
         await Promise.all([
           fetchGeoJson(LAYER_URLS.afdjKm, "Km AFDJ"),
           fetchGeoJson(LAYER_URLS.pcKmSegments, "PC km segments"),
+          fetchGeoJson(LAYER_URLS.pcPlanningPolygons, "PC planning polygons", true),
           fetchGeoJson(LAYER_URLS.pcPolygons, "PC polygons"),
           fetchGeoJson(LAYER_URLS.fairway, "Șenal navigabil"),
           fetchGeoJson(LAYER_URLS.works, "Lucrări principale", true),
@@ -419,9 +458,18 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
 
       if (cancelled) return;
 
-      setDatasets({ afdjKm, pcKmSegments, pcPolygons, fairway, works, disposalZones });
+      setDatasets({
+        afdjKm,
+        pcKmSegments,
+        pcPlanningPolygons,
+        pcPolygons,
+        fairway,
+        works,
+        disposalZones,
+      });
       setAvailability({
         afdjKm: Boolean(afdjKm),
+        pcPlanningPolygons: Boolean(pcPlanningPolygons),
         pcKmSegments: Boolean(pcKmSegments),
         pcPolygons: Boolean(pcPolygons),
         works: Boolean(works),
@@ -438,8 +486,8 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
   }, []);
 
   const fitDatasets = useMemo(
-    () => [datasets.pcKmSegments].filter(Boolean),
-    [datasets.pcKmSegments]
+    () => [datasets.pcPlanningPolygons, datasets.pcKmSegments].filter(Boolean),
+    [datasets.pcKmSegments, datasets.pcPlanningPolygons]
   );
 
   const visibleKmFeatures = useMemo(() => {
@@ -477,14 +525,17 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
     ]
   );
 
-  const selectedSegmentFeature = useMemo(
+  const selectedFeature = useMemo(
     () =>
+      datasets.pcPlanningPolygons?.features?.find(
+        (feature) => feature?.properties?.pc_code === selectedPcCode
+      ) ||
       datasets.pcKmSegments?.features?.find(
         (feature) =>
           feature?.properties?.geometry_role === "segment" &&
           feature?.properties?.pc_code === selectedPcCode
       ) || null,
-    [datasets.pcKmSegments, selectedPcCode]
+    [datasets.pcKmSegments, datasets.pcPlanningPolygons, selectedPcCode]
   );
 
   const pcSegmentCount = useMemo(
@@ -494,6 +545,8 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
       ).length || 0,
     [datasets.pcKmSegments]
   );
+  const planningPolygonCount = datasets.pcPlanningPolygons?.features?.length || 0;
+  const sourcePolygonCount = datasets.pcPolygons?.features?.length || 0;
   const optionalLayerUnavailable = !availability.works || !availability.disposalZones;
 
   return (
@@ -520,7 +573,7 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
         <FastFitBounds datasets={fitDatasets} fitRequestId={fitRequestId} />
         <FastViewState onChange={setViewState} />
         <FastPcFocus
-          selectedFeature={selectedSegmentFeature}
+          selectedFeature={selectedFeature}
           selectionRequestId={selectionRequestId}
         />
         <ScaleControl position="bottomleft" imperial={false} />
@@ -542,6 +595,28 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
           </>
         )}
 
+        {activeLayers.pcPlanningPolygons && datasets.pcPlanningPolygons && (
+          <GeoJSON
+            key={`pc-planning-polygons-${selectedPcCode || "none"}`}
+            data={datasets.pcPlanningPolygons}
+            style={(feature) => getPcPlanningPolygonStyle(feature, selectedPcCode)}
+            onEachFeature={(feature, layer) => {
+              bindPcPopupInteractions(layer, feature, onSelectPc);
+              layer.on("mouseover", () => {
+                layer.setStyle({
+                  color: "#be123c",
+                  weight: 3.4,
+                  fillColor: "#fb7185",
+                  fillOpacity: 0.3,
+                });
+              });
+              layer.on("mouseout", () => {
+                layer.setStyle(getPcPlanningPolygonStyle(feature, selectedPcCode));
+              });
+            }}
+          />
+        )}
+
         {activeLayers.pcKmSegments && datasets.pcKmSegments && (
           <GeoJSON
             key={`pc-segments-${selectedPcCode || "none"}`}
@@ -561,8 +636,7 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
             }}
             onEachFeature={(feature, layer) => {
               const isSegment = feature?.properties?.geometry_role === "segment";
-              layer.bindPopup(buildPcPopup(feature), { className: "fast-popup" });
-              layer.on("click", () => onSelectPc(feature?.properties?.pc_code));
+              bindPcPopupInteractions(layer, feature, onSelectPc);
 
               if (isSegment) {
                 layer.on("mouseover", () => {
@@ -580,7 +654,8 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
           />
         )}
 
-        {activeLayers.pcKmSegments && featureSets.pcLabels.features.length > 0 && (
+        {(activeLayers.pcKmSegments || activeLayers.pcPlanningPolygons) &&
+          featureSets.pcLabels.features.length > 0 && (
           <GeoJSON
             key={`pc-labels-${viewState.zoom}-${selectedPcCode || "none"}-${activeLayers.monitoringOverview}`}
             data={featureSets.pcLabels}
@@ -704,7 +779,23 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
               ? "AFDJ km layer unavailable"
               : "AFDJ km layer loading"}
         </div>
-        {layersLoaded && optionalLayerUnavailable ? <div>optional layer unavailable</div> : null}
+        <div>
+          {availability.pcPlanningPolygons
+            ? `${planningPolygonCount} PC planning polygons loaded`
+            : layersLoaded
+              ? "PC planning polygons unavailable"
+              : "PC planning polygons loading"}
+        </div>
+        <div>
+          {availability.pcPolygons
+            ? `${sourcePolygonCount} source polygons available`
+            : layersLoaded
+              ? "source polygons unavailable"
+              : "source polygons loading"}
+        </div>
+        {layersLoaded && optionalLayerUnavailable ? (
+          <div>optional GIS layers unavailable</div>
+        ) : null}
       </div>
     </div>
   );

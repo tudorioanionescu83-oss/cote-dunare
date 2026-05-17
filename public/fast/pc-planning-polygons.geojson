@@ -1,0 +1,1097 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC1",
+        "name": "Gârla Mare",
+        "km_interval": "km 839 – 837",
+        "km_upstream": 839,
+        "km_downstream": 837,
+        "representation_type": "derived planning polygon",
+        "source": "generated from detailed AFDJ km/bank reference points",
+        "disclaimer": "Poligon de orientare generat din puncte km AFDJ de pe maluri/șenal; nu reprezintă poligon tehnic final de execuție.",
+        "works_summary": "dragaj șenal existent; depozitare material dragat.",
+        "monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare și scrumbie de Dunăre.",
+        "source_km_values": [
+          839,
+          838,
+          837
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              22.753752,
+              44.2036088
+            ],
+            [
+              22.7583445,
+              44.1978589
+            ],
+            [
+              22.7662274,
+              44.1898561
+            ],
+            [
+              22.7601389,
+              44.1858056
+            ],
+            [
+              22.7530278,
+              44.18975
+            ],
+            [
+              22.7461667,
+              44.1920278
+            ],
+            [
+              22.753752,
+              44.2036088
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC2",
+        "name": "Salcia",
+        "km_interval": "km 824 – 820",
+        "km_upstream": 824,
+        "km_downstream": 820,
+        "representation_type": "derived planning polygon",
+        "source": "generated from detailed AFDJ km/bank reference points",
+        "disclaimer": "Poligon de orientare generat din puncte km AFDJ de pe maluri/șenal; nu reprezintă poligon tehnic final de execuție.",
+        "works_summary": "dragaj șenal existent; depozitare pe malul bulgăresc.",
+        "monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare și scrumbie de Dunăre.",
+        "source_km_values": [
+          824,
+          823,
+          822,
+          821,
+          820
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              22.8940109,
+              44.1256886
+            ],
+            [
+              22.9025346,
+              44.121279
+            ],
+            [
+              22.9134112,
+              44.1160096
+            ],
+            [
+              22.9240029,
+              44.1105179
+            ],
+            [
+              22.9345436,
+              44.1043291
+            ],
+            [
+              22.9318611,
+              44.0967778
+            ],
+            [
+              22.9130833,
+              44.1012222
+            ],
+            [
+              22.9008889,
+              44.1066389
+            ],
+            [
+              22.8894426,
+              44.1128419
+            ],
+            [
+              22.8825,
+              44.1199722
+            ],
+            [
+              22.8940109,
+              44.1256886
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC3",
+        "name": "Bogdan Secian",
+        "km_interval": "km 786 – 782",
+        "km_upstream": 786,
+        "km_downstream": 782,
+        "representation_type": "derived planning polygon",
+        "source": "generated from detailed AFDJ km/bank reference points",
+        "disclaimer": "Poligon de orientare generat din puncte km AFDJ de pe maluri/șenal; nu reprezintă poligon tehnic final de execuție.",
+        "works_summary": "dragaj șenal existent; depozitare amonte de insula Bogdan Secian.",
+        "monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare și scrumbie de Dunăre.",
+        "source_km_values": [
+          786,
+          785,
+          784,
+          783,
+          782
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              22.8725379,
+              43.943002
+            ],
+            [
+              22.870417,
+              43.934158
+            ],
+            [
+              22.8674735,
+              43.9254064
+            ],
+            [
+              22.8623155,
+              43.9173244
+            ],
+            [
+              22.8568162,
+              43.9092436
+            ],
+            [
+              22.8440278,
+              43.9119444
+            ],
+            [
+              22.8533334,
+              43.9187778
+            ],
+            [
+              22.8561944,
+              43.9268889
+            ],
+            [
+              22.8568333,
+              43.9423611
+            ],
+            [
+              22.8628593,
+              43.9491072
+            ],
+            [
+              22.8725379,
+              43.943002
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC4",
+        "name": "Dobrina",
+        "km_interval": "km 762 – 756",
+        "km_upstream": 762,
+        "km_downstream": 756,
+        "representation_type": "derived planning polygon",
+        "source": "generated from detailed AFDJ km/bank reference points",
+        "disclaimer": "Poligon de orientare generat din puncte km AFDJ de pe maluri/șenal; nu reprezintă poligon tehnic final de execuție.",
+        "works_summary": "dragaj șenal existent; două zone de depozitare.",
+        "monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare și scrumbie de Dunăre.",
+        "source_km_values": [
+          762,
+          761,
+          760,
+          759,
+          758,
+          757,
+          756
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              23.0048518,
+              43.8096217
+            ],
+            [
+              23.0150646,
+              43.8084795
+            ],
+            [
+              23.0303966,
+              43.807817
+            ],
+            [
+              23.0429353,
+              43.8065146
+            ],
+            [
+              23.0557795,
+              43.8059024
+            ],
+            [
+              23.0681523,
+              43.8046121
+            ],
+            [
+              23.0810956,
+              43.8045784
+            ],
+            [
+              23.0821228,
+              43.7932188
+            ],
+            [
+              23.0694802,
+              43.7921788
+            ],
+            [
+              23.0544491,
+              43.7915144
+            ],
+            [
+              23.0429271,
+              43.8027705
+            ],
+            [
+              23.0292399,
+              43.7986259
+            ],
+            [
+              23.0156543,
+              43.800589
+            ],
+            [
+              23.0016389,
+              43.80325
+            ],
+            [
+              23.0048518,
+              43.8096217
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC5",
+        "name": "Bechet",
+        "km_interval": "km 678 – 673",
+        "km_upstream": 678,
+        "km_downstream": 673,
+        "representation_type": "derived planning polygon",
+        "source": "generated from detailed AFDJ km/bank reference points",
+        "disclaimer": "Poligon de orientare generat din puncte km AFDJ de pe maluri/șenal; nu reprezintă poligon tehnic final de execuție.",
+        "works_summary": "dragaj / realiniere șenal; chevron; epiuri; stabilizare mal; insulă artificială; depozitare material dragat.",
+        "monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare și scrumbie de Dunăre; accent pe habitate, sturioni și efectul structurilor asupra ihtiofaunei.",
+        "source_km_values": [
+          678,
+          677,
+          676,
+          675,
+          674,
+          673
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              23.9632778,
+              43.7406667
+            ],
+            [
+              23.9731807,
+              43.7377183
+            ],
+            [
+              23.9826504,
+              43.7351997
+            ],
+            [
+              23.9928248,
+              43.7336669
+            ],
+            [
+              24.0055067,
+              43.7295628
+            ],
+            [
+              24.0145392,
+              43.7247193
+            ],
+            [
+              24.0236463,
+              43.7351601
+            ],
+            [
+              24.0117177,
+              43.7376348
+            ],
+            [
+              24.0017527,
+              43.7431635
+            ],
+            [
+              23.9950662,
+              43.7454379
+            ],
+            [
+              23.9796587,
+              43.749233
+            ],
+            [
+              23.9662156,
+              43.7492255
+            ],
+            [
+              23.9632778,
+              43.7406667
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC6",
+        "name": "Corabia",
+        "km_interval": "km 632 – 626",
+        "km_upstream": 632,
+        "km_downstream": 626,
+        "representation_type": "derived planning polygon",
+        "source": "generated from detailed AFDJ km/bank reference points",
+        "disclaimer": "Poligon de orientare generat din puncte km AFDJ de pe maluri/șenal; nu reprezintă poligon tehnic final de execuție.",
+        "works_summary": "dragaj șenal existent și canal acces port Corabia; depozitare amonte de insula Baloiu.",
+        "monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare și scrumbie de Dunăre.",
+        "source_km_values": [
+          632,
+          631,
+          630,
+          629,
+          628,
+          627,
+          626
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              24.4858626,
+              43.7651025
+            ],
+            [
+              24.5006358,
+              43.7660817
+            ],
+            [
+              24.5121342,
+              43.7711087
+            ],
+            [
+              24.5256639,
+              43.7714678
+            ],
+            [
+              24.5395094,
+              43.7717194
+            ],
+            [
+              24.553209,
+              43.7663927
+            ],
+            [
+              24.5649864,
+              43.7603749
+            ],
+            [
+              24.5588412,
+              43.7512413
+            ],
+            [
+              24.5475716,
+              43.7530732
+            ],
+            [
+              24.5358324,
+              43.7536906
+            ],
+            [
+              24.5275166,
+              43.7552351
+            ],
+            [
+              24.5135821,
+              43.7577021
+            ],
+            [
+              24.503599,
+              43.7565997
+            ],
+            [
+              24.4928484,
+              43.7509302
+            ],
+            [
+              24.4858626,
+              43.7651025
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC7",
+        "name": "Belene",
+        "km_interval": "km 577 – 560",
+        "km_upstream": 577,
+        "km_downstream": 560,
+        "representation_type": "derived planning polygon",
+        "source": "generated from detailed AFDJ km/bank reference points",
+        "disclaimer": "Poligon de orientare generat din puncte km AFDJ de pe maluri/șenal; nu reprezintă poligon tehnic final de execuție.",
+        "works_summary": "dragaj / realiniere șenal; două chevroane; trei epiuri; stabilizare mal; depozitare material dragat.",
+        "monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare și scrumbie de Dunăre.",
+        "source_km_values": [
+          577,
+          576,
+          575,
+          574,
+          573,
+          572,
+          571,
+          570,
+          569,
+          568,
+          567,
+          566,
+          565,
+          564,
+          563,
+          562,
+          561,
+          560
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              25.1024901,
+              43.6795619
+            ],
+            [
+              25.117999,
+              43.6804484
+            ],
+            [
+              25.1289893,
+              43.6820796
+            ],
+            [
+              25.1443753,
+              43.6858956
+            ],
+            [
+              25.1540247,
+              43.6913381
+            ],
+            [
+              25.1629562,
+              43.6943176
+            ],
+            [
+              25.1738363,
+              43.6948638
+            ],
+            [
+              25.1857161,
+              43.6949368
+            ],
+            [
+              25.1964062,
+              43.6910901
+            ],
+            [
+              25.2059757,
+              43.6873794
+            ],
+            [
+              25.2175969,
+              43.6838723
+            ],
+            [
+              25.2314279,
+              43.6809062
+            ],
+            [
+              25.2415152,
+              43.6801378
+            ],
+            [
+              25.2506311,
+              43.6764299
+            ],
+            [
+              25.2590008,
+              43.6719548
+            ],
+            [
+              25.2669808,
+              43.665773
+            ],
+            [
+              25.2751966,
+              43.6591877
+            ],
+            [
+              25.290176,
+              43.6510185
+            ],
+            [
+              25.2982994,
+              43.6567614
+            ],
+            [
+              25.2849898,
+              43.6648127
+            ],
+            [
+              25.2760909,
+              43.6744046
+            ],
+            [
+              25.2650798,
+              43.6777121
+            ],
+            [
+              25.2588963,
+              43.6870916
+            ],
+            [
+              25.2462139,
+              43.6896563
+            ],
+            [
+              25.2343846,
+              43.6916004
+            ],
+            [
+              25.222051,
+              43.6930465
+            ],
+            [
+              25.211403,
+              43.6946689
+            ],
+            [
+              25.1999432,
+              43.6978182
+            ],
+            [
+              25.1883352,
+              43.7016492
+            ],
+            [
+              25.1759447,
+              43.7037228
+            ],
+            [
+              25.1619539,
+              43.7037635
+            ],
+            [
+              25.1491636,
+              43.7021838
+            ],
+            [
+              25.1377696,
+              43.6979548
+            ],
+            [
+              25.1271237,
+              43.6936464
+            ],
+            [
+              25.118128,
+              43.6916004
+            ],
+            [
+              25.1062752,
+              43.6899444
+            ],
+            [
+              25.1024901,
+              43.6795619
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC8",
+        "name": "Vardim",
+        "km_interval": "km 542 – 539",
+        "km_upstream": 542,
+        "km_downstream": 539,
+        "representation_type": "derived planning polygon",
+        "source": "generated from detailed AFDJ km/bank reference points",
+        "disclaimer": "Poligon de orientare generat din puncte km AFDJ de pe maluri/șenal; nu reprezintă poligon tehnic final de execuție.",
+        "works_summary": "dragaj șenal existent; două zone de depozitare.",
+        "monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare și scrumbie de Dunăre.",
+        "source_km_values": [
+          542,
+          541,
+          540,
+          539
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              25.4987111,
+              43.6508996
+            ],
+            [
+              25.5110505,
+              43.6520783
+            ],
+            [
+              25.5210147,
+              43.6529216
+            ],
+            [
+              25.533704,
+              43.6489632
+            ],
+            [
+              25.538111,
+              43.6378326
+            ],
+            [
+              25.5259638,
+              43.640556
+            ],
+            [
+              25.5140512,
+              43.6395969
+            ],
+            [
+              25.503368,
+              43.6312151
+            ],
+            [
+              25.4987111,
+              43.6508996
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC9",
+        "name": "Iantra",
+        "km_interval": "km 537 – 534",
+        "km_upstream": 537,
+        "km_downstream": 534,
+        "representation_type": "derived planning polygon",
+        "source": "generated from detailed AFDJ km/bank reference points",
+        "disclaimer": "Poligon de orientare generat din puncte km AFDJ de pe maluri/șenal; nu reprezintă poligon tehnic final de execuție.",
+        "works_summary": "dragaj șenal existent; depozitare lângă malul românesc.",
+        "monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare și scrumbie de Dunăre.",
+        "source_km_values": [
+          537,
+          536,
+          535,
+          534
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              25.5656073,
+              43.6525729
+            ],
+            [
+              25.5740154,
+              43.6551611
+            ],
+            [
+              25.5803702,
+              43.6580219
+            ],
+            [
+              25.589766,
+              43.6631692
+            ],
+            [
+              25.5982676,
+              43.6555945
+            ],
+            [
+              25.5892887,
+              43.6514994
+            ],
+            [
+              25.5778841,
+              43.6445436
+            ],
+            [
+              25.5649124,
+              43.6383613
+            ],
+            [
+              25.5656073,
+              43.6525729
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC10",
+        "name": "Batin",
+        "km_interval": "km 530 – 520",
+        "km_upstream": 530,
+        "km_downstream": 520,
+        "representation_type": "derived planning polygon",
+        "source": "generated from detailed AFDJ km/bank reference points",
+        "disclaimer": "Poligon de orientare generat din puncte km AFDJ de pe maluri/șenal; nu reprezintă poligon tehnic final de execuție.",
+        "works_summary": "dragaj șenal existent; depozitare lângă insula Batin.",
+        "monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare și scrumbie de Dunăre.",
+        "source_km_values": [
+          530,
+          529,
+          528,
+          527,
+          526,
+          525,
+          524,
+          523,
+          522,
+          521,
+          520
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              25.6360861,
+              43.6694538
+            ],
+            [
+              25.6485779,
+              43.6693431
+            ],
+            [
+              25.6611359,
+              43.6684885
+            ],
+            [
+              25.6736369,
+              43.6678179
+            ],
+            [
+              25.6857116,
+              43.6707007
+            ],
+            [
+              25.6972331,
+              43.6753228
+            ],
+            [
+              25.7091207,
+              43.6793394
+            ],
+            [
+              25.720572,
+              43.6837934
+            ],
+            [
+              25.7326754,
+              43.6869542
+            ],
+            [
+              25.745197,
+              43.6907363
+            ],
+            [
+              25.7587001,
+              43.6965485
+            ],
+            [
+              25.7493457,
+              43.7045926
+            ],
+            [
+              25.7383163,
+              43.7000605
+            ],
+            [
+              25.7265882,
+              43.6981048
+            ],
+            [
+              25.7147696,
+              43.6970842
+            ],
+            [
+              25.7018008,
+              43.697069
+            ],
+            [
+              25.6867363,
+              43.6960688
+            ],
+            [
+              25.6773689,
+              43.6957931
+            ],
+            [
+              25.6638101,
+              43.6950408
+            ],
+            [
+              25.6563696,
+              43.6944129
+            ],
+            [
+              25.6483866,
+              43.6906837
+            ],
+            [
+              25.6352687,
+              43.6844414
+            ],
+            [
+              25.6360861,
+              43.6694538
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC11",
+        "name": "Kosui",
+        "km_interval": "km 428 – 423",
+        "km_upstream": 428,
+        "km_downstream": 423,
+        "representation_type": "derived planning polygon",
+        "source": "generated from detailed AFDJ km/bank reference points",
+        "disclaimer": "Poligon de orientare generat din puncte km AFDJ de pe maluri/șenal; nu reprezintă poligon tehnic final de execuție.",
+        "works_summary": "dragaj șenal existent; depozitare/extindere insulele Kosui și Malyk Kosui.",
+        "monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare și scrumbie de Dunăre.",
+        "source_km_values": [
+          428,
+          427,
+          426,
+          425,
+          424,
+          423
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              26.6650901,
+              44.0706335
+            ],
+            [
+              26.6786682,
+              44.0756872
+            ],
+            [
+              26.6842519,
+              44.0771787
+            ],
+            [
+              26.6955389,
+              44.0807546
+            ],
+            [
+              26.7099377,
+              44.0824112
+            ],
+            [
+              26.7198857,
+              44.0822255
+            ],
+            [
+              26.7265985,
+              44.0672092
+            ],
+            [
+              26.7149056,
+              44.0629166
+            ],
+            [
+              26.7026391,
+              44.060445
+            ],
+            [
+              26.6910104,
+              44.0561618
+            ],
+            [
+              26.6786403,
+              44.0554358
+            ],
+            [
+              26.6661333,
+              44.056285
+            ],
+            [
+              26.6650901,
+              44.0706335
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC12",
+        "name": "Popina",
+        "km_interval": "km 408 – 401",
+        "km_upstream": 408,
+        "km_downstream": 401,
+        "representation_type": "derived planning polygon",
+        "source": "generated from detailed AFDJ km/bank reference points",
+        "disclaimer": "Poligon de orientare generat din puncte km AFDJ de pe maluri/șenal; nu reprezintă poligon tehnic final de execuție.",
+        "works_summary": "dragaj / realiniere șenal; trei epiuri; chevron; două zone de depozitare.",
+        "monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare și scrumbie de Dunăre.",
+        "source_km_values": [
+          408,
+          407,
+          406,
+          405,
+          404,
+          403,
+          402,
+          401
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              26.8900951,
+              44.13159
+            ],
+            [
+              26.9009085,
+              44.1364987
+            ],
+            [
+              26.911742,
+              44.1407585
+            ],
+            [
+              26.9242199,
+              44.142961
+            ],
+            [
+              26.9375909,
+              44.1423891
+            ],
+            [
+              26.9486454,
+              44.138722
+            ],
+            [
+              26.9594453,
+              44.1399712
+            ],
+            [
+              26.9712214,
+              44.1414915
+            ],
+            [
+              26.9707845,
+              44.1308591
+            ],
+            [
+              26.9598391,
+              44.1306381
+            ],
+            [
+              26.9485673,
+              44.1302984
+            ],
+            [
+              26.9366763,
+              44.1295087
+            ],
+            [
+              26.925204,
+              44.1284304
+            ],
+            [
+              26.9157704,
+              44.1227221
+            ],
+            [
+              26.9057214,
+              44.1180666
+            ],
+            [
+              26.8948218,
+              44.1170875
+            ],
+            [
+              26.8900951,
+              44.13159
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
