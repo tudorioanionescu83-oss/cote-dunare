@@ -11,6 +11,110 @@ const MONITORING_OVERVIEW =
   "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare și scrumbie de Dunăre.";
 const MONITORING_NOTE =
   "Monitorizarea sturionilor se referă la întreg sectorul comun și la toate cele 12 puncte critice. Detalierea MON12–MON27 și fazele PIM/SM/STCM/LTCM vor fi adăugate ulterior.";
+const MONITORING_SCOPE =
+  "întreg sectorul comun și toate cele 12 puncte critice";
+const MONITORING_PHASES = [
+  {
+    code: "PIM",
+    label: "Pre-Intervention Monitoring",
+    description: "monitorizare înainte de lucrări / baseline",
+  },
+  {
+    code: "SM",
+    label: "Surveillance Monitoring",
+    description: "monitorizare în timpul execuției",
+  },
+  {
+    code: "STCM",
+    label: "Short-Term Compliance Monitoring",
+    description: "monitorizare post-intervenție pe termen scurt",
+  },
+  {
+    code: "LTCM",
+    label: "Long-Term Compliance Monitoring",
+    description: "monitorizare post-intervenție pe termen lung",
+  },
+];
+const MONITORING_REQUIREMENTS = [
+  {
+    code: "MON12",
+    title: "Habitate pești Natura 2000",
+    object: "pierdere / afectare habitat",
+    target: "sub 1% pierdere habitat",
+    phases: ["PIM", "SM", "STCM"],
+    category: "fish",
+  },
+  {
+    code: "MON13",
+    title: "Abundența peștilor",
+    object: "listă specii, număr indivizi, abundență, clase de vârstă",
+    note: "include zonele cu structuri noi: epiuri, chevroane, insule",
+    phases: ["PIM", "SM", "STCM", "LTCM"],
+    category: "fish",
+  },
+  {
+    code: "MON21",
+    title: "Structura habitatelor de reproducere și hrănire a sturionilor",
+    object: "substrat, viteză apă, lățime canal, vegetație, bentos",
+    result: "hartă anuală pe baza observațiilor",
+    phases: ["PIM", "SM", "STCM", "LTCM"],
+    category: "sturgeon",
+  },
+  {
+    code: "MON22",
+    title: "Sturioni în habitate de hrănire și iernare",
+    object: "telemetrie pentru utilizarea habitatelor",
+    method:
+      "etichetare martie–mai pentru primăvară și septembrie–decembrie pentru iarnă; minimum 30 sturioni/an; urmărire activă sau staționară",
+    phases: ["PIM", "SM", "STCM", "LTCM"],
+    category: "sturgeon",
+  },
+  {
+    code: "MON23",
+    title: "Alte specii de pești prin telemetrie",
+    object: "marcare prin telemetrie",
+    method:
+      "martie–aprilie pentru migrația de primăvară, septembrie–noiembrie pentru iernare; minimum 20 pești/specie/an",
+    phases: ["PIM", "SM", "STCM", "LTCM"],
+    category: "fish",
+  },
+  {
+    code: "MON24",
+    title: "Scrumbia de Dunăre / Alosa immaculata",
+    object: "deplasare, migrație, dimensiune, greutate, vârstă, diversitate genetică",
+    method: "prelevare în sezonul de migrație; probe de solzi pentru 50–100 indivizi",
+    phases: ["PIM", "SM", "STCM", "LTCM"],
+    category: "fish",
+  },
+  {
+    code: "MON25",
+    title: "Habitat reproducere sturioni",
+    object: "utilizarea habitatului de depunere a pontei",
+    method:
+      "colectare ponte / puiet aval de zonele de depunere; conservare probe în etanol 99% pentru ADN",
+    parameters: "specii de sturioni, abundență ponte / puiet",
+    phases: ["PIM", "SM", "STCM", "LTCM"],
+    category: "sturgeon",
+  },
+  {
+    code: "MON26",
+    title: "Habitat hrănire sturioni",
+    object: "utilizarea habitatelor de hrănire",
+    method:
+      "capturare puiet de un an, măsurare, cântărire, etichetare, eliberare, probe ADN",
+    parameters: "specii, lungime, greutate, diversitate genetică, hibrizi",
+    phases: ["PIM", "SM", "STCM", "LTCM"],
+    category: "sturgeon",
+  },
+  {
+    code: "MON27",
+    title: "Habitat iernare sturioni",
+    object: "comportamentul sturionilor în habitatul de iernare",
+    method: "receptor acustic mobil cu GPS, deplasare amonte–aval",
+    phases: ["PIM", "SM", "STCM", "LTCM"],
+    category: "sturgeon",
+  },
+];
 const GENERAL_NOTE =
   "Soluții orientative din Caietul de sarcini / Studiul de fezabilitate; reprezentarea PC km segments și PC planning polygons este pentru orientare și nu reprezintă poligon tehnic final de execuție.";
 const REPRESENTATION_OBSERVATION =
@@ -261,6 +365,9 @@ const PC_INTERVALS = [
   representation_type: "km interval representation",
   monitoring_overview: MONITORING_OVERVIEW,
   monitoring_note: MONITORING_NOTE,
+  monitoring_scope: MONITORING_SCOPE,
+  monitoring_phases: MONITORING_PHASES,
+  monitoring_requirements: MONITORING_REQUIREMENTS,
   observations: REPRESENTATION_OBSERVATION,
   source_note: SOURCE_REFERENCE,
   ...item,
@@ -424,8 +531,10 @@ function updateMetadata(metadata, featureCount) {
     },
     monitoring_overview: {
       summary: MONITORING_OVERVIEW,
-      scope: "întreg sectorul comun și toate cele 12 puncte critice",
+      scope: MONITORING_SCOPE,
       note: MONITORING_NOTE,
+      phases: MONITORING_PHASES,
+      requirements: MONITORING_REQUIREMENTS,
     },
     general_note: GENERAL_NOTE,
     source_reference: SOURCE_REFERENCE,

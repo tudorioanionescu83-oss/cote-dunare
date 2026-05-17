@@ -11,6 +11,7 @@ const OVERLAY_OPTIONS = [
   { id: "works", label: "Lucrări principale" },
   { id: "disposalZones", label: "Zone depozitare material dragat" },
   { id: "monitoringOverview", label: "Monitorizare ihtiofaună overview" },
+  { id: "monitoringSturgeons", label: "Monitorizare sturioni" },
 ];
 
 export default function FastLayerControl({

@@ -50,6 +50,13 @@ export default function FastLegend() {
           </span>
         </div>
         <div className="fast-legend-row">
+          <span className="fast-swatch fast-swatch-sturgeon" />
+          <span>
+            <strong>Monitorizare sturioni</strong> — cerințe MON21, MON22, MON25–MON27
+            afișate ca metadata tehnică, fără geometrii GIS false.
+          </span>
+        </div>
+        <div className="fast-legend-row">
           <span className="fast-swatch fast-swatch-works" />
           <span>Lucrări principale — metadata tehnică; layer GIS doar când există sursă clară.</span>
         </div>

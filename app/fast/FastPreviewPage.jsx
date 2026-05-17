@@ -3,6 +3,8 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import FastDetailCard from "./FastDetailCard";
+import FastPcSlider from "./FastPcSlider";
 import FastSidebar from "./FastSidebar";
 
 const FastMap = dynamic(() => import("./FastMap"), {
@@ -15,6 +17,7 @@ export default function FastPreviewPage() {
   const [selectedPcCode, setSelectedPcCode] = useState(null);
   const [selectionRequestId, setSelectionRequestId] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,11 +48,14 @@ export default function FastPreviewPage() {
   const pcIntervals = metadata?.pc_intervals || [];
   const monitoringOverview = metadata?.monitoring_overview || null;
   const generalNote = metadata?.general_note || "";
+  const selectedInterval =
+    pcIntervals.find((interval) => interval.pc_code === selectedPcCode) || null;
 
   function handleSelectPc(pcCode) {
     setSelectedPcCode(pcCode);
     setSelectionRequestId((value) => value + 1);
-    setSidebarOpen(true);
+    setDetailOpen(true);
+    setSidebarOpen(false);
   }
 
   return (
@@ -67,6 +73,12 @@ export default function FastPreviewPage() {
         </Link>
       </header>
 
+      <FastPcSlider
+        pcIntervals={pcIntervals}
+        selectedPcCode={selectedPcCode}
+        onSelectPc={handleSelectPc}
+      />
+
       <section className="fast-workspace">
         <FastSidebar
           pcIntervals={pcIntervals}
@@ -83,6 +95,11 @@ export default function FastPreviewPage() {
             selectedPcCode={selectedPcCode}
             selectionRequestId={selectionRequestId}
             onSelectPc={handleSelectPc}
+          />
+          <FastDetailCard
+            interval={selectedInterval}
+            isOpen={detailOpen}
+            onClose={() => setDetailOpen(false)}
           />
         </div>
       </section>

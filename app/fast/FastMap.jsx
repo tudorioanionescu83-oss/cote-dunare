@@ -30,6 +30,7 @@ const INITIAL_LAYERS = {
   works: false,
   disposalZones: false,
   monitoringOverview: true,
+  monitoringSturgeons: true,
 };
 
 const INITIAL_AVAILABILITY = {
@@ -40,6 +41,7 @@ const INITIAL_AVAILABILITY = {
   works: false,
   disposalZones: false,
   monitoringOverview: false,
+  monitoringSturgeons: false,
 };
 
 function isFeatureCollection(payload) {
@@ -197,13 +199,16 @@ function buildKmLabelIcon(label) {
   });
 }
 
-function buildPcLabelIcon(label, isSelected, showMonitoringBadge) {
+function buildPcLabelIcon(label, isSelected, isDimmed, showMonitoringBadge, showSturgeonBadge) {
   return L.divIcon({
     className: "fast-pc-label-anchor",
     html: `
-      <div class="fast-pc-label${isSelected ? " is-selected" : ""}">
+      <div class="fast-pc-label${isSelected ? " is-selected" : ""}${
+        isDimmed ? " is-dimmed" : ""
+      }">
         <span>${escapeHtml(label)}</span>
         ${showMonitoringBadge ? '<em>MON</em>' : ""}
+        ${showSturgeonBadge ? '<em>STUR</em>' : ""}
       </div>
     `,
   });
@@ -218,8 +223,15 @@ function getLineMidpointCoordinate(feature) {
   return coordinates[Math.floor(coordinates.length / 2)] || null;
 }
 
-function buildPcLabelFeatures(pcKmSegments, zoom, selectedPcCode, showMonitoringBadge) {
+function buildPcLabelFeatures(
+  pcKmSegments,
+  zoom,
+  selectedPcCode,
+  showMonitoringBadge,
+  showSturgeonBadge
+) {
   if (!pcKmSegments || zoom < 8) return [];
+  const hasSelection = Boolean(selectedPcCode);
 
   return pcKmSegments.features
     .filter((feature) => feature?.properties?.geometry_role === "segment")
@@ -235,7 +247,9 @@ function buildPcLabelFeatures(pcKmSegments, zoom, selectedPcCode, showMonitoring
           ...feature.properties,
           __fastPcLabel: label,
           __fastIsSelected: pcCode === selectedPcCode,
+          __fastIsDimmed: hasSelection && pcCode !== selectedPcCode,
           __fastShowMonitoringBadge: showMonitoringBadge,
+          __fastShowSturgeonBadge: showSturgeonBadge,
         },
         geometry: {
           type: "Point",
@@ -348,12 +362,16 @@ function getPcPolygonStyle() {
 
 function getPcPlanningPolygonStyle(feature, selectedPcCode) {
   const isSelected = feature?.properties?.pc_code === selectedPcCode;
+  const isDimmed = Boolean(selectedPcCode) && !isSelected;
   return {
-    color: isSelected ? "#be123c" : "#7c3aed",
-    weight: isSelected ? 3 : 2,
-    opacity: isSelected ? 0.98 : 0.86,
-    fillColor: isSelected ? "#fb7185" : "#c084fc",
-    fillOpacity: isSelected ? 0.28 : 0.18,
+    className: `fast-pc-shape${isSelected ? " is-selected" : ""}${
+      isDimmed ? " is-dimmed" : ""
+    }`,
+    color: isSelected ? "#22d3ee" : "#7c3aed",
+    weight: isSelected ? 4 : isDimmed ? 1.6 : 2,
+    opacity: isSelected ? 1 : isDimmed ? 0.36 : 0.86,
+    fillColor: isSelected ? "#06b6d4" : "#c084fc",
+    fillOpacity: isSelected ? 0.3 : isDimmed ? 0.08 : 0.18,
   };
 }
 
@@ -361,10 +379,14 @@ function getPcKmSegmentStyle(feature, selectedPcCode) {
   if (feature?.geometry?.type !== "LineString") return {};
 
   const isSelected = feature?.properties?.pc_code === selectedPcCode;
+  const isDimmed = Boolean(selectedPcCode) && !isSelected;
   return {
-    color: isSelected ? "#be123c" : "#e11d48",
-    weight: isSelected ? 6 : 4.8,
-    opacity: isSelected ? 1 : 0.95,
+    className: `fast-pc-segment${isSelected ? " is-selected" : ""}${
+      isDimmed ? " is-dimmed" : ""
+    }`,
+    color: isSelected ? "#22d3ee" : "#e11d48",
+    weight: isSelected ? 7 : isDimmed ? 3 : 4.8,
+    opacity: isSelected ? 1 : isDimmed ? 0.34 : 0.95,
     dashArray: isSelected ? "10 5" : "8 6",
   };
 }
@@ -475,6 +497,7 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
         works: Boolean(works),
         disposalZones: Boolean(disposalZones),
         monitoringOverview: hasMonitoringOverview(pcKmSegments),
+        monitoringSturgeons: hasMonitoringOverview(pcKmSegments),
       });
       setLayersLoaded(true);
     }
@@ -512,12 +535,14 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
           datasets.pcKmSegments,
           viewState.zoom,
           selectedPcCode,
-          activeLayers.monitoringOverview
+          activeLayers.monitoringOverview,
+          activeLayers.monitoringSturgeons
         )
       ),
     }),
     [
       activeLayers.monitoringOverview,
+      activeLayers.monitoringSturgeons,
       datasets.pcKmSegments,
       selectedPcCode,
       viewState.zoom,
@@ -604,10 +629,11 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
               bindPcPopupInteractions(layer, feature, onSelectPc);
               layer.on("mouseover", () => {
                 layer.setStyle({
-                  color: "#be123c",
-                  weight: 3.4,
-                  fillColor: "#fb7185",
-                  fillOpacity: 0.3,
+                  color: "#22d3ee",
+                  weight: 4.2,
+                  fillColor: "#06b6d4",
+                  fillOpacity: 0.32,
+                  opacity: 1,
                 });
               });
               layer.on("mouseout", () => {
@@ -625,13 +651,21 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
             pointToLayer={(feature, latlng) => {
               const role = feature?.properties?.geometry_role;
               const isSelected = feature?.properties?.pc_code === selectedPcCode;
+              const isDimmed = Boolean(selectedPcCode) && !isSelected;
               return L.circleMarker(latlng, {
-                radius: isSelected ? 7 : 5.8,
+                className: `fast-pc-marker${isSelected ? " is-selected" : ""}${
+                  isDimmed ? " is-dimmed" : ""
+                }`,
+                radius: isSelected ? 7.5 : isDimmed ? 4.8 : 5.8,
                 color: "#ffffff",
                 weight: 1.5,
-                opacity: 1,
-                fillColor: role === "upstream_marker" ? "#be123c" : "#f97316",
-                fillOpacity: 0.98,
+                opacity: isDimmed ? 0.45 : 1,
+                fillColor: isSelected
+                  ? "#22d3ee"
+                  : role === "upstream_marker"
+                    ? "#be123c"
+                    : "#f97316",
+                fillOpacity: isDimmed ? 0.45 : 0.98,
               });
             }}
             onEachFeature={(feature, layer) => {
@@ -641,8 +675,8 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
               if (isSegment) {
                 layer.on("mouseover", () => {
                   layer.setStyle({
-                    color: "#be123c",
-                    weight: 6.4,
+                    color: "#22d3ee",
+                    weight: 7.2,
                     opacity: 1,
                   });
                 });
@@ -664,7 +698,9 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
                 icon: buildPcLabelIcon(
                   feature?.properties?.__fastPcLabel || "",
                   feature?.properties?.__fastIsSelected,
-                  feature?.properties?.__fastShowMonitoringBadge
+                  feature?.properties?.__fastIsDimmed,
+                  feature?.properties?.__fastShowMonitoringBadge,
+                  feature?.properties?.__fastShowSturgeonBadge
                 ),
                 keyboard: false,
                 zIndexOffset: 1200,
