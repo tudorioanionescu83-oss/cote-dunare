@@ -1135,16 +1135,26 @@ export default function FastMap({
         }
         onToggleAllHabitats={() =>
           setActiveLayers((current) => {
-            const shouldEnableAll = !Object.keys(HABITAT_SELECTIONS).every(
-              (id) => !availability[id] || current[id]
-            );
-            return Object.keys(HABITAT_SELECTIONS).reduce(
-              (next, id) => ({
-                ...next,
-                [id]: availability[id] ? shouldEnableAll : current[id],
-              }),
-              current
-            );
+            const habitatIds = [
+              "fast2Spawning",
+              "fast2Feeding",
+              "fast2Wintering",
+              "lowerConfirmedSpawning",
+              "lowerProtection",
+              "lowerFeeding",
+              "lowerWintering",
+            ];
+            const shouldEnable = habitatIds.some((id) => !current[id]);
+            return {
+              ...current,
+              fast2Spawning: shouldEnable,
+              fast2Feeding: shouldEnable,
+              fast2Wintering: shouldEnable,
+              lowerConfirmedSpawning: shouldEnable,
+              lowerProtection: shouldEnable,
+              lowerFeeding: shouldEnable,
+              lowerWintering: shouldEnable,
+            };
           })
         }
       />
