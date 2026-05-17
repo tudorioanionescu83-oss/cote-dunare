@@ -1863,3 +1863,33 @@ input:focus, select:focus{
 .fast-habitat-control {
   pointer-events: auto !important;
 }
+
+
+/* FAST force controls clickable */
+.fast-map-toolbar,
+.fast-map-toolbar *,
+.fast-habitat-panel,
+.fast-habitat-panel *,
+.fast-layer-control,
+.fast-layer-control * {
+  pointer-events: auto !important;
+}
+.fast-map-toolbar button,
+.fast-habitat-panel button,
+.fast-layer-control button,
+.fast-map-toolbar input,
+.fast-habitat-panel input,
+.fast-layer-control input {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+.fast-map-toolbar button:disabled,
+.fast-habitat-panel button:disabled,
+.fast-layer-control button:disabled,
+.fast-map-toolbar input:disabled,
+.fast-habitat-panel input:disabled,
+.fast-layer-control input:disabled {
+  cursor: pointer !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}

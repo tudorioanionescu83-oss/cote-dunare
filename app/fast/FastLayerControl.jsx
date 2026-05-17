@@ -261,7 +261,6 @@ export default function FastLayerControl({
                       type="checkbox"
                       checked={isActive}
                       onChange={() => handleMapInteraction(() => onToggleLayer(option.id))}
-                      disabled={!isAvailable}
                     />
                     <span>
                       {option.label}
@@ -374,7 +373,6 @@ export default function FastLayerControl({
             <button
               type="button"
               className="fast-habitat-control__fit"
-              disabled={!anyHabitatsActive}
               onClick={() => handleHabitatInteraction(onFitToHabitats)}
             >
               Zoom to habitats
