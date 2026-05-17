@@ -284,7 +284,6 @@ export default function FastLayerControl({
         <button
           type="button"
           className={`fast-habitat-control__button${anyHabitatsActive ? " is-active" : ""}`}
-          disabled={!habitatsAvailable}
           onClick={() => {
             setIsMapControlOpen(false);
             setIsHabitatControlOpen((value) => {
@@ -320,7 +319,6 @@ export default function FastLayerControl({
               <input
                 type="checkbox"
                 checked={allHabitatsActive}
-                disabled={!habitatsAvailable}
                 onChange={() => handleHabitatInteraction(onToggleAllHabitats)}
               />
               <span>
@@ -351,7 +349,6 @@ export default function FastLayerControl({
                       <input
                         type="checkbox"
                         checked={Boolean(activeLayers[option.id])}
-                        disabled={!availability[option.id]}
                         onChange={() =>
                           handleHabitatInteraction(() => onToggleLayer(option.id))
                         }

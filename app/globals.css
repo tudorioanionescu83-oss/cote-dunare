@@ -1840,3 +1840,26 @@ input:focus, select:focus{
     font-size: 12px;
   }
 }
+
+
+/* FAST habitat button interaction fix */
+.fast-habitat-trigger,
+.fast-habitat-toggle,
+.fast-habitat-button,
+.fast-habitats-button,
+.fast-habitat-panel button {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+.fast-habitat-trigger:disabled,
+.fast-habitat-toggle:disabled,
+.fast-habitat-button:disabled,
+.fast-habitats-button:disabled {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  opacity: 1 !important;
+}
+.fast-habitat-panel,
+.fast-habitat-control {
+  pointer-events: auto !important;
+}
