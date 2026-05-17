@@ -4,12 +4,14 @@ const BASEMAP_OPTIONS = [
 ];
 
 const OVERLAY_OPTIONS = [
+  { id: "pcPlanningPolygons", label: "PC planning polygons" },
   { id: "pcKmSegments", label: "PC km segments" },
   { id: "pcPolygons", label: "PC polygons" },
   { id: "afdjKm", label: "Km AFDJ" },
   { id: "works", label: "Lucrări principale" },
   { id: "disposalZones", label: "Zone depozitare material dragat" },
   { id: "monitoringOverview", label: "Monitorizare ihtiofaună overview" },
+  { id: "monitoringSturgeons", label: "Monitorizare sturioni" },
 ];
 
 export default function FastLayerControl({
@@ -38,11 +40,7 @@ export default function FastLayerControl({
         </div>
       </div>
 
-      <button
-        type="button"
-        className="fast-layer-control__fit"
-        onClick={onFitToFastSector}
-      >
+      <button type="button" className="fast-layer-control__fit" onClick={onFitToFastSector}>
         Fit to FAST sector
       </button>
 
@@ -51,20 +49,23 @@ export default function FastLayerControl({
         <div className="fast-layer-control__toggles">
           {OVERLAY_OPTIONS.map((option) => {
             const isAvailable = availability[option.id];
+            const isActive = Boolean(activeLayers[option.id]);
             return (
               <label
                 key={option.id}
-                className={isAvailable ? "" : "is-unavailable"}
+                className={`${isAvailable ? "" : "is-unavailable"}${
+                  isActive ? " is-active" : ""
+                }`}
               >
                 <input
                   type="checkbox"
-                  checked={activeLayers[option.id]}
+                  checked={isActive}
                   onChange={() => onToggleLayer(option.id)}
                   disabled={!isAvailable}
                 />
                 <span>
                   {option.label}
-                  {!isAvailable ? " — not available" : ""}
+                  {!isAvailable ? " — not available as GIS layer" : ""}
                 </span>
               </label>
             );

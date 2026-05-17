@@ -16,20 +16,23 @@ function displayValue(value) {
 
 export function buildPcPopup(feature) {
   const properties = feature?.properties || {};
-  const kmRange =
-    properties.km_upstream || properties.km_downstream
-      ? `${displayValue(properties.km_upstream)} – ${displayValue(properties.km_downstream)}`
-      : "Nedisponibil în sursa curentă";
+  const pcCode = properties.pc_code || "Zonă PC";
+  const kmInterval =
+    properties.km_interval ||
+    `${displayValue(properties.km_upstream)} – ${displayValue(properties.km_downstream)}`;
+  const representationNote = properties.disclaimer || properties.observations;
 
   return `
     <div class="fast-popup-content">
-      <strong>${displayValue(properties.pc_code || "Zonă PC")}</strong><br />
-      <span>Denumire: ${displayValue(properties.name)}</span><br />
-      <span>Km amonte–aval: ${kmRange}</span><br />
-      <span>Lucrări principale: ${displayValue(properties.main_works)}</span><br />
-      <span>Monitorizare ihtiofaună/sturioni – overview: ${displayValue(properties.fish_monitoring_overview)}</span><br />
+      <strong>${displayValue(pcCode)} · ${displayValue(properties.name)}</strong><br />
+      <span>Km interval: ${displayValue(kmInterval)}</span><br />
       <span>Tip reprezentare: ${displayValue(properties.representation_type)}</span><br />
-      <span>Observații: Reprezentare pe interval kilometric, nu poligon tehnic de execuție.</span>
+      <span>Lucrări principale: ${displayValue(properties.works_summary)}</span><br />
+      <span>Monitorizare overview: ${displayValue(properties.monitoring_overview)}</span><br />
+      <span>Observație: ${displayValue(representationNote)}</span><br />
+      <button type="button" class="fast-popup-detail-button" data-fast-pc-code="${displayValue(
+        pcCode
+      )}">Vezi detalii</button>
     </div>
   `;
 }
@@ -48,7 +51,7 @@ export function buildPcPolygonPopup(feature) {
       <strong>Source polygon</strong><br />
       <span>Nume sursă: ${displayValue(properties.name || sourceNames)}</span><br />
       <span>Fișiere sursă: ${displayValue(sourceFiles)}</span><br />
-      <span>Observații: Sursa disponibilă nu conține toate metadatele FAST pentru acest poligon.</span>
+      <span>Observație: sursa disponibilă nu conține toate metadatele FAST pentru acest poligon.</span>
     </div>
   `;
 }
