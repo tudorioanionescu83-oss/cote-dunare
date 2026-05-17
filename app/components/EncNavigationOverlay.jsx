@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { GeoJSON, LayerGroup, useMap } from "react-leaflet";
 import L from "leaflet";
 
-const DISTANCE_MARKS_URL = "/layers/danube_km_fairway.geojson?v=canonical-labels-20260516";
+const DISTANCE_MARKS_URL = "/layers/danube_km_fairway.geojson?v=canonical-labels-20260517";
 const FAIRWAY_URL = "/layers/danube_fairway.geojson";
 
 function getPointCoordinates(feature) {
@@ -134,9 +134,23 @@ function getFairwayStyle(zoom) {
   return {
     fillColor: "#35D399",
     color: "#A7FFE6",
-    fillOpacity: isVeryLowZoom ? 0.1 : isLowZoom ? 0.12 : isHighZoom ? 0.22 : 0.18,
-    opacity: isVeryLowZoom ? 0.45 : isLowZoom ? 0.5 : 0.65,
-    weight: isLowZoom ? 0.8 : isHighZoom ? 1.2 : 1,
+    fillOpacity: isVeryLowZoom ? 0.14 : isLowZoom ? 0.17 : isHighZoom ? 0.28 : 0.23,
+    opacity: isVeryLowZoom ? 0.5 : isLowZoom ? 0.58 : 0.72,
+    weight: isLowZoom ? 0.9 : isHighZoom ? 1.25 : 1.1,
+  };
+}
+
+function getFairwayBoundaryStyle(zoom) {
+  const isVeryLowZoom = zoom < 8;
+  const isLowZoom = zoom < 10;
+  const isHighZoom = zoom >= 14;
+
+  return {
+    fill: false,
+    color: "#F59E0B",
+    opacity: isVeryLowZoom ? 0.28 : isLowZoom ? 0.36 : isHighZoom ? 0.52 : 0.44,
+    weight: isLowZoom ? 0.9 : isHighZoom ? 1.25 : 1.05,
+    dashArray: isLowZoom ? "3 6" : "4 6",
   };
 }
 
@@ -181,6 +195,26 @@ function isMultipleOf(value, interval) {
   return value % interval === 0;
 }
 
+function shouldRenderOverviewNavigationAnchor(normalized, zoom) {
+  if (zoom < 8 || zoom >= 10) return false;
+
+  if (normalized.unit === "mn") {
+    return normalized.value === 0 || normalized.value === 40 || normalized.value === 80;
+  }
+
+  if (normalized.unit === "km") {
+    return normalized.value === 150 || (normalized.value >= 200 && normalized.value % 100 === 0);
+  }
+
+  return false;
+}
+
+function shouldRenderLabelAtZoom(normalized, zoom) {
+  if (shouldRenderOverviewNavigationAnchor(normalized, zoom)) return true;
+  const interval = getLabelInterval(normalized.unit, zoom);
+  return isMultipleOf(normalized.value, interval);
+}
+
 function getFeatureDistanceMeters(firstFeature, secondFeature) {
   const firstLatLng = getPointLatLng(firstFeature);
   const secondLatLng = getPointLatLng(secondFeature);
@@ -218,8 +252,7 @@ function buildRepresentativeLabelFeatures(features = [], zoom) {
     const normalized = normalizeDistanceMark(feature);
     if (!isRenderablePermanentNavigationLabel(normalized)) continue;
 
-    const interval = getLabelInterval(normalized.unit, zoom);
-    if (!isMultipleOf(normalized.value, interval)) continue;
+    if (!shouldRenderLabelAtZoom(normalized, zoom)) continue;
 
     const permanentLabel = normalized.label;
     const key = `${normalized.unit}:${normalized.value}`;
@@ -327,16 +360,24 @@ export default function EncNavigationOverlay() {
   return (
     <LayerGroup>
       {showFairway && fairway && (
-        <GeoJSON
-          key={`enc-fairway-${zoom < 8 ? "very-low" : zoom < 10 ? "low" : zoom <= 14 ? "mid" : "high"}`}
-          data={fairway}
-          style={() => getFairwayStyle(zoom)}
-          onEachFeature={(_, layer) => {
-            layer.on("click", () => {
-              layer.bindPopup(buildFairwayPopup(), { className: "enc-navigation-popup" }).openPopup();
-            });
-          }}
-        />
+        <>
+          <GeoJSON
+            key={`enc-fairway-${zoom < 8 ? "very-low" : zoom < 10 ? "low" : zoom <= 14 ? "mid" : "high"}`}
+            data={fairway}
+            style={() => getFairwayStyle(zoom)}
+            onEachFeature={(_, layer) => {
+              layer.on("click", () => {
+                layer.bindPopup(buildFairwayPopup(), { className: "enc-navigation-popup" }).openPopup();
+              });
+            }}
+          />
+          <GeoJSON
+            key={`enc-fairway-boundary-${zoom < 8 ? "very-low" : zoom < 10 ? "low" : zoom <= 14 ? "mid" : "high"}`}
+            data={fairway}
+            style={() => getFairwayBoundaryStyle(zoom)}
+            interactive={false}
+          />
+        </>
       )}
 
       {showAllPoints && (

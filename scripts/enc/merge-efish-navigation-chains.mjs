@@ -12,6 +12,8 @@ const MAX_CHAIN_STEP_METERS = 3500;
 const GALATI_BRAILA_VALUES = Array.from({ length: 17 }, (_, index) => index + 150);
 const GALATI_BRAILA_VALUES_TO_ADD = new Set([154, 155, 156, 159, 160, 161, 162, 163, 166]);
 const GALATI_BRAILA_BBOX = { minLng: 27.9, maxLng: 28.1, minLat: 45.18, maxLat: 45.45 };
+const KM_298_303_VALUES = Array.from({ length: 6 }, (_, index) => index + 298);
+const KM_298_303_BBOX = { minLng: 27.95, maxLng: 28.08, minLat: 44.3, maxLat: 44.38 };
 const MACIN_VALUES = Array.from({ length: 45 }, (_, index) => index + 1);
 const MACIN_BBOX = { minLng: 27.7, maxLng: 28.35, minLat: 45.05, maxLat: 45.45 };
 const EXACT_DUPLICATE_DISTANCE_METERS = 5;
@@ -211,9 +213,15 @@ const galatiBrailaChain = chooseContinuousChain(
   GALATI_BRAILA_VALUES,
   GALATI_BRAILA_BBOX
 );
+const km298to303Chain = chooseContinuousChain(
+  efishCollection.features,
+  KM_298_303_VALUES,
+  KM_298_303_BBOX
+);
 const macinChain = chooseContinuousChain(efishCollection.features, MACIN_VALUES, MACIN_BBOX);
 const selectedCandidates = [
   ...galatiBrailaChain.filter((candidate) => GALATI_BRAILA_VALUES_TO_ADD.has(candidate.value)),
+  ...km298to303Chain,
   ...macinChain,
 ];
 
@@ -245,12 +253,16 @@ console.log(
       efishPath: absoluteEfishPath,
       selectedChains: {
         galatiBraila: summarize(galatiBrailaChain),
+        km298to303: summarize(km298to303Chain),
         macin: summarize(macinChain),
       },
       added: {
         total: addedFeatures.length,
         galatiBraila: addedFeatures.filter((feature) =>
           GALATI_BRAILA_VALUES_TO_ADD.has(feature.properties.distance_value)
+        ).length,
+        km298to303: addedFeatures.filter((feature) =>
+          KM_298_303_VALUES.includes(feature.properties.distance_value)
         ).length,
         macin: addedFeatures.filter((feature) => MACIN_VALUES.includes(feature.properties.distance_value))
           .length,

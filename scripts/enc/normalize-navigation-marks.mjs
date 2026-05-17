@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 const DEFAULT_INPUT = "public/layers/danube_km_fairway.geojson";
 const DEFAULT_OUTPUT = "public/layers/danube_km_fairway.geojson";
 const MIXED_FOLDER = "u_20260326-mm47-km175";
+const EFISH_SELECTED_CHAIN_FOLDER = "efish-danube_km_clean-selected-chain";
 const MIXED_MM_CELLS = new Set([
   "3R7D0047",
   "3R7D0052",
@@ -116,6 +117,19 @@ function getDistanceLabelDecision(properties, unit, rawValue, distanceValue, cla
     return {
       shouldLabel: false,
       reason: "folder:mm0-mm47:zero-hidden-outside-origin-cell",
+    };
+  }
+
+  if (
+    unit === "km" &&
+    Number.isInteger(distanceValue) &&
+    distanceValue >= 0 &&
+    distanceValue <= 10 &&
+    folder !== EFISH_SELECTED_CHAIN_FOLDER
+  ) {
+    return {
+      shouldLabel: false,
+      reason: "km:single-digit-local-mark-hidden",
     };
   }
 
