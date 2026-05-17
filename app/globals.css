@@ -403,8 +403,8 @@ input:focus, select:focus{
 
 .fast-map-entry-overlay{
   position: absolute;
-  top: 12px;
-  right: 54px;
+  right: 14px;
+  bottom: 58px;
   z-index: 1200;
   background: rgba(255,255,255,0.94);
   color: #082f49;
@@ -729,8 +729,8 @@ input:focus, select:focus{
 
 @media (max-width: 768px){
   .fast-map-entry-overlay{
-    top: 12px;
-    right: 54px;
+    right: 12px;
+    bottom: 140px;
     padding: 9px 12px;
     font-size: 12px;
   }
