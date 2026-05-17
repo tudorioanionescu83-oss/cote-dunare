@@ -231,7 +231,7 @@ function shouldRenderLocalBranchKmLabel(properties, normalized, zoom) {
   if (zoom >= 15.5) return true;
   if (zoom >= 14.5) return normalized.value % 2 === 0;
   if (zoom >= 13.5) return normalized.value % 5 === 0;
-  if (zoom >= 12.5) return normalized.value % 10 === 0;
+  if (zoom >= 11.5) return normalized.value % 10 === 0;
   return false;
 }
 
