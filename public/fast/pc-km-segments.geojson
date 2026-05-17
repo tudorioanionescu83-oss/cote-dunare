@@ -1,0 +1,1241 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC1",
+        "name": "Gârla Mare",
+        "km_upstream": 839,
+        "km_downstream": 837,
+        "main_works": "dragaj șenal existent; depozitare material dragat.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "segment",
+        "source_km_values": [
+          839,
+          838,
+          837
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            22.7471102,
+            44.1933871
+          ],
+          [
+            22.7539906,
+            44.1911841
+          ],
+          [
+            22.7625786,
+            44.1874297
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC1",
+        "name": "Gârla Mare",
+        "km_upstream": 839,
+        "km_downstream": 837,
+        "main_works": "dragaj șenal existent; depozitare material dragat.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "upstream_marker",
+        "km_value": 839
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          22.7471102,
+          44.1933871
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC1",
+        "name": "Gârla Mare",
+        "km_upstream": 839,
+        "km_downstream": 837,
+        "main_works": "dragaj șenal existent; depozitare material dragat.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "downstream_marker",
+        "km_value": 837
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          22.7625786,
+          44.1874297
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC2",
+        "name": "Salcia",
+        "km_upstream": 824,
+        "km_downstream": 820,
+        "main_works": "dragaj șenal existent; depozitare pe malul bulgăresc.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "segment",
+        "source_km_values": [
+          824,
+          823,
+          822,
+          821,
+          820
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            22.889053,
+            44.1232055
+          ],
+          [
+            22.8961422,
+            44.1170775
+          ],
+          [
+            22.9046679,
+            44.1093982
+          ],
+          [
+            22.9156966,
+            44.1033348
+          ],
+          [
+            22.9325821,
+            44.0988396
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC2",
+        "name": "Salcia",
+        "km_upstream": 824,
+        "km_downstream": 820,
+        "main_works": "dragaj șenal existent; depozitare pe malul bulgăresc.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "upstream_marker",
+        "km_value": 824
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          22.889053,
+          44.1232055
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC2",
+        "name": "Salcia",
+        "km_upstream": 824,
+        "km_downstream": 820,
+        "main_works": "dragaj șenal existent; depozitare pe malul bulgăresc.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "downstream_marker",
+        "km_value": 820
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          22.9325821,
+          44.0988396
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC3",
+        "name": "Bogdan Secian",
+        "km_upstream": 786,
+        "km_downstream": 782,
+        "main_works": "dragaj șenal existent; depozitare amonte de insula Bogdan Secian.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "segment",
+        "source_km_values": [
+          786,
+          785,
+          784,
+          783,
+          782
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            22.8698384,
+            43.9447048
+          ],
+          [
+            22.8675703,
+            43.9358456
+          ],
+          [
+            22.8616453,
+            43.926168
+          ],
+          [
+            22.855787,
+            43.9183794
+          ],
+          [
+            22.8493861,
+            43.9108061
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC3",
+        "name": "Bogdan Secian",
+        "km_upstream": 786,
+        "km_downstream": 782,
+        "main_works": "dragaj șenal existent; depozitare amonte de insula Bogdan Secian.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "upstream_marker",
+        "km_value": 786
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          22.8698384,
+          43.9447048
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC3",
+        "name": "Bogdan Secian",
+        "km_upstream": 786,
+        "km_downstream": 782,
+        "main_works": "dragaj șenal existent; depozitare amonte de insula Bogdan Secian.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "downstream_marker",
+        "km_value": 782
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          22.8493861,
+          43.9108061
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC4",
+        "name": "Dobrina",
+        "km_upstream": 762,
+        "km_downstream": 756,
+        "main_works": "dragaj șenal existent; două zone de depozitare.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "segment",
+        "source_km_values": [
+          762,
+          761,
+          760,
+          759,
+          758,
+          757,
+          756
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.0030253,
+            43.8059741
+          ],
+          [
+            23.0152934,
+            43.8055841
+          ],
+          [
+            23.0300012,
+            43.8044691
+          ],
+          [
+            23.0429301,
+            43.8039438
+          ],
+          [
+            23.0554408,
+            43.8022072
+          ],
+          [
+            23.0685862,
+            43.8006448
+          ],
+          [
+            23.0814108,
+            43.8012101
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC4",
+        "name": "Dobrina",
+        "km_upstream": 762,
+        "km_downstream": 756,
+        "main_works": "dragaj șenal existent; două zone de depozitare.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "upstream_marker",
+        "km_value": 762
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.0030253,
+          43.8059741
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC4",
+        "name": "Dobrina",
+        "km_upstream": 762,
+        "km_downstream": 756,
+        "main_works": "dragaj șenal existent; două zone de depozitare.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "downstream_marker",
+        "km_value": 756
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.0814108,
+          43.8012101
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC5",
+        "name": "Bechet",
+        "km_upstream": 678,
+        "km_downstream": 673,
+        "main_works": "dragaj/realiniere șenal, chevron, epiuri, stabilizare mal, insulă artificială, depozitare material dragat.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "segment",
+        "source_km_values": [
+          678,
+          677,
+          676,
+          675,
+          674,
+          673
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.9648939,
+            43.7453531
+          ],
+          [
+            23.9779194,
+            43.7460777
+          ],
+          [
+            23.993825,
+            43.7444137
+          ],
+          [
+            24.0007348,
+            43.7420247
+          ],
+          [
+            24.0110372,
+            43.7367461
+          ],
+          [
+            24.0221488,
+            43.7334436
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC5",
+        "name": "Bechet",
+        "km_upstream": 678,
+        "km_downstream": 673,
+        "main_works": "dragaj/realiniere șenal, chevron, epiuri, stabilizare mal, insulă artificială, depozitare material dragat.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "upstream_marker",
+        "km_value": 678
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.9648939,
+          43.7453531
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC5",
+        "name": "Bechet",
+        "km_upstream": 678,
+        "km_downstream": 673,
+        "main_works": "dragaj/realiniere șenal, chevron, epiuri, stabilizare mal, insulă artificială, depozitare material dragat.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "downstream_marker",
+        "km_value": 673
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.0221488,
+          43.7334436
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC6",
+        "name": "Corabia",
+        "km_upstream": 632,
+        "km_downstream": 626,
+        "main_works": "dragaj șenal existent și canal acces port Corabia; depozitare amonte de insula Baloiu.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "segment",
+        "source_km_values": [
+          632,
+          631,
+          630,
+          629,
+          628,
+          627,
+          626
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.4882672,
+            43.7602326
+          ],
+          [
+            24.5021095,
+            43.7615011
+          ],
+          [
+            24.5132764,
+            43.7602817
+          ],
+          [
+            24.5265021,
+            43.7643283
+          ],
+          [
+            24.5376789,
+            43.7627463
+          ],
+          [
+            24.5507054,
+            43.7604791
+          ],
+          [
+            24.5630331,
+            43.7575146
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC6",
+        "name": "Corabia",
+        "km_upstream": 632,
+        "km_downstream": 626,
+        "main_works": "dragaj șenal existent și canal acces port Corabia; depozitare amonte de insula Baloiu.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "upstream_marker",
+        "km_value": 632
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.4882672,
+          43.7602326
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC6",
+        "name": "Corabia",
+        "km_upstream": 632,
+        "km_downstream": 626,
+        "main_works": "dragaj șenal existent și canal acces port Corabia; depozitare amonte de insula Baloiu.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "downstream_marker",
+        "km_value": 626
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.5630331,
+          43.7575146
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC7",
+        "name": "Belene",
+        "km_upstream": 577,
+        "km_downstream": 560,
+        "main_works": "dragaj/realiniere șenal, două chevroane, trei epiuri, stabilizare mal, depozitare material dragat.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "segment",
+        "source_km_values": [
+          577,
+          576,
+          575,
+          574,
+          573,
+          572,
+          571,
+          570,
+          569,
+          568,
+          567,
+          566,
+          565,
+          564,
+          563,
+          562,
+          561,
+          560
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            25.1049711,
+            43.6864866
+          ],
+          [
+            25.1180499,
+            43.6862476
+          ],
+          [
+            25.1282639,
+            43.6861395
+          ],
+          [
+            25.1434978,
+            43.6874575
+          ],
+          [
+            25.1532335,
+            43.6932545
+          ],
+          [
+            25.1625567,
+            43.6980305
+          ],
+          [
+            25.1750605,
+            43.7000284
+          ],
+          [
+            25.1875555,
+            43.6996489
+          ],
+          [
+            25.1990981,
+            43.6962394
+          ],
+          [
+            25.2102369,
+            43.6932225
+          ],
+          [
+            25.2213016,
+            43.6915469
+          ],
+          [
+            25.2340246,
+            43.6903448
+          ],
+          [
+            25.2454363,
+            43.688176
+          ],
+          [
+            25.2545951,
+            43.6815304
+          ],
+          [
+            25.2627458,
+            43.6754806
+          ],
+          [
+            25.2689168,
+            43.6675548
+          ],
+          [
+            25.2771922,
+            43.6603279
+          ],
+          [
+            25.2925284,
+            43.6527232
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC7",
+        "name": "Belene",
+        "km_upstream": 577,
+        "km_downstream": 560,
+        "main_works": "dragaj/realiniere șenal, două chevroane, trei epiuri, stabilizare mal, depozitare material dragat.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "upstream_marker",
+        "km_value": 577
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.1049711,
+          43.6864866
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC7",
+        "name": "Belene",
+        "km_upstream": 577,
+        "km_downstream": 560,
+        "main_works": "dragaj/realiniere șenal, două chevroane, trei epiuri, stabilizare mal, depozitare material dragat.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "downstream_marker",
+        "km_value": 560
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.2925284,
+          43.6527232
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC8",
+        "name": "Vardim",
+        "km_upstream": 542,
+        "km_downstream": 539,
+        "main_works": "dragaj șenal existent; două zone de depozitare.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "segment",
+        "source_km_values": [
+          542,
+          541,
+          540,
+          539
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            25.5012732,
+            43.6401623
+          ],
+          [
+            25.5115868,
+            43.6497046
+          ],
+          [
+            25.5245964,
+            43.6438471
+          ],
+          [
+            25.5365528,
+            43.6416578
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC8",
+        "name": "Vardim",
+        "km_upstream": 542,
+        "km_downstream": 539,
+        "main_works": "dragaj șenal existent; două zone de depozitare.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "upstream_marker",
+        "km_value": 542
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.5012732,
+          43.6401623
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC8",
+        "name": "Vardim",
+        "km_upstream": 542,
+        "km_downstream": 539,
+        "main_works": "dragaj șenal existent; două zone de depozitare.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "downstream_marker",
+        "km_value": 539
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.5365528,
+          43.6416578
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC9",
+        "name": "Iantra",
+        "km_upstream": 537,
+        "km_downstream": 534,
+        "main_works": "dragaj șenal existent; depozitare lângă malul românesc.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "segment",
+        "source_km_values": [
+          537,
+          536,
+          535,
+          534
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            25.565161,
+            43.6435507
+          ],
+          [
+            25.5769772,
+            43.6469412
+          ],
+          [
+            25.5874716,
+            43.6528593
+          ],
+          [
+            25.5961684,
+            43.6574408
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC9",
+        "name": "Iantra",
+        "km_upstream": 537,
+        "km_downstream": 534,
+        "main_works": "dragaj șenal existent; depozitare lângă malul românesc.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "upstream_marker",
+        "km_value": 537
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.565161,
+          43.6435507
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC9",
+        "name": "Iantra",
+        "km_upstream": 537,
+        "km_downstream": 534,
+        "main_works": "dragaj șenal existent; depozitare lângă malul românesc.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "downstream_marker",
+        "km_value": 534
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.5961684,
+          43.6574408
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC10",
+        "name": "Batin",
+        "km_upstream": 530,
+        "km_downstream": 520,
+        "main_works": "dragaj șenal existent; depozitare lângă insula Batin.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "segment",
+        "source_km_values": [
+          530,
+          529,
+          528,
+          527,
+          526,
+          525,
+          524,
+          523,
+          522,
+          521,
+          520
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            25.6354969,
+            43.6798842
+          ],
+          [
+            25.6485595,
+            43.6757681
+          ],
+          [
+            25.6583655,
+            43.6835111
+          ],
+          [
+            25.6673333,
+            43.685262
+          ],
+          [
+            25.6804358,
+            43.6865278
+          ],
+          [
+            25.6920814,
+            43.6855163
+          ],
+          [
+            25.7056885,
+            43.6877032
+          ],
+          [
+            25.7193551,
+            43.6865349
+          ],
+          [
+            25.7318422,
+            43.6884297
+          ],
+          [
+            25.7442142,
+            43.6920708
+          ],
+          [
+            25.7570501,
+            43.6979699
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC10",
+        "name": "Batin",
+        "km_upstream": 530,
+        "km_downstream": 520,
+        "main_works": "dragaj șenal existent; depozitare lângă insula Batin.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "upstream_marker",
+        "km_value": 530
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.6354969,
+          43.6798842
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC10",
+        "name": "Batin",
+        "km_upstream": 530,
+        "km_downstream": 520,
+        "main_works": "dragaj șenal existent; depozitare lângă insula Batin.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "downstream_marker",
+        "km_value": 520
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.7570501,
+          43.6979699
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC11",
+        "name": "Kosui",
+        "km_upstream": 428,
+        "km_downstream": 423,
+        "main_works": "dragaj șenal existent; depozitare/extindere insulele Kosui și Malyk Kosui.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "segment",
+        "source_km_values": [
+          428,
+          427,
+          426,
+          425,
+          424,
+          423
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            26.665214,
+            44.0689235
+          ],
+          [
+            26.6786631,
+            44.0649879
+          ],
+          [
+            26.6871217,
+            44.0701451
+          ],
+          [
+            26.6991703,
+            44.0704201
+          ],
+          [
+            26.7112816,
+            44.0770153
+          ],
+          [
+            26.7227197,
+            44.075938
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC11",
+        "name": "Kosui",
+        "km_upstream": 428,
+        "km_downstream": 423,
+        "main_works": "dragaj șenal existent; depozitare/extindere insulele Kosui și Malyk Kosui.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "upstream_marker",
+        "km_value": 428
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          26.665214,
+          44.0689235
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC11",
+        "name": "Kosui",
+        "km_upstream": 428,
+        "km_downstream": 423,
+        "main_works": "dragaj șenal existent; depozitare/extindere insulele Kosui și Malyk Kosui.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "downstream_marker",
+        "km_value": 423
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          26.7227197,
+          44.075938
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC12",
+        "name": "Popina",
+        "km_upstream": 408,
+        "km_downstream": 401,
+        "main_works": "dragaj/realiniere șenal, trei epiuri, chevron, două zone de depozitare.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "segment",
+        "source_km_values": [
+          408,
+          407,
+          406,
+          405,
+          404,
+          403,
+          402,
+          401
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            26.8922022,
+            44.1255657
+          ],
+          [
+            26.9029831,
+            44.1283025
+          ],
+          [
+            26.9138184,
+            44.1310326
+          ],
+          [
+            26.9248587,
+            44.1333121
+          ],
+          [
+            26.9371297,
+            44.1362721
+          ],
+          [
+            26.9486152,
+            44.1371245
+          ],
+          [
+            26.9596197,
+            44.1364274
+          ],
+          [
+            26.9709216,
+            44.1336654
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC12",
+        "name": "Popina",
+        "km_upstream": 408,
+        "km_downstream": 401,
+        "main_works": "dragaj/realiniere șenal, trei epiuri, chevron, două zone de depozitare.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "upstream_marker",
+        "km_value": 408
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          26.8922022,
+          44.1255657
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "pc_code": "PC12",
+        "name": "Popina",
+        "km_upstream": 408,
+        "km_downstream": 401,
+        "main_works": "dragaj/realiniere șenal, trei epiuri, chevron, două zone de depozitare.",
+        "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.",
+        "representation_type": "km interval representation",
+        "source_layer": "afdj-km.geojson",
+        "observations": "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+        "geometry_role": "downstream_marker",
+        "km_value": 401
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          26.9709216,
+          44.1336654
+        ]
+      }
+    }
+  ]
+}

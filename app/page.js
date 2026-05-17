@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import StationPanel from "./components/StationPanel";
 import MarineStationPanel from "./components/stations/MarineStationPanel";
 import DonationWidget from "./components/DonationWidget";
@@ -866,6 +867,12 @@ export default function Page() {
       </aside>
 
       <main className="page-main">
+        <div className="fast-preview-entry">
+          <Link href="/fast" className="fast-preview-link">
+            FAST Danube
+          </Link>
+        </div>
+
         {/* FULLSCREEN MAP OVERLAY */}
         {mapFullscreen && (
           <div className="map-fullscreen-overlay">

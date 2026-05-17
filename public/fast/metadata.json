@@ -1,0 +1,141 @@
+{
+  "generated_from": {
+    "afdj_km": "source/afdj-km.kmz",
+    "pc_zone_candidates": [
+      "T11_P57_267908_mp_WGS84.kmz",
+      "T11_P57_267908_mp_WGS84_1.kmz",
+      "T11_P57_a_167592_mp_WGS84.kmz"
+    ]
+  },
+  "layers": {
+    "afdj_km": {
+      "file": "afdj-km.geojson",
+      "feature_count": 12960,
+      "status": "converted"
+    },
+    "pc_zones": {
+      "file": "pc-zones.geojson",
+      "feature_count": 2,
+      "status": "converted_from_exact_polygon_sources",
+      "note": "Sursele KMZ con?in geometrii exacte, dar nu con?in atribute descriptive FAST suficiente pentru cod, denumire sau lucr?ri."
+    },
+    "works": {
+      "file": "works.geojson",
+      "status": "not_created_source_not_clear"
+    },
+    "disposal_zones": {
+      "file": "disposal-zones.geojson",
+      "status": "not_created_source_not_clear"
+    },
+    "pc_km_segments": {
+      "file": "pc-km-segments.geojson",
+      "feature_count": 36,
+      "status": "generated_from_afdj_km_markers",
+      "geometry_note": "Km interval representation construită din puncte AFDJ existente; nu este poligon exact."
+    }
+  },
+  "unclassified_sources": [
+    {
+      "file": "source/waterskmz_v1_10.kmz",
+      "reason": "Con?ine NetworkLink-uri ?i imagini externe, nu geometrii vectoriale FAST utilizabile direct ?n preview."
+    }
+  ],
+  "pc_intervals": [
+    {
+      "pc_code": "PC1",
+      "name": "Gârla Mare",
+      "km_upstream": 839,
+      "km_downstream": 837,
+      "main_works": "dragaj șenal existent; depozitare material dragat.",
+      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+    },
+    {
+      "pc_code": "PC2",
+      "name": "Salcia",
+      "km_upstream": 824,
+      "km_downstream": 820,
+      "main_works": "dragaj șenal existent; depozitare pe malul bulgăresc.",
+      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+    },
+    {
+      "pc_code": "PC3",
+      "name": "Bogdan Secian",
+      "km_upstream": 786,
+      "km_downstream": 782,
+      "main_works": "dragaj șenal existent; depozitare amonte de insula Bogdan Secian.",
+      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+    },
+    {
+      "pc_code": "PC4",
+      "name": "Dobrina",
+      "km_upstream": 762,
+      "km_downstream": 756,
+      "main_works": "dragaj șenal existent; două zone de depozitare.",
+      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+    },
+    {
+      "pc_code": "PC5",
+      "name": "Bechet",
+      "km_upstream": 678,
+      "km_downstream": 673,
+      "main_works": "dragaj/realiniere șenal, chevron, epiuri, stabilizare mal, insulă artificială, depozitare material dragat.",
+      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+    },
+    {
+      "pc_code": "PC6",
+      "name": "Corabia",
+      "km_upstream": 632,
+      "km_downstream": 626,
+      "main_works": "dragaj șenal existent și canal acces port Corabia; depozitare amonte de insula Baloiu.",
+      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+    },
+    {
+      "pc_code": "PC7",
+      "name": "Belene",
+      "km_upstream": 577,
+      "km_downstream": 560,
+      "main_works": "dragaj/realiniere șenal, două chevroane, trei epiuri, stabilizare mal, depozitare material dragat.",
+      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+    },
+    {
+      "pc_code": "PC8",
+      "name": "Vardim",
+      "km_upstream": 542,
+      "km_downstream": 539,
+      "main_works": "dragaj șenal existent; două zone de depozitare.",
+      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+    },
+    {
+      "pc_code": "PC9",
+      "name": "Iantra",
+      "km_upstream": 537,
+      "km_downstream": 534,
+      "main_works": "dragaj șenal existent; depozitare lângă malul românesc.",
+      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+    },
+    {
+      "pc_code": "PC10",
+      "name": "Batin",
+      "km_upstream": 530,
+      "km_downstream": 520,
+      "main_works": "dragaj șenal existent; depozitare lângă insula Batin.",
+      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+    },
+    {
+      "pc_code": "PC11",
+      "name": "Kosui",
+      "km_upstream": 428,
+      "km_downstream": 423,
+      "main_works": "dragaj șenal existent; depozitare/extindere insulele Kosui și Malyk Kosui.",
+      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+    },
+    {
+      "pc_code": "PC12",
+      "name": "Popina",
+      "km_upstream": 408,
+      "km_downstream": 401,
+      "main_works": "dragaj/realiniere șenal, trei epiuri, chevron, două zone de depozitare.",
+      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+    }
+  ]
+}
