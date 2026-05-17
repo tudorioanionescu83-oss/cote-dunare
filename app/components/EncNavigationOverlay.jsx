@@ -6,6 +6,10 @@ import L from "leaflet";
 
 const DISTANCE_MARKS_URL = "/layers/danube_km_fairway.geojson?v=canonical-labels-20260517";
 const FAIRWAY_URL = "/layers/danube_fairway.geojson";
+const LOCAL_BRANCH_KM_FOLDERS = new Set([
+  "20230213_bala_borcea",
+  "efish-danube_km_clean-selected-chain",
+]);
 
 function getPointCoordinates(feature) {
   const coordinates = feature?.geometry?.coordinates;
@@ -215,6 +219,22 @@ function shouldRenderLabelAtZoom(normalized, zoom) {
   return isMultipleOf(normalized.value, interval);
 }
 
+function shouldRenderLocalBranchKmLabel(properties, normalized, zoom) {
+  if (
+    normalized.unit !== "km" ||
+    !LOCAL_BRANCH_KM_FOLDERS.has(properties.source_folder) ||
+    !Number.isInteger(normalized.value)
+  ) {
+    return false;
+  }
+
+  if (zoom >= 15.5) return true;
+  if (zoom >= 14.5) return normalized.value % 2 === 0;
+  if (zoom >= 13.5) return normalized.value % 5 === 0;
+  if (zoom >= 12.5) return normalized.value % 10 === 0;
+  return false;
+}
+
 function getFeatureDistanceMeters(firstFeature, secondFeature) {
   const firstLatLng = getPointLatLng(firstFeature);
   const secondLatLng = getPointLatLng(secondFeature);
@@ -252,7 +272,12 @@ function buildRepresentativeLabelFeatures(features = [], zoom) {
     const normalized = normalizeDistanceMark(feature);
     if (!isRenderablePermanentNavigationLabel(normalized)) continue;
 
-    if (!shouldRenderLabelAtZoom(normalized, zoom)) continue;
+    if (
+      !shouldRenderLocalBranchKmLabel(properties, normalized, zoom) &&
+      !shouldRenderLabelAtZoom(normalized, zoom)
+    ) {
+      continue;
+    }
 
     const permanentLabel = normalized.label;
     const key = `${normalized.unit}:${normalized.value}`;
