@@ -26,6 +26,12 @@ const HABITAT_OPTIONS = [
     countKey: "spawning_potential",
   },
   {
+    id: "sturgeonConfirmedSpawning",
+    label: "Reproducere confirmată",
+    swatch: "confirmed",
+    countKey: "confirmed_spawning",
+  },
+  {
     id: "sturgeonFeeding",
     label: "Hrănire / juvenili",
     swatch: "feeding",
@@ -36,6 +42,12 @@ const HABITAT_OPTIONS = [
     label: "Iernare / refugiu",
     swatch: "wintering",
     countKey: "wintering_refuge",
+  },
+  {
+    id: "sturgeonProtection",
+    label: "Protecție sensibilă",
+    swatch: "protection",
+    countKey: "sensitive_protection",
   },
 ];
 
@@ -61,16 +73,22 @@ export default function FastLayerControl({
 
   const allHabitatsActive =
     activeLayers.sturgeonSpawning &&
+    activeLayers.sturgeonConfirmedSpawning &&
     activeLayers.sturgeonFeeding &&
-    activeLayers.sturgeonWintering;
+    activeLayers.sturgeonWintering &&
+    activeLayers.sturgeonProtection;
   const anyHabitatsActive =
     activeLayers.sturgeonSpawning ||
+    activeLayers.sturgeonConfirmedSpawning ||
     activeLayers.sturgeonFeeding ||
-    activeLayers.sturgeonWintering;
+    activeLayers.sturgeonWintering ||
+    activeLayers.sturgeonProtection;
   const habitatsAvailable =
     availability.sturgeonSpawning ||
+    availability.sturgeonConfirmedSpawning ||
     availability.sturgeonFeeding ||
-    availability.sturgeonWintering;
+    availability.sturgeonWintering ||
+    availability.sturgeonProtection;
 
   function getAutoCloseDelay() {
     return typeof window !== "undefined" &&

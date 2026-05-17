@@ -1,0 +1,37 @@
+{
+  "dataset_total": 32,
+  "generated_features": 28,
+  "skipped_features": 4,
+  "dataset_counts_by_habitat_type": {
+    "spawning_potential": 15,
+    "wintering_refuge": 6,
+    "feeding_yoy": 4,
+    "confirmed_spawning": 2,
+    "sensitive_protection": 5
+  },
+  "generated_counts_by_habitat_type": {
+    "spawning_potential": 15,
+    "wintering_refuge": 4,
+    "feeding_yoy": 4,
+    "confirmed_spawning": 2,
+    "sensitive_protection": 3
+  },
+  "skipped": [
+    {
+      "id": "STU-WIN-BORCEA-BRANCH",
+      "reason": "skipped_due_to_missing_branch_geometry"
+    },
+    {
+      "id": "STU-WIN-BALA-BRANCH",
+      "reason": "skipped_due_to_missing_branch_geometry"
+    },
+    {
+      "id": "STU-SENSITIVE-BORCEA-37-41",
+      "reason": "skipped_due_to_missing_branch_geometry"
+    },
+    {
+      "id": "STU-SENSITIVE-CHILIA-72-77",
+      "reason": "skipped_due_to_missing_branch_geometry"
+    }
+  ]
+}

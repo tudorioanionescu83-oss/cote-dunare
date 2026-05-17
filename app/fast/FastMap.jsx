@@ -38,8 +38,10 @@ const INITIAL_LAYERS = {
   monitoringOverview: true,
   monitoringSturgeons: true,
   sturgeonSpawning: false,
+  sturgeonConfirmedSpawning: false,
   sturgeonFeeding: false,
   sturgeonWintering: false,
+  sturgeonProtection: false,
 };
 
 const INITIAL_AVAILABILITY = {
@@ -52,11 +54,13 @@ const INITIAL_AVAILABILITY = {
   monitoringOverview: false,
   monitoringSturgeons: false,
   sturgeonSpawning: false,
+  sturgeonConfirmedSpawning: false,
   sturgeonFeeding: false,
   sturgeonWintering: false,
+  sturgeonProtection: false,
 };
 
-const FAST_RKM_MIN = 375;
+const FAST_RKM_MIN = 0;
 const FAST_RKM_MAX = 863;
 
 function isFeatureCollection(payload) {
@@ -139,6 +143,19 @@ function isFastRelevantKmFeature(feature) {
   );
 }
 
+function isMaritimeDanubeCoordinate(feature) {
+  const coordinates = getPointCoordinates(feature);
+  if (!coordinates) return false;
+  return coordinates.lat >= 45.15 && (coordinates.lng >= 28.15 || coordinates.lat >= 45.4);
+}
+
+function getDistanceLabel(feature, value) {
+  if (isMaritimeDanubeCoordinate(feature) && value >= 0 && value <= 80) {
+    return `Mm ${value}`;
+  }
+  return `Km ${value}`;
+}
+
 function isFastHectometricFeature(feature) {
   const value = Number(feature?.properties?.wtwdis);
   return (
@@ -179,7 +196,7 @@ function buildRepresentativeKmFeatures(features = [], zoom) {
       ...feature,
       properties: {
         ...feature.properties,
-        __fastKmLabel: `Km ${km}`,
+        __fastKmLabel: getDistanceLabel(feature, km),
       },
     }));
 }
@@ -494,6 +511,15 @@ function getSturgeonHabitatStyle(feature, selectedHabitatId) {
       fillOpacity: isSelected ? 0.42 : 0.32,
     };
   }
+  if (habitatType === "confirmed_spawning") {
+    return {
+      color: "#9A3412",
+      weight: isSelected ? 3.8 : 2.4,
+      opacity: 0.96,
+      fillColor: "#DC2626",
+      fillOpacity: isSelected ? 0.52 : 0.42,
+    };
+  }
   if (habitatType === "feeding_yoy") {
     return {
       color: "#1E874B",
@@ -501,6 +527,16 @@ function getSturgeonHabitatStyle(feature, selectedHabitatId) {
       opacity: 0.9,
       fillColor: "#2ECC71",
       fillOpacity: isSelected ? 0.42 : 0.32,
+    };
+  }
+  if (habitatType === "sensitive_protection") {
+    return {
+      color: "#7C2D12",
+      weight: isSelected ? 3.8 : 2.4,
+      opacity: 0.96,
+      fillColor: "#F59E0B",
+      fillOpacity: isSelected ? 0.5 : 0.38,
+      dashArray: "7 5",
     };
   }
   return {
@@ -607,8 +643,10 @@ export default function FastMap({
         pcKmSegments: Boolean(pcKmSegments),
         pcPolygons: Boolean(pcPolygons),
         sturgeonSpawning: Boolean(sturgeonHabitats),
+        sturgeonConfirmedSpawning: Boolean(sturgeonHabitats),
         sturgeonFeeding: Boolean(sturgeonHabitats),
         sturgeonWintering: Boolean(sturgeonHabitats),
+        sturgeonProtection: Boolean(sturgeonHabitats),
         works: Boolean(works),
         disposalZones: Boolean(disposalZones),
         monitoringOverview: hasMonitoringOverview(pcKmSegments),
@@ -689,8 +727,11 @@ export default function FastMap({
             const habitatType = feature?.properties?.habitat_type;
             return (
               (habitatType === "spawning_potential" && activeLayers.sturgeonSpawning) ||
+              (habitatType === "confirmed_spawning" &&
+                activeLayers.sturgeonConfirmedSpawning) ||
               (habitatType === "feeding_yoy" && activeLayers.sturgeonFeeding) ||
-              (habitatType === "wintering_refuge" && activeLayers.sturgeonWintering)
+              (habitatType === "wintering_refuge" && activeLayers.sturgeonWintering) ||
+              (habitatType === "sensitive_protection" && activeLayers.sturgeonProtection)
             );
           }) || [],
           viewState.zoom
@@ -700,7 +741,9 @@ export default function FastMap({
     [
       activeLayers.monitoringOverview,
       activeLayers.monitoringSturgeons,
+      activeLayers.sturgeonConfirmedSpawning,
       activeLayers.sturgeonFeeding,
+      activeLayers.sturgeonProtection,
       activeLayers.sturgeonSpawning,
       activeLayers.sturgeonWintering,
       datasets.pcKmSegments,
@@ -719,13 +762,18 @@ export default function FastMap({
           const habitatType = feature?.properties?.habitat_type;
           return (
             (habitatType === "spawning_potential" && activeLayers.sturgeonSpawning) ||
+            (habitatType === "confirmed_spawning" &&
+              activeLayers.sturgeonConfirmedSpawning) ||
             (habitatType === "feeding_yoy" && activeLayers.sturgeonFeeding) ||
-            (habitatType === "wintering_refuge" && activeLayers.sturgeonWintering)
+            (habitatType === "wintering_refuge" && activeLayers.sturgeonWintering) ||
+            (habitatType === "sensitive_protection" && activeLayers.sturgeonProtection)
           );
         }) || []
       ),
     [
+      activeLayers.sturgeonConfirmedSpawning,
       activeLayers.sturgeonFeeding,
+      activeLayers.sturgeonProtection,
       activeLayers.sturgeonSpawning,
       activeLayers.sturgeonWintering,
       datasets.sturgeonHabitats,
@@ -736,8 +784,10 @@ export default function FastMap({
     const counts = {
       total: 0,
       spawning_potential: 0,
+      confirmed_spawning: 0,
       feeding_yoy: 0,
       wintering_refuge: 0,
+      sensitive_protection: 0,
     };
     for (const feature of datasets.sturgeonHabitats?.features || []) {
       const habitatType = feature?.properties?.habitat_type;
@@ -835,9 +885,16 @@ export default function FastMap({
 
         {visibleSturgeonHabitats.features.length > 0 && (
           <GeoJSON
-            key={`sturgeon-habitats-${activeLayers.sturgeonSpawning}-${activeLayers.sturgeonFeeding}-${activeLayers.sturgeonWintering}-${selectedHabitatId || "none"}`}
+            key={`sturgeon-habitats-${activeLayers.sturgeonSpawning}-${activeLayers.sturgeonConfirmedSpawning}-${activeLayers.sturgeonFeeding}-${activeLayers.sturgeonWintering}-${activeLayers.sturgeonProtection}-${selectedHabitatId || "none"}`}
             data={visibleSturgeonHabitats}
             style={(feature) => getSturgeonHabitatStyle(feature, selectedHabitatId)}
+            pointToLayer={(feature, latlng) => {
+              const style = getSturgeonHabitatStyle(feature, selectedHabitatId);
+              return L.circleMarker(latlng, {
+                radius: feature?.properties?.habitat_type === "confirmed_spawning" ? 7.5 : 6.5,
+                ...style,
+              });
+            }}
             onEachFeature={(feature, layer) => {
               layer.bindPopup(buildSturgeonHabitatPopup(feature), {
                 className: "fast-popup fast-habitat-popup",
@@ -921,7 +978,7 @@ export default function FastMap({
 
         {featureSets.habitatLabels.features.length > 0 && (
           <GeoJSON
-            key={`habitat-labels-${viewState.zoom}-${activeLayers.sturgeonSpawning}-${activeLayers.sturgeonFeeding}-${activeLayers.sturgeonWintering}`}
+            key={`habitat-labels-${viewState.zoom}-${activeLayers.sturgeonSpawning}-${activeLayers.sturgeonConfirmedSpawning}-${activeLayers.sturgeonFeeding}-${activeLayers.sturgeonWintering}-${activeLayers.sturgeonProtection}`}
             data={featureSets.habitatLabels}
             pointToLayer={(feature, latlng) =>
               L.marker(latlng, {
@@ -1034,14 +1091,18 @@ export default function FastMap({
           setActiveLayers((current) => {
             const shouldEnableAll = !(
               current.sturgeonSpawning &&
+              current.sturgeonConfirmedSpawning &&
               current.sturgeonFeeding &&
-              current.sturgeonWintering
+              current.sturgeonWintering &&
+              current.sturgeonProtection
             );
             return {
               ...current,
               sturgeonSpawning: shouldEnableAll,
+              sturgeonConfirmedSpawning: shouldEnableAll,
               sturgeonFeeding: shouldEnableAll,
               sturgeonWintering: shouldEnableAll,
+              sturgeonProtection: shouldEnableAll,
             };
           })
         }
@@ -1051,7 +1112,13 @@ export default function FastMap({
   );
 }
 
-function getPolygonLabelCoordinate(feature) {
+function getHabitatLabelCoordinate(feature) {
+  if (feature?.geometry?.type === "Point") {
+    return feature.geometry.coordinates || null;
+  }
+  if (feature?.geometry?.type === "LineString") {
+    return getLineMidpointCoordinate(feature);
+  }
   if (feature?.geometry?.type !== "Polygon") return null;
   const ring = feature.geometry.coordinates?.[0];
   if (!Array.isArray(ring) || ring.length < 4) return null;
@@ -1073,8 +1140,14 @@ function getHabitatLabelParts(feature) {
   if (habitatType === "spawning_potential") {
     return { shortLabel: "STU-R", extendedLabel: "Reproducere sturioni" };
   }
+  if (habitatType === "confirmed_spawning") {
+    return { shortLabel: "STU-RC", extendedLabel: "Reproducere confirmată" };
+  }
   if (habitatType === "feeding_yoy") {
     return { shortLabel: "STU-H", extendedLabel: "Hrănire juvenili" };
+  }
+  if (habitatType === "sensitive_protection") {
+    return { shortLabel: "STU-P", extendedLabel: "Protecție sensibilă" };
   }
   return { shortLabel: "STU-I", extendedLabel: "Iernare / refugiu" };
 }
@@ -1084,7 +1157,7 @@ function buildHabitatLabelFeatures(features = [], zoom) {
 
   return features
     .map((feature) => {
-      const coordinate = getPolygonLabelCoordinate(feature);
+      const coordinate = getHabitatLabelCoordinate(feature);
       if (!coordinate) return null;
       const { shortLabel, extendedLabel } = getHabitatLabelParts(feature);
       return {

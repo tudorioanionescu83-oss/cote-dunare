@@ -58,17 +58,29 @@ export function buildPcPolygonPopup(feature) {
 
 export function buildKmPopup(feature) {
   const properties = feature?.properties || {};
-  const kmValue = properties.wtwdis ?? properties.WTWDIS ?? "—";
-  const catdis = properties.catdis ?? properties.CATDIS ?? "—";
+  const distanceValue = properties.wtwdis ?? properties.WTWDIS ?? "-";
+  const catdis = properties.catdis ?? properties.CATDIS ?? "-";
   const isHectometric =
     Number(catdis) === 3 &&
-    Number.isInteger(Number(kmValue)) &&
-    Number(kmValue) >= 1 &&
-    Number(kmValue) <= 9;
+    Number.isInteger(Number(distanceValue)) &&
+    Number(distanceValue) >= 1 &&
+    Number(distanceValue) <= 9;
+  const coordinates = feature?.geometry?.coordinates || [];
+  const isMaritime =
+    Array.isArray(coordinates) &&
+    Number(coordinates[1]) >= 45.15 &&
+    (Number(coordinates[0]) >= 28.15 || Number(coordinates[1]) >= 45.4) &&
+    Number(distanceValue) >= 0 &&
+    Number(distanceValue) <= 80;
+  const distancePrefix = isMaritime ? "Mm" : "Km AFDJ";
 
   return `
     <div class="fast-popup-content">
-      <strong>${isHectometric ? `Marcaj 100 m AFDJ +${escapeHtml(kmValue)}00 m` : `Km AFDJ ${escapeHtml(kmValue)}`}</strong><br />
+      <strong>${
+        isHectometric
+          ? `Marcaj 100 m AFDJ +${escapeHtml(distanceValue)}00 m`
+          : `${distancePrefix} ${escapeHtml(distanceValue)}`
+      }</strong><br />
       <span>catdis: ${escapeHtml(catdis)}</span><br />
       <span>Sursă: AFDJ</span>
     </div>
@@ -81,12 +93,17 @@ export function buildSturgeonHabitatPopup(feature) {
     ? properties.related_fast_pc.join(", ")
     : properties.related_fast_pc;
   const activeType = properties.label_ro || "Habitat sensibil";
+  const sector =
+    properties.distance_unit === "mm"
+      ? `Mm ${displayValue(properties.mm_start)}-${displayValue(properties.mm_end)}`
+      : `Dunăre km ${displayValue(properties.rkm_start)}-${displayValue(properties.rkm_end)}`;
 
   return `
     <div class="fast-popup-content fast-habitat-popup-content">
       <strong>Habitat sensibil pentru sturioni</strong><br />
       <span>Tip: ${displayValue(activeType)}</span><br />
-      <span>Sector: Dunăre km ${displayValue(properties.rkm_start)}–${displayValue(properties.rkm_end)}</span><br />
+      <span>Loc: ${displayValue(properties.location_name)}</span><br />
+      <span>Sector: ${sector}</span><br />
       <span>Mal: ${displayValue(properties.bank_side_ro)}</span><br />
       <span>Indiciu ecologic: ${displayValue(properties.substrate_ro)}</span><br />
       <span>Relație FAST 2: ${displayValue(relatedFastPc)}</span><br />
@@ -97,8 +114,10 @@ export function buildSturgeonHabitatPopup(feature) {
       <div class="fast-habitat-popup-types">
         <strong>Posibile habitate</strong>
         <span class="${properties.habitat_type === "spawning_potential" ? "is-active" : ""}">Reproducere potențială</span>
+        <span class="${properties.habitat_type === "confirmed_spawning" ? "is-active" : ""}">Reproducere confirmată</span>
         <span class="${properties.habitat_type === "feeding_yoy" ? "is-active" : ""}">Hrănire / juvenili</span>
         <span class="${properties.habitat_type === "wintering_refuge" ? "is-active" : ""}">Iernare / refugiu</span>
+        <span class="${properties.habitat_type === "sensitive_protection" ? "is-active" : ""}">Protecție sensibilă</span>
       </div>
     </div>
   `;

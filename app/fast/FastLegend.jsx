@@ -56,12 +56,21 @@ export default function FastLegend() {
           <span>portocaliu = reproducere potențială</span>
         </div>
         <div className="fast-legend-row">
+          <span className="fast-swatch fast-swatch-sturgeon-confirmed" />
+          <span>roșu = reproducere confirmată</span>
+        </div>
+        <div className="fast-legend-row">
           <span className="fast-swatch fast-swatch-sturgeon-feeding" />
           <span>verde = hrănire / juvenili</span>
         </div>
         <div className="fast-legend-row">
           <span className="fast-swatch fast-swatch-sturgeon-wintering" />
           <span>albastru = iernare / refugiu</span>
+        </div>
+
+        <div className="fast-legend-row">
+          <span className="fast-swatch fast-swatch-sturgeon-protection" />
+          <span>galben = protecție sensibilă</span>
         </div>
 
         <div className="fast-legend-group">
@@ -119,6 +128,10 @@ export default function FastLegend() {
             Danube River sector km 863–375
           </span>
           <span>Caiet de sarcini FAST Danube 2 — lucrări și monitorizare impact asupra mediului</span>
+          <span>
+            Lower Danube extins: Rasova, Isaccea, Borcea și Chilia; ramurile fără geometrie
+            dedicată rămân raportate separat.
+          </span>
           <strong>Powered by Tudor</strong>
           <em>tudor.ionescu@sturgeons.eu</em>
         </details>

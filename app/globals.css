@@ -832,6 +832,11 @@ input:focus, select:focus{
   background: rgba(255, 122, 0, 0.32);
 }
 
+.fast-swatch-sturgeon-confirmed{
+  border: 2px solid #9a3412;
+  background: rgba(220, 38, 38, 0.42);
+}
+
 .fast-swatch-sturgeon-feeding{
   border: 2px solid #1e874b;
   background: rgba(46, 204, 113, 0.32);
@@ -840,6 +845,11 @@ input:focus, select:focus{
 .fast-swatch-sturgeon-wintering{
   border: 2px solid #0b3d91;
   background: rgba(36, 120, 255, 0.38);
+}
+
+.fast-swatch-sturgeon-protection{
+  border: 2px solid #7c2d12;
+  background: rgba(245, 158, 11, 0.38);
 }
 
 .fast-legend-sources{
@@ -1018,12 +1028,20 @@ input:focus, select:focus{
   background: #ff7a00;
 }
 
+.fast-habitat-swatch.is-confirmed{
+  background: #dc2626;
+}
+
 .fast-habitat-swatch.is-feeding{
   background: #2ecc71;
 }
 
 .fast-habitat-swatch.is-wintering{
   background: #2478ff;
+}
+
+.fast-habitat-swatch.is-protection{
+  background: #f59e0b;
 }
 
 .fast-habitat-control__fit{
