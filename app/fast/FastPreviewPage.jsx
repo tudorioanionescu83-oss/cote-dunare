@@ -89,6 +89,7 @@ export default function FastPreviewPage() {
             selectedPcCode={selectedPcCode}
             selectionRequestId={selectionRequestId}
             onSelectPc={handleSelectPc}
+            isPcDetailOpen={detailOpen}
           />
           <FastDetailCard
             interval={selectedInterval}

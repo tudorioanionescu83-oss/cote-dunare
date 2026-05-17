@@ -10,13 +10,19 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import FastLayerControl from "./FastLayerControl";
-import { buildKmPopup, buildPcPolygonPopup, buildPcPopup } from "./fastPopup";
+import {
+  buildKmPopup,
+  buildPcPolygonPopup,
+  buildPcPopup,
+  buildSturgeonHabitatPopup,
+} from "./fastPopup";
 
 const LAYER_URLS = {
   afdjKm: "/fast/afdj-km.geojson",
   pcKmSegments: "/fast/pc-km-segments.geojson",
   pcPlanningPolygons: "/fast/pc-planning-polygons.geojson",
   pcPolygons: "/fast/pc-zones.geojson",
+  sturgeonHabitats: "/fast/sturgeon-habitats.geojson",
   fairway: "/layers/danube_fairway.geojson",
   works: "/fast/works.geojson",
   disposalZones: "/fast/disposal-zones.geojson",
@@ -31,6 +37,9 @@ const INITIAL_LAYERS = {
   disposalZones: false,
   monitoringOverview: true,
   monitoringSturgeons: true,
+  sturgeonSpawning: false,
+  sturgeonFeeding: false,
+  sturgeonWintering: false,
 };
 
 const INITIAL_AVAILABILITY = {
@@ -42,6 +51,9 @@ const INITIAL_AVAILABILITY = {
   disposalZones: false,
   monitoringOverview: false,
   monitoringSturgeons: false,
+  sturgeonSpawning: false,
+  sturgeonFeeding: false,
+  sturgeonWintering: false,
 };
 
 function isFeatureCollection(payload) {
@@ -211,6 +223,14 @@ function buildPcLabelIcon(label, isSelected, isDimmed, showMonitoringBadge, show
         ${showSturgeonBadge ? '<em>STUR</em>' : ""}
       </div>
     `,
+  });
+}
+
+function buildHabitatLabelIcon(shortLabel, extendedLabel, zoom) {
+  const label = zoom >= 15 ? extendedLabel : shortLabel;
+  return L.divIcon({
+    className: "fast-habitat-label-anchor",
+    html: `<div class="fast-habitat-label">${escapeHtml(label)}</div>`,
   });
 }
 
@@ -411,6 +431,35 @@ function getDisposalStyle() {
   };
 }
 
+function getSturgeonHabitatStyle(feature) {
+  const habitatType = feature?.properties?.habitat_type;
+  if (habitatType === "spawning_potential") {
+    return {
+      color: "#C94F00",
+      weight: 2,
+      opacity: 0.9,
+      fillColor: "#FF7A00",
+      fillOpacity: 0.32,
+    };
+  }
+  if (habitatType === "feeding_yoy") {
+    return {
+      color: "#1E874B",
+      weight: 2,
+      opacity: 0.9,
+      fillColor: "#2ECC71",
+      fillOpacity: 0.32,
+    };
+  }
+  return {
+    color: "#0B3D91",
+    weight: 2,
+    opacity: 0.92,
+    fillColor: "#2478FF",
+    fillOpacity: 0.38,
+  };
+}
+
 function hasMonitoringOverview(featureCollection) {
   return Boolean(
     featureCollection?.features?.some(
@@ -434,7 +483,12 @@ function bindPcPopupInteractions(layer, feature, onSelectPc) {
   });
 }
 
-export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc }) {
+export default function FastMap({
+  selectedPcCode,
+  selectionRequestId,
+  onSelectPc,
+  isPcDetailOpen,
+}) {
   const [basemap, setBasemap] = useState("map");
   const [fitRequestId, setFitRequestId] = useState(0);
   const [activeLayers, setActiveLayers] = useState(INITIAL_LAYERS);
@@ -448,6 +502,7 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
     pcKmSegments: null,
     pcPlanningPolygons: null,
     pcPolygons: null,
+    sturgeonHabitats: null,
     fairway: null,
     works: null,
     disposalZones: null,
@@ -463,6 +518,7 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
         pcKmSegments,
         pcPlanningPolygons,
         pcPolygons,
+        sturgeonHabitats,
         fairway,
         works,
         disposalZones,
@@ -472,6 +528,7 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
           fetchGeoJson(LAYER_URLS.pcKmSegments, "PC km segments"),
           fetchGeoJson(LAYER_URLS.pcPlanningPolygons, "PC planning polygons", true),
           fetchGeoJson(LAYER_URLS.pcPolygons, "PC polygons"),
+          fetchGeoJson(LAYER_URLS.sturgeonHabitats, "Habitate sturioni", true),
           fetchGeoJson(LAYER_URLS.fairway, "Șenal navigabil"),
           fetchGeoJson(LAYER_URLS.works, "Lucrări principale", true),
           fetchGeoJson(LAYER_URLS.disposalZones, "Zone depozitare material dragat", true),
@@ -484,6 +541,7 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
         pcKmSegments,
         pcPlanningPolygons,
         pcPolygons,
+        sturgeonHabitats,
         fairway,
         works,
         disposalZones,
@@ -493,6 +551,9 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
         pcPlanningPolygons: Boolean(pcPlanningPolygons),
         pcKmSegments: Boolean(pcKmSegments),
         pcPolygons: Boolean(pcPolygons),
+        sturgeonSpawning: Boolean(sturgeonHabitats),
+        sturgeonFeeding: Boolean(sturgeonHabitats),
+        sturgeonWintering: Boolean(sturgeonHabitats),
         works: Boolean(works),
         disposalZones: Boolean(disposalZones),
         monitoringOverview: hasMonitoringOverview(pcKmSegments),
@@ -537,14 +598,51 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
           activeLayers.monitoringSturgeons
         )
       ),
+      habitatLabels: toFeatureCollection(
+        buildHabitatLabelFeatures(
+          datasets.sturgeonHabitats?.features?.filter((feature) => {
+            const habitatType = feature?.properties?.habitat_type;
+            return (
+              (habitatType === "spawning_potential" && activeLayers.sturgeonSpawning) ||
+              (habitatType === "feeding_yoy" && activeLayers.sturgeonFeeding) ||
+              (habitatType === "wintering_refuge" && activeLayers.sturgeonWintering)
+            );
+          }) || [],
+          viewState.zoom
+        )
+      ),
     }),
     [
       activeLayers.monitoringOverview,
       activeLayers.monitoringSturgeons,
+      activeLayers.sturgeonFeeding,
+      activeLayers.sturgeonSpawning,
+      activeLayers.sturgeonWintering,
       datasets.pcKmSegments,
+      datasets.sturgeonHabitats,
       selectedPcCode,
       viewState.zoom,
       visibleKmFeatures,
+    ]
+  );
+
+  const visibleSturgeonHabitats = useMemo(
+    () =>
+      toFeatureCollection(
+        datasets.sturgeonHabitats?.features?.filter((feature) => {
+          const habitatType = feature?.properties?.habitat_type;
+          return (
+            (habitatType === "spawning_potential" && activeLayers.sturgeonSpawning) ||
+            (habitatType === "feeding_yoy" && activeLayers.sturgeonFeeding) ||
+            (habitatType === "wintering_refuge" && activeLayers.sturgeonWintering)
+          );
+        }) || []
+      ),
+    [
+      activeLayers.sturgeonFeeding,
+      activeLayers.sturgeonSpawning,
+      activeLayers.sturgeonWintering,
+      datasets.sturgeonHabitats,
     ]
   );
 
@@ -630,6 +728,19 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
           />
         )}
 
+        {visibleSturgeonHabitats.features.length > 0 && (
+          <GeoJSON
+            key={`sturgeon-habitats-${activeLayers.sturgeonSpawning}-${activeLayers.sturgeonFeeding}-${activeLayers.sturgeonWintering}`}
+            data={visibleSturgeonHabitats}
+            style={getSturgeonHabitatStyle}
+            onEachFeature={(feature, layer) => {
+              layer.bindPopup(buildSturgeonHabitatPopup(feature), {
+                className: "fast-popup fast-habitat-popup",
+              });
+            }}
+          />
+        )}
+
         {activeLayers.pcKmSegments && datasets.pcKmSegments && (
           <GeoJSON
             key={`pc-segments-${selectedPcCode || "none"}`}
@@ -696,6 +807,25 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
             onEachFeature={(feature, layer) => {
               layer.on("click", () => onSelectPc(feature?.properties?.pc_code));
             }}
+          />
+        )}
+
+        {featureSets.habitatLabels.features.length > 0 && (
+          <GeoJSON
+            key={`habitat-labels-${viewState.zoom}-${activeLayers.sturgeonSpawning}-${activeLayers.sturgeonFeeding}-${activeLayers.sturgeonWintering}`}
+            data={featureSets.habitatLabels}
+            pointToLayer={(feature, latlng) =>
+              L.marker(latlng, {
+                icon: buildHabitatLabelIcon(
+                  feature?.properties?.__fastHabitatShortLabel || "",
+                  feature?.properties?.__fastHabitatExtendedLabel || "",
+                  viewState.zoom
+                ),
+                interactive: false,
+                keyboard: false,
+                zIndexOffset: 1180,
+              })
+            }
           />
         )}
 
@@ -779,6 +909,7 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
         basemap={basemap}
         activeLayers={activeLayers}
         availability={availability}
+        isPcDetailOpen={isPcDetailOpen}
         onBasemapChange={setBasemap}
         onFitToFastSector={() => setFitRequestId((value) => value + 1)}
         onToggleLayer={(layerId) =>
@@ -787,8 +918,75 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
             [layerId]: !current[layerId],
           }))
         }
+        onToggleAllHabitats={() =>
+          setActiveLayers((current) => {
+            const shouldEnableAll = !(
+              current.sturgeonSpawning &&
+              current.sturgeonFeeding &&
+              current.sturgeonWintering
+            );
+            return {
+              ...current,
+              sturgeonSpawning: shouldEnableAll,
+              sturgeonFeeding: shouldEnableAll,
+              sturgeonWintering: shouldEnableAll,
+            };
+          })
+        }
       />
 
     </div>
   );
+}
+
+function getPolygonLabelCoordinate(feature) {
+  if (feature?.geometry?.type !== "Polygon") return null;
+  const ring = feature.geometry.coordinates?.[0];
+  if (!Array.isArray(ring) || ring.length < 4) return null;
+
+  const coordinates = ring.slice(0, -1);
+  const total = coordinates.reduce(
+    (result, coordinate) => ({
+      lng: result.lng + coordinate[0],
+      lat: result.lat + coordinate[1],
+    }),
+    { lng: 0, lat: 0 }
+  );
+
+  return [total.lng / coordinates.length, total.lat / coordinates.length];
+}
+
+function getHabitatLabelParts(feature) {
+  const habitatType = feature?.properties?.habitat_type;
+  if (habitatType === "spawning_potential") {
+    return { shortLabel: "STU-R", extendedLabel: "Reproducere sturioni" };
+  }
+  if (habitatType === "feeding_yoy") {
+    return { shortLabel: "STU-H", extendedLabel: "Hrănire juvenili" };
+  }
+  return { shortLabel: "STU-I", extendedLabel: "Iernare / refugiu" };
+}
+
+function buildHabitatLabelFeatures(features = [], zoom) {
+  if (zoom < 13) return [];
+
+  return features
+    .map((feature) => {
+      const coordinate = getPolygonLabelCoordinate(feature);
+      if (!coordinate) return null;
+      const { shortLabel, extendedLabel } = getHabitatLabelParts(feature);
+      return {
+        type: "Feature",
+        properties: {
+          ...feature.properties,
+          __fastHabitatShortLabel: shortLabel,
+          __fastHabitatExtendedLabel: extendedLabel,
+        },
+        geometry: {
+          type: "Point",
+          coordinates: coordinate,
+        },
+      };
+    })
+    .filter(Boolean);
 }

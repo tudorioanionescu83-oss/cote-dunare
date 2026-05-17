@@ -1,0 +1,1097 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-SPAWN-843",
+        "layer": "fast2_sturgeons_spawning_potential",
+        "habitat_type": "spawning_potential",
+        "label_ro": "Reproducere potențială",
+        "rkm_start": 843,
+        "rkm_end": 841,
+        "bank_side": "left",
+        "bank_side_ro": "mal stâng",
+        "substrate_ro": "substrat de pietriș",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          843,
+          841
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              22.7037305,
+              44.2035942
+            ],
+            [
+              22.7272524,
+              44.2016215
+            ],
+            [
+              22.7295333,
+              44.2056836
+            ],
+            [
+              22.7038466,
+              44.2072566
+            ],
+            [
+              22.7037305,
+              44.2035942
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-SPAWN-831",
+        "layer": "fast2_sturgeons_spawning_potential",
+        "habitat_type": "spawning_potential",
+        "label_ro": "Reproducere potențială",
+        "rkm_start": 831,
+        "rkm_end": 824,
+        "bank_side": "right",
+        "bank_side_ro": "mal drept",
+        "substrate_ro": "maluri stâncoase și substrat de pietriș",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [
+          "PC2"
+        ],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          831,
+          824
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              22.8180901,
+              44.1527921
+            ],
+            [
+              22.889053,
+              44.1232055
+            ],
+            [
+              22.8825,
+              44.1199722
+            ],
+            [
+              22.8153056,
+              44.1479723
+            ],
+            [
+              22.8180901,
+              44.1527921
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-SPAWN-786",
+        "layer": "fast2_sturgeons_spawning_potential",
+        "habitat_type": "spawning_potential",
+        "label_ro": "Reproducere potențială",
+        "rkm_start": 786,
+        "rkm_end": 785,
+        "bank_side": "left",
+        "bank_side_ro": "mal stâng",
+        "substrate_ro": "maluri verticale de argilă",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [
+          "PC3"
+        ],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          786,
+          785
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              22.8698384,
+              43.9447048
+            ],
+            [
+              22.8675703,
+              43.9358456
+            ],
+            [
+              22.870417,
+              43.934158
+            ],
+            [
+              22.8725379,
+              43.943002
+            ],
+            [
+              22.8698384,
+              43.9447048
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-SPAWN-778",
+        "layer": "fast2_sturgeons_spawning_potential",
+        "habitat_type": "spawning_potential",
+        "label_ro": "Reproducere potențială",
+        "rkm_start": 778,
+        "rkm_end": 776,
+        "bank_side": "right",
+        "bank_side_ro": "mal drept",
+        "substrate_ro": "maluri stâncoase și substrat de pietriș",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          778,
+          776
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              22.8413771,
+              43.8756446
+            ],
+            [
+              22.8481398,
+              43.8551625
+            ],
+            [
+              22.84375,
+              43.8526389
+            ],
+            [
+              22.8307507,
+              43.8771179
+            ],
+            [
+              22.8413771,
+              43.8756446
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-SPAWN-775",
+        "layer": "fast2_sturgeons_spawning_potential",
+        "habitat_type": "spawning_potential",
+        "label_ro": "Reproducere potențială",
+        "rkm_start": 775,
+        "rkm_end": 771,
+        "bank_side": "right",
+        "bank_side_ro": "mal drept",
+        "substrate_ro": "maluri stâncoase și substrat de pietriș",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          775,
+          771
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              22.8555192,
+              43.8470635
+            ],
+            [
+              22.9013706,
+              43.8287182
+            ],
+            [
+              22.89875,
+              43.8245555
+            ],
+            [
+              22.8516111,
+              43.8446389
+            ],
+            [
+              22.8555192,
+              43.8470635
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-SPAWN-770",
+        "layer": "fast2_sturgeons_spawning_potential",
+        "habitat_type": "spawning_potential",
+        "label_ro": "Reproducere potențială",
+        "rkm_start": 770,
+        "rkm_end": 769,
+        "bank_side": "left",
+        "bank_side_ro": "mal stâng",
+        "substrate_ro": "maluri verticale de argilă",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          770,
+          769
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              22.912376,
+              43.826705
+            ],
+            [
+              22.9238533,
+              43.8243637
+            ],
+            [
+              22.9247207,
+              43.8294897
+            ],
+            [
+              22.9132958,
+              43.8296531
+            ],
+            [
+              22.912376,
+              43.826705
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-SPAWN-762",
+        "layer": "fast2_sturgeons_spawning_potential",
+        "habitat_type": "spawning_potential",
+        "label_ro": "Reproducere potențială",
+        "rkm_start": 762,
+        "rkm_end": 761,
+        "bank_side": "left",
+        "bank_side_ro": "mal stâng",
+        "substrate_ro": "maluri verticale de argilă",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [
+          "PC4"
+        ],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          762,
+          761
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              23.0030253,
+              43.8059741
+            ],
+            [
+              23.0152934,
+              43.8055841
+            ],
+            [
+              23.0150646,
+              43.8084795
+            ],
+            [
+              23.0048518,
+              43.8096217
+            ],
+            [
+              23.0030253,
+              43.8059741
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-WIN-678",
+        "layer": "fast2_sturgeons_wintering_refuge",
+        "habitat_type": "wintering_refuge",
+        "label_ro": "Iernare / refugiu",
+        "rkm_start": 678,
+        "rkm_end": 677,
+        "bank_side": "left",
+        "bank_side_ro": "mal stâng",
+        "substrate_ro": "apă adâncă, aprox. 8 m, aproape de mal",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [
+          "PC5"
+        ],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          678,
+          677
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              23.9648939,
+              43.7453531
+            ],
+            [
+              23.9779194,
+              43.7460777
+            ],
+            [
+              23.9796587,
+              43.749233
+            ],
+            [
+              23.9662156,
+              43.7492255
+            ],
+            [
+              23.9648939,
+              43.7453531
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-SPAWN-678",
+        "layer": "fast2_sturgeons_spawning_potential",
+        "habitat_type": "spawning_potential",
+        "label_ro": "Reproducere potențială",
+        "rkm_start": 678,
+        "rkm_end": 673,
+        "bank_side": "right",
+        "bank_side_ro": "mal drept",
+        "substrate_ro": "substrat stâncos / pietriș",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [
+          "PC5"
+        ],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          678,
+          673
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              23.9648939,
+              43.7453531
+            ],
+            [
+              24.0221488,
+              43.7334436
+            ],
+            [
+              24.0145392,
+              43.7247193
+            ],
+            [
+              23.9632778,
+              43.7406667
+            ],
+            [
+              23.9648939,
+              43.7453531
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-SPAWN-662",
+        "layer": "fast2_sturgeons_spawning_potential",
+        "habitat_type": "spawning_potential",
+        "label_ro": "Reproducere potențială",
+        "rkm_start": 662,
+        "rkm_end": 651,
+        "bank_side": "right",
+        "bank_side_ro": "mal drept",
+        "substrate_ro": "substrat stâncos / pietriș și pietre moi mari",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          662,
+          651
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              24.1467308,
+              43.6927654
+            ],
+            [
+              24.2792667,
+              43.6953717
+            ],
+            [
+              24.28,
+              43.6918889
+            ],
+            [
+              24.140178,
+              43.6874902
+            ],
+            [
+              24.1467308,
+              43.6927654
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-SPAWN-649",
+        "layer": "fast2_sturgeons_spawning_potential",
+        "habitat_type": "spawning_potential",
+        "label_ro": "Reproducere potențială",
+        "rkm_start": 649,
+        "rkm_end": 640,
+        "bank_side": "right",
+        "bank_side_ro": "mal drept",
+        "substrate_ro": "maluri stâncoase și substrat de pietriș",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          649,
+          640
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              24.3027171,
+              43.6986298
+            ],
+            [
+              24.4123971,
+              43.7210524
+            ],
+            [
+              24.4163056,
+              43.7149445
+            ],
+            [
+              24.3024679,
+              43.6930813
+            ],
+            [
+              24.3027171,
+              43.6986298
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-FEED-626",
+        "layer": "fast2_sturgeons_feeding_yoy",
+        "habitat_type": "feeding_yoy",
+        "label_ro": "Hrănire / juvenili",
+        "rkm_start": 626,
+        "rkm_end": 624,
+        "bank_side": "left",
+        "bank_side_ro": "mal stâng",
+        "substrate_ro": "probe de fund cu viermi / substrat favorabil juvenilor",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [
+          "PC6"
+        ],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          626,
+          624
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              24.5630331,
+              43.7575146
+            ],
+            [
+              24.5828862,
+              43.7537497
+            ],
+            [
+              24.5836737,
+              43.7566448
+            ],
+            [
+              24.5649864,
+              43.7603749
+            ],
+            [
+              24.5630331,
+              43.7575146
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-SPAWN-603",
+        "layer": "fast2_sturgeons_spawning_potential",
+        "habitat_type": "spawning_potential",
+        "label_ro": "Reproducere potențială",
+        "rkm_start": 603,
+        "rkm_end": 602,
+        "bank_side": "right",
+        "bank_side_ro": "mal drept",
+        "substrate_ro": "substrat stâncos / pietriș",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          603,
+          602
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              24.8191503,
+              43.7116584
+            ],
+            [
+              24.8333969,
+              43.7128
+            ],
+            [
+              24.8331002,
+              43.7088302
+            ],
+            [
+              24.8206218,
+              43.7098687
+            ],
+            [
+              24.8191503,
+              43.7116584
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-SPAWN-596",
+        "layer": "fast2_sturgeons_spawning_potential",
+        "habitat_type": "spawning_potential",
+        "label_ro": "Reproducere potențială",
+        "rkm_start": 596,
+        "rkm_end": 593,
+        "bank_side": "right",
+        "bank_side_ro": "mal drept",
+        "substrate_ro": "maluri stâncoase și substrat de pietriș",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          596,
+          593
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              24.9067302,
+              43.7119592
+            ],
+            [
+              24.9363444,
+              43.7173291
+            ],
+            [
+              24.9362189,
+              43.7116357
+            ],
+            [
+              24.9082303,
+              43.7087968
+            ],
+            [
+              24.9067302,
+              43.7119592
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-WIN-586",
+        "layer": "fast2_sturgeons_wintering_refuge",
+        "habitat_type": "wintering_refuge",
+        "label_ro": "Iernare / refugiu",
+        "rkm_start": 586,
+        "rkm_end": 585,
+        "bank_side": "left",
+        "bank_side_ro": "mal stâng",
+        "substrate_ro": "apă adâncă / groapă",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": true,
+        "source_km_values": [
+          590,
+          585
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              25.006044160000002,
+              43.71218606
+            ],
+            [
+              25.0139028,
+              43.7094092
+            ],
+            [
+              25.0211362,
+              43.7154093
+            ],
+            [
+              25.011272220000002,
+              43.719301779999995
+            ],
+            [
+              25.006044160000002,
+              43.71218606
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-SPAWN-579",
+        "layer": "fast2_sturgeons_spawning_potential",
+        "habitat_type": "spawning_potential",
+        "label_ro": "Reproducere potențială",
+        "rkm_start": 579,
+        "rkm_end": 577,
+        "bank_side": "right",
+        "bank_side_ro": "mal drept",
+        "substrate_ro": "substrat de pietriș",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [
+          "PC7"
+        ],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          579,
+          577
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              25.0797478,
+              43.6882907
+            ],
+            [
+              25.1049711,
+              43.6864866
+            ],
+            [
+              25.1024901,
+              43.6795619
+            ],
+            [
+              25.0777673,
+              43.6842905
+            ],
+            [
+              25.0797478,
+              43.6882907
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-FEED-572",
+        "layer": "fast2_sturgeons_feeding_yoy",
+        "habitat_type": "feeding_yoy",
+        "label_ro": "Hrănire / juvenili",
+        "rkm_start": 572,
+        "rkm_end": 571,
+        "bank_side": "left",
+        "bank_side_ro": "mal stâng",
+        "substrate_ro": "coada insulei; probe de fund cu viermi",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [
+          "PC7"
+        ],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          572,
+          571
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              25.1625567,
+              43.6980305
+            ],
+            [
+              25.1750605,
+              43.7000284
+            ],
+            [
+              25.1759447,
+              43.7037228
+            ],
+            [
+              25.1619539,
+              43.7037635
+            ],
+            [
+              25.1625567,
+              43.6980305
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-SPAWN-570",
+        "layer": "fast2_sturgeons_spawning_potential",
+        "habitat_type": "spawning_potential",
+        "label_ro": "Reproducere potențială",
+        "rkm_start": 570,
+        "rkm_end": 569,
+        "bank_side": "left",
+        "bank_side_ro": "mal stâng",
+        "substrate_ro": "maluri verticale de argilă",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [
+          "PC7"
+        ],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          570,
+          569
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              25.1875555,
+              43.6996489
+            ],
+            [
+              25.1990981,
+              43.6962394
+            ],
+            [
+              25.1999432,
+              43.6978182
+            ],
+            [
+              25.1883352,
+              43.7016492
+            ],
+            [
+              25.1875555,
+              43.6996489
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-WIN-524",
+        "layer": "fast2_sturgeons_wintering_refuge",
+        "habitat_type": "wintering_refuge",
+        "label_ro": "Iernare / refugiu",
+        "rkm_start": 524,
+        "rkm_end": 523,
+        "bank_side": "left",
+        "bank_side_ro": "mal stâng",
+        "substrate_ro": "apă adâncă / groapă",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [
+          "PC10"
+        ],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          524,
+          523
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              25.7056885,
+              43.6877032
+            ],
+            [
+              25.7193551,
+              43.6865349
+            ],
+            [
+              25.7147696,
+              43.6970842
+            ],
+            [
+              25.7018008,
+              43.697069
+            ],
+            [
+              25.7056885,
+              43.6877032
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-SPAWN-414",
+        "layer": "fast2_sturgeons_spawning_potential",
+        "habitat_type": "spawning_potential",
+        "label_ro": "Reproducere potențială",
+        "rkm_start": 414,
+        "rkm_end": 412,
+        "bank_side": "left",
+        "bank_side_ro": "mal stâng",
+        "substrate_ro": "substrat de pietriș",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": false,
+        "source_km_values": [
+          414,
+          412
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              26.826784,
+              44.1050754
+            ],
+            [
+              26.8479749,
+              44.1146428
+            ],
+            [
+              26.8441977,
+              44.1199527
+            ],
+            [
+              26.8245943,
+              44.1082703
+            ],
+            [
+              26.826784,
+              44.1050754
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "STU-WIN-409",
+        "layer": "fast2_sturgeons_wintering_refuge",
+        "habitat_type": "wintering_refuge",
+        "label_ro": "Iernare / refugiu",
+        "rkm_start": 409.3,
+        "rkm_end": 408.7,
+        "bank_side": "left",
+        "bank_side_ro": "mal stâng",
+        "substrate_ro": "groapă adâncă la coada insulei",
+        "confidence_ro": "habitat potențial / evaluare preliminară",
+        "popup_priority": null,
+        "related_fast_pc": [],
+        "source": "Honț et al. 2022 / DDNI + puncte AFDJ",
+        "geometry_method": "corridor between interpolated fairway reference and hydrographic bank",
+        "interpolation_used": true,
+        "source_km_values": [
+          410,
+          409,
+          408
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              26.87796806,
+              44.1219821
+            ],
+            [
+              26.88453566,
+              44.12364434
+            ],
+            [
+              26.88235373,
+              44.12821866
+            ],
+            [
+              26.87590439,
+              44.12584248
+            ],
+            [
+              26.87796806,
+              44.1219821
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

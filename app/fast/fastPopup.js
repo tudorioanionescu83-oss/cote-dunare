@@ -69,3 +69,32 @@ export function buildKmPopup(feature) {
     </div>
   `;
 }
+
+export function buildSturgeonHabitatPopup(feature) {
+  const properties = feature?.properties || {};
+  const relatedFastPc = Array.isArray(properties.related_fast_pc)
+    ? properties.related_fast_pc.join(", ")
+    : properties.related_fast_pc;
+  const activeType = properties.label_ro || "Habitat sensibil";
+
+  return `
+    <div class="fast-popup-content fast-habitat-popup-content">
+      <strong>Habitat sensibil pentru sturioni</strong><br />
+      <span>Tip: ${displayValue(activeType)}</span><br />
+      <span>Sector: Dunăre km ${displayValue(properties.rkm_start)}–${displayValue(properties.rkm_end)}</span><br />
+      <span>Mal: ${displayValue(properties.bank_side_ro)}</span><br />
+      <span>Indiciu ecologic: ${displayValue(properties.substrate_ro)}</span><br />
+      <span>Relație FAST 2: ${displayValue(relatedFastPc)}</span><br />
+      <span>Prioritate: ${displayValue(properties.popup_priority || "evaluare de impact")}</span><br />
+      <span>Nivel interpretare: habitat potențial / zonă sensibilă pentru evaluare impact</span><br />
+      <span>Recomandare: evitare impact direct, monitorizare pre/post-lucrări, corelare cu batimetrie, substrat, șenal și lucrările FAST 2.</span><br />
+      <span>Atenție: nu reprezintă loc de pescuit; informația este destinată conservării, evaluării de mediu și planificării lucrărilor hidrotehnice.</span>
+      <div class="fast-habitat-popup-types">
+        <strong>Posibile habitate</strong>
+        <span class="${properties.habitat_type === "spawning_potential" ? "is-active" : ""}">Reproducere potențială</span>
+        <span class="${properties.habitat_type === "feeding_yoy" ? "is-active" : ""}">Hrănire / juvenili</span>
+        <span class="${properties.habitat_type === "wintering_refuge" ? "is-active" : ""}">Iernare / refugiu</span>
+      </div>
+    </div>
+  `;
+}
