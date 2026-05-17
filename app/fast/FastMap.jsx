@@ -1201,9 +1201,24 @@ function matchesHabitatSelection(feature, selection) {
 }
 
 function isHabitatVisible(feature, activeLayers) {
-  return Object.entries(HABITAT_SELECTIONS).some(
-    ([id, selection]) => activeLayers[id] && matchesHabitatSelection(feature, selection)
-  );
+  const props = feature?.properties || {};
+  const group = props.dataset_group;
+  const type = props.habitat_type;
+
+  if (group === FAST2_GROUP) {
+    if (type === "spawning_potential") return Boolean(activeLayers.fast2Spawning);
+    if (type === "feeding_yoy") return Boolean(activeLayers.fast2Feeding);
+    if (type === "wintering_refuge") return Boolean(activeLayers.fast2Wintering);
+  }
+
+  if (group === LOWER_DANUBE_GROUP) {
+    if (type === "confirmed_spawning") return Boolean(activeLayers.lowerConfirmedSpawning);
+    if (type === "sensitive_protection") return Boolean(activeLayers.lowerProtection);
+    if (type === "feeding_yoy") return Boolean(activeLayers.lowerFeeding);
+    if (type === "wintering_refuge") return Boolean(activeLayers.lowerWintering);
+  }
+
+  return false;
 }
 
 function getHabitatLayerStateKey(activeLayers) {
