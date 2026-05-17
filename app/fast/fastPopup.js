@@ -27,9 +27,10 @@ export function buildPcPopup(feature) {
       <span>Denumire: ${displayValue(properties.name)}</span><br />
       <span>Km amonte–aval: ${kmRange}</span><br />
       <span>Lucrări principale: ${displayValue(properties.main_works)}</span><br />
-      <span>Monitorizare ihtiofaună/sturioni – overview: ${displayValue(properties.fish_monitoring_overview)}</span><br />
+      <span>Monitorizare overview: ${displayValue(properties.fish_monitoring_overview)}</span><br />
       <span>Tip reprezentare: ${displayValue(properties.representation_type)}</span><br />
-      <span>Observații: Reprezentare pe interval kilometric, nu poligon tehnic de execuție.</span>
+      <span>Observație: ${displayValue(properties.observations)}</span><br />
+      <span>Sursă: ${displayValue(properties.source)}</span>
     </div>
   `;
 }
@@ -48,7 +49,7 @@ export function buildPcPolygonPopup(feature) {
       <strong>Source polygon</strong><br />
       <span>Nume sursă: ${displayValue(properties.name || sourceNames)}</span><br />
       <span>Fișiere sursă: ${displayValue(sourceFiles)}</span><br />
-      <span>Observații: Sursa disponibilă nu conține toate metadatele FAST pentru acest poligon.</span>
+      <span>Observație: sursa disponibilă nu conține toate metadatele FAST pentru acest poligon.</span>
     </div>
   `;
 }

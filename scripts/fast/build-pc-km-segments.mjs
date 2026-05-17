@@ -8,7 +8,12 @@ const METADATA_PATH = path.join(FAST_DIR, "metadata.json");
 const OUTPUT_PATH = path.join(FAST_DIR, "pc-km-segments.geojson");
 
 const MONITORING_OVERVIEW =
-  "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior.";
+  "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare, migrație și scrumbie de Dunăre.";
+const MONITORING_NOTE =
+  "Monitorizarea sturionilor se referă la întreg sectorul comun și la toate punctele critice. Detalierea MON12–MON27 va fi adăugată ulterior.";
+const REPRESENTATION_OBSERVATION =
+  "Reprezentare pe interval kilometric, nu poligon tehnic de execuție.";
+const SOURCE_REFERENCE = "caiet de sarcini / clarificări";
 
 const PC_INTERVALS = [
   {
@@ -45,14 +50,15 @@ const PC_INTERVALS = [
     km_upstream: 678,
     km_downstream: 673,
     main_works:
-      "dragaj/realiniere șenal, chevron, epiuri, stabilizare mal, insulă artificială, depozitare material dragat.",
+      "dragaj / realiniere șenal; chevron; epiuri; stabilizare mal; insulă artificială; depozitare material dragat.",
   },
   {
     pc_code: "PC6",
     name: "Corabia",
     km_upstream: 632,
     km_downstream: 626,
-    main_works: "dragaj șenal existent și canal acces port Corabia; depozitare amonte de insula Baloiu.",
+    main_works:
+      "dragaj șenal existent și canal acces port Corabia; depozitare amonte de insula Baloiu.",
   },
   {
     pc_code: "PC7",
@@ -60,7 +66,7 @@ const PC_INTERVALS = [
     km_upstream: 577,
     km_downstream: 560,
     main_works:
-      "dragaj/realiniere șenal, două chevroane, trei epiuri, stabilizare mal, depozitare material dragat.",
+      "dragaj / realiniere șenal; două chevroane; trei epiuri; stabilizare mal; depozitare material dragat.",
   },
   {
     pc_code: "PC8",
@@ -95,11 +101,15 @@ const PC_INTERVALS = [
     name: "Popina",
     km_upstream: 408,
     km_downstream: 401,
-    main_works: "dragaj/realiniere șenal, trei epiuri, chevron, două zone de depozitare.",
+    main_works: "dragaj / realiniere șenal; trei epiuri; chevron; două zone de depozitare.",
   },
 ].map((item) => ({
   ...item,
+  representation_type: "km interval representation",
   fish_monitoring_overview: MONITORING_OVERVIEW,
+  monitoring_note: MONITORING_NOTE,
+  observations: REPRESENTATION_OBSERVATION,
+  source: SOURCE_REFERENCE,
 }));
 
 function readJson(filePath) {
@@ -134,10 +144,11 @@ function baseProperties(interval) {
     km_downstream: interval.km_downstream,
     main_works: interval.main_works,
     fish_monitoring_overview: interval.fish_monitoring_overview,
-    representation_type: "km interval representation",
+    monitoring_note: interval.monitoring_note,
+    representation_type: interval.representation_type,
+    source: interval.source,
     source_layer: "afdj-km.geojson",
-    observations:
-      "Reprezentare de interval km construită din puncte AFDJ existente; nu este poligon exact al punctului critic.",
+    observations: interval.observations,
   };
 }
 
@@ -244,6 +255,11 @@ function updateMetadata(metadata, featureCount) {
     ...metadata,
     layers: {
       ...metadata.layers,
+      pc_zones: {
+        ...metadata.layers?.pc_zones,
+        note:
+          "Sursele KMZ conțin geometrii exacte, dar nu conțin atribute descriptive FAST suficiente pentru cod, denumire sau lucrări.",
+      },
       pc_km_segments: {
         file: "pc-km-segments.geojson",
         feature_count: featureCount,
@@ -252,7 +268,22 @@ function updateMetadata(metadata, featureCount) {
           "Km interval representation construită din puncte AFDJ existente; nu este poligon exact.",
       },
     },
+    monitoring_overview: {
+      summary: MONITORING_OVERVIEW,
+      scope: "întreg sectorul comun și toate punctele critice",
+      note: MONITORING_NOTE,
+    },
+    source_reference: SOURCE_REFERENCE,
     pc_intervals: PC_INTERVALS,
+    unclassified_sources: (metadata.unclassified_sources || []).map((item) =>
+      item.file === "source/waterskmz_v1_10.kmz"
+        ? {
+            ...item,
+            reason:
+              "Conține NetworkLink-uri și imagini externe, nu geometrii vectoriale FAST utilizabile direct în preview.",
+          }
+        : item
+    ),
   };
 }
 

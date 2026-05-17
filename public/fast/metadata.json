@@ -17,7 +17,7 @@
       "file": "pc-zones.geojson",
       "feature_count": 2,
       "status": "converted_from_exact_polygon_sources",
-      "note": "Sursele KMZ con?in geometrii exacte, dar nu con?in atribute descriptive FAST suficiente pentru cod, denumire sau lucr?ri."
+      "note": "Sursele KMZ conțin geometrii exacte, dar nu conțin atribute descriptive FAST suficiente pentru cod, denumire sau lucrări."
     },
     "works": {
       "file": "works.geojson",
@@ -37,7 +37,7 @@
   "unclassified_sources": [
     {
       "file": "source/waterskmz_v1_10.kmz",
-      "reason": "Con?ine NetworkLink-uri ?i imagini externe, nu geometrii vectoriale FAST utilizabile direct ?n preview."
+      "reason": "Conține NetworkLink-uri și imagini externe, nu geometrii vectoriale FAST utilizabile direct în preview."
     }
   ],
   "pc_intervals": [
@@ -47,7 +47,11 @@
       "km_upstream": 839,
       "km_downstream": 837,
       "main_works": "dragaj șenal existent; depozitare material dragat.",
-      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+      "representation_type": "km interval representation",
+      "fish_monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare, migrație și scrumbie de Dunăre.",
+      "monitoring_note": "Monitorizarea sturionilor se referă la întreg sectorul comun și la toate punctele critice. Detalierea MON12–MON27 va fi adăugată ulterior.",
+      "observations": "Reprezentare pe interval kilometric, nu poligon tehnic de execuție.",
+      "source": "caiet de sarcini / clarificări"
     },
     {
       "pc_code": "PC2",
@@ -55,7 +59,11 @@
       "km_upstream": 824,
       "km_downstream": 820,
       "main_works": "dragaj șenal existent; depozitare pe malul bulgăresc.",
-      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+      "representation_type": "km interval representation",
+      "fish_monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare, migrație și scrumbie de Dunăre.",
+      "monitoring_note": "Monitorizarea sturionilor se referă la întreg sectorul comun și la toate punctele critice. Detalierea MON12–MON27 va fi adăugată ulterior.",
+      "observations": "Reprezentare pe interval kilometric, nu poligon tehnic de execuție.",
+      "source": "caiet de sarcini / clarificări"
     },
     {
       "pc_code": "PC3",
@@ -63,7 +71,11 @@
       "km_upstream": 786,
       "km_downstream": 782,
       "main_works": "dragaj șenal existent; depozitare amonte de insula Bogdan Secian.",
-      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+      "representation_type": "km interval representation",
+      "fish_monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare, migrație și scrumbie de Dunăre.",
+      "monitoring_note": "Monitorizarea sturionilor se referă la întreg sectorul comun și la toate punctele critice. Detalierea MON12–MON27 va fi adăugată ulterior.",
+      "observations": "Reprezentare pe interval kilometric, nu poligon tehnic de execuție.",
+      "source": "caiet de sarcini / clarificări"
     },
     {
       "pc_code": "PC4",
@@ -71,15 +83,23 @@
       "km_upstream": 762,
       "km_downstream": 756,
       "main_works": "dragaj șenal existent; două zone de depozitare.",
-      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+      "representation_type": "km interval representation",
+      "fish_monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare, migrație și scrumbie de Dunăre.",
+      "monitoring_note": "Monitorizarea sturionilor se referă la întreg sectorul comun și la toate punctele critice. Detalierea MON12–MON27 va fi adăugată ulterior.",
+      "observations": "Reprezentare pe interval kilometric, nu poligon tehnic de execuție.",
+      "source": "caiet de sarcini / clarificări"
     },
     {
       "pc_code": "PC5",
       "name": "Bechet",
       "km_upstream": 678,
       "km_downstream": 673,
-      "main_works": "dragaj/realiniere șenal, chevron, epiuri, stabilizare mal, insulă artificială, depozitare material dragat.",
-      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+      "main_works": "dragaj / realiniere șenal; chevron; epiuri; stabilizare mal; insulă artificială; depozitare material dragat.",
+      "representation_type": "km interval representation",
+      "fish_monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare, migrație și scrumbie de Dunăre.",
+      "monitoring_note": "Monitorizarea sturionilor se referă la întreg sectorul comun și la toate punctele critice. Detalierea MON12–MON27 va fi adăugată ulterior.",
+      "observations": "Reprezentare pe interval kilometric, nu poligon tehnic de execuție.",
+      "source": "caiet de sarcini / clarificări"
     },
     {
       "pc_code": "PC6",
@@ -87,15 +107,23 @@
       "km_upstream": 632,
       "km_downstream": 626,
       "main_works": "dragaj șenal existent și canal acces port Corabia; depozitare amonte de insula Baloiu.",
-      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+      "representation_type": "km interval representation",
+      "fish_monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare, migrație și scrumbie de Dunăre.",
+      "monitoring_note": "Monitorizarea sturionilor se referă la întreg sectorul comun și la toate punctele critice. Detalierea MON12–MON27 va fi adăugată ulterior.",
+      "observations": "Reprezentare pe interval kilometric, nu poligon tehnic de execuție.",
+      "source": "caiet de sarcini / clarificări"
     },
     {
       "pc_code": "PC7",
       "name": "Belene",
       "km_upstream": 577,
       "km_downstream": 560,
-      "main_works": "dragaj/realiniere șenal, două chevroane, trei epiuri, stabilizare mal, depozitare material dragat.",
-      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+      "main_works": "dragaj / realiniere șenal; două chevroane; trei epiuri; stabilizare mal; depozitare material dragat.",
+      "representation_type": "km interval representation",
+      "fish_monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare, migrație și scrumbie de Dunăre.",
+      "monitoring_note": "Monitorizarea sturionilor se referă la întreg sectorul comun și la toate punctele critice. Detalierea MON12–MON27 va fi adăugată ulterior.",
+      "observations": "Reprezentare pe interval kilometric, nu poligon tehnic de execuție.",
+      "source": "caiet de sarcini / clarificări"
     },
     {
       "pc_code": "PC8",
@@ -103,7 +131,11 @@
       "km_upstream": 542,
       "km_downstream": 539,
       "main_works": "dragaj șenal existent; două zone de depozitare.",
-      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+      "representation_type": "km interval representation",
+      "fish_monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare, migrație și scrumbie de Dunăre.",
+      "monitoring_note": "Monitorizarea sturionilor se referă la întreg sectorul comun și la toate punctele critice. Detalierea MON12–MON27 va fi adăugată ulterior.",
+      "observations": "Reprezentare pe interval kilometric, nu poligon tehnic de execuție.",
+      "source": "caiet de sarcini / clarificări"
     },
     {
       "pc_code": "PC9",
@@ -111,7 +143,11 @@
       "km_upstream": 537,
       "km_downstream": 534,
       "main_works": "dragaj șenal existent; depozitare lângă malul românesc.",
-      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+      "representation_type": "km interval representation",
+      "fish_monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare, migrație și scrumbie de Dunăre.",
+      "monitoring_note": "Monitorizarea sturionilor se referă la întreg sectorul comun și la toate punctele critice. Detalierea MON12–MON27 va fi adăugată ulterior.",
+      "observations": "Reprezentare pe interval kilometric, nu poligon tehnic de execuție.",
+      "source": "caiet de sarcini / clarificări"
     },
     {
       "pc_code": "PC10",
@@ -119,7 +155,11 @@
       "km_upstream": 530,
       "km_downstream": 520,
       "main_works": "dragaj șenal existent; depozitare lângă insula Batin.",
-      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+      "representation_type": "km interval representation",
+      "fish_monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare, migrație și scrumbie de Dunăre.",
+      "monitoring_note": "Monitorizarea sturionilor se referă la întreg sectorul comun și la toate punctele critice. Detalierea MON12–MON27 va fi adăugată ulterior.",
+      "observations": "Reprezentare pe interval kilometric, nu poligon tehnic de execuție.",
+      "source": "caiet de sarcini / clarificări"
     },
     {
       "pc_code": "PC11",
@@ -127,15 +167,29 @@
       "km_upstream": 428,
       "km_downstream": 423,
       "main_works": "dragaj șenal existent; depozitare/extindere insulele Kosui și Malyk Kosui.",
-      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+      "representation_type": "km interval representation",
+      "fish_monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare, migrație și scrumbie de Dunăre.",
+      "monitoring_note": "Monitorizarea sturionilor se referă la întreg sectorul comun și la toate punctele critice. Detalierea MON12–MON27 va fi adăugată ulterior.",
+      "observations": "Reprezentare pe interval kilometric, nu poligon tehnic de execuție.",
+      "source": "caiet de sarcini / clarificări"
     },
     {
       "pc_code": "PC12",
       "name": "Popina",
       "km_upstream": 408,
       "km_downstream": 401,
-      "main_works": "dragaj/realiniere șenal, trei epiuri, chevron, două zone de depozitare.",
-      "fish_monitoring_overview": "Ihtiofaună, sturioni, habitate, migrație, hrănire, reproducere, iernare. Detalierea MON12–MON27 va fi adăugată ulterior."
+      "main_works": "dragaj / realiniere șenal; trei epiuri; chevron; două zone de depozitare.",
+      "representation_type": "km interval representation",
+      "fish_monitoring_overview": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare, migrație și scrumbie de Dunăre.",
+      "monitoring_note": "Monitorizarea sturionilor se referă la întreg sectorul comun și la toate punctele critice. Detalierea MON12–MON27 va fi adăugată ulterior.",
+      "observations": "Reprezentare pe interval kilometric, nu poligon tehnic de execuție.",
+      "source": "caiet de sarcini / clarificări"
     }
-  ]
+  ],
+  "monitoring_overview": {
+    "summary": "Pești Natura 2000, abundență pești, telemetrie sturioni, habitate de reproducere/hrănire/iernare, migrație și scrumbie de Dunăre.",
+    "scope": "întreg sectorul comun și toate punctele critice",
+    "note": "Monitorizarea sturionilor se referă la întreg sectorul comun și la toate punctele critice. Detalierea MON12–MON27 va fi adăugată ulterior."
+  },
+  "source_reference": "caiet de sarcini / clarificări"
 }
