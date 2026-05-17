@@ -693,6 +693,19 @@ input:focus, select:focus{
   font-size: 13px;
 }
 
+.fast-legend-details > summary{
+  list-style: none;
+  color: #082f49;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.fast-legend-details > summary::-webkit-details-marker{
+  display: none;
+}
+
 .fast-legend-group{
   margin-top: 4px;
 }
@@ -890,7 +903,7 @@ input:focus, select:focus{
   top: 14px;
   right: 14px;
   z-index: 1000;
-  width: min(420px, calc(100% - 28px));
+  width: min(280px, calc(100% - 28px));
   border: 1px solid rgba(255,255,255,0.72);
   border-radius: 14px;
   background: rgba(255,255,255,0.92);
@@ -905,10 +918,6 @@ input:focus, select:focus{
   gap: 8px;
 }
 
-.fast-habitat-control{
-  position: relative;
-}
-
 .fast-habitat-control__button{
   border: 1px solid rgba(255, 122, 0, 0.2);
   border-radius: 999px;
@@ -918,6 +927,13 @@ input:focus, select:focus{
   font-size: 12px;
   font-weight: 900;
   white-space: nowrap;
+}
+
+.fast-habitat-control-shell{
+  position: absolute;
+  top: 14px;
+  right: 308px;
+  z-index: 1001;
 }
 
 .fast-habitat-control__button.is-active{
@@ -970,6 +986,16 @@ input:focus, select:focus{
   gap: 7px;
 }
 
+.fast-habitat-control__panel em{
+  border-radius: 999px;
+  background: rgba(255, 122, 0, 0.14);
+  color: #9a3412;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  padding: 2px 6px;
+}
+
 .fast-habitat-control__close{
   justify-self: end;
   width: 24px;
@@ -998,6 +1024,21 @@ input:focus, select:focus{
 
 .fast-habitat-swatch.is-wintering{
   background: #2478ff;
+}
+
+.fast-habitat-control__fit{
+  border: 1px solid rgba(255, 122, 0, 0.18);
+  border-radius: 999px;
+  background: #9a3412;
+  color: #ffffff;
+  padding: 8px 11px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.fast-habitat-control__fit:disabled{
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .fast-layer-control__drawer{
@@ -1333,6 +1374,10 @@ input:focus, select:focus{
   display: none;
 }
 
+.fast-detail-card__sheet-action{
+  display: none;
+}
+
 .fast-habitat-label{
   border: 1px solid rgba(255,255,255,0.82);
   border-radius: 999px;
@@ -1622,12 +1667,25 @@ input:focus, select:focus{
     transform: translateX(-50%);
   }
 
+  .fast-detail-card__sheet-action{
+    display: inline-flex;
+    align-self: center;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(224, 242, 254, 0.88);
+    color: #075985;
+    font-size: 11px;
+    font-weight: 900;
+    margin-top: -2px;
+    padding: 4px 10px;
+  }
+
   .fast-detail-card[data-sheet-state="collapsed"]{
-    max-height: 148px;
+    max-height: 108px;
   }
 
   .fast-detail-card[data-sheet-state="half"]{
-    max-height: min(44vh, 420px);
+    max-height: min(40vh, 380px);
   }
 
   .fast-detail-card[data-sheet-state="expanded"]{
@@ -1635,11 +1693,13 @@ input:focus, select:focus{
   }
 
   .fast-detail-card[data-sheet-state="collapsed"] .fast-detail-card__header{
-    padding-top: 6px;
+    gap: 5px;
+    padding-top: 2px;
+    padding-bottom: 10px;
   }
 
   .fast-detail-card[data-sheet-state="collapsed"] .fast-detail-card__header h2{
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .fast-detail-card[data-sheet-state="collapsed"] .fast-detail-card__expanded{
@@ -1655,28 +1715,42 @@ input:focus, select:focus{
     right: 12px;
     bottom: auto;
     left: auto;
-    width: min(360px, calc(100% - 24px));
+    width: min(210px, calc(100% - 24px));
   }
 
   .fast-layer-control__toolbar{
     gap: 6px;
   }
 
-  .fast-layer-control__basemaps button,
+  .fast-layer-control__basemaps button{
+    padding-inline: 9px;
+    font-size: 11px;
+  }
+
+  .fast-habitat-control-shell{
+    top: 12px;
+    left: 12px;
+    right: auto;
+  }
+
   .fast-habitat-control__button{
     padding-inline: 9px;
     font-size: 11px;
   }
 
   .fast-habitat-control__panel{
+    left: 0;
     right: auto;
-    left: 50%;
-    transform: translateX(-50%);
+    transform: none;
   }
 
   .fast-habitat-popup .leaflet-popup-content{
     max-height: 32vh;
     overflow-y: auto;
+  }
+
+  .fast-legend-details:not([open]) .fast-legend{
+    display: none;
   }
 }
 

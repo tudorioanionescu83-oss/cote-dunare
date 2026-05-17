@@ -56,6 +56,9 @@ const INITIAL_AVAILABILITY = {
   sturgeonWintering: false,
 };
 
+const FAST_RKM_MIN = 375;
+const FAST_RKM_MAX = 863;
+
 function isFeatureCollection(payload) {
   return payload?.type === "FeatureCollection" && Array.isArray(payload.features);
 }
@@ -126,6 +129,27 @@ function isSubKmValue(value) {
   return Number.isFinite(value) && !Number.isInteger(value);
 }
 
+function isFastRelevantKmFeature(feature) {
+  const km = Number(feature?.properties?.wtwdis);
+  return (
+    feature?.geometry?.type === "Point" &&
+    Number.isFinite(km) &&
+    km >= FAST_RKM_MIN &&
+    km <= FAST_RKM_MAX
+  );
+}
+
+function isFastHectometricFeature(feature) {
+  const value = Number(feature?.properties?.wtwdis);
+  return (
+    feature?.geometry?.type === "Point" &&
+    Number(feature?.properties?.catdis) === 3 &&
+    Number.isInteger(value) &&
+    value >= 1 &&
+    value <= 9
+  );
+}
+
 function getFeaturePriority(feature) {
   const catdis = Number(feature?.properties?.catdis);
   if (catdis === 1) return 0;
@@ -183,9 +207,10 @@ function buildRepresentativeSubKmPointFeatures(features = [], zoom) {
   const bestByValue = new Map();
   for (const feature of features) {
     const km = Number(feature?.properties?.wtwdis);
-    if (!isSubKmValue(km)) continue;
+    if (!isSubKmValue(km) && !isFastHectometricFeature(feature)) continue;
 
-    const key = km.toFixed(1);
+    const coordinates = feature?.geometry?.coordinates || [];
+    const key = `${km}:${coordinates[0]?.toFixed?.(6)}:${coordinates[1]?.toFixed?.(6)}`;
     const existing = bestByValue.get(key);
     if (!existing || getFeaturePriority(feature) < getFeaturePriority(existing)) {
       bestByValue.set(key, feature);
@@ -431,32 +456,59 @@ function getDisposalStyle() {
   };
 }
 
-function getSturgeonHabitatStyle(feature) {
+function FastRequestedFitBounds({ datasets, fitRequestId }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (fitRequestId === 0) return;
+    const featureCollections = datasets.filter(isFeatureCollection);
+    if (!featureCollections.length) return;
+
+    const group = L.featureGroup(featureCollections.map((dataset) => L.geoJSON(dataset)));
+    const bounds = group.getBounds();
+    if (!bounds.isValid()) return;
+
+    map.fitBounds(bounds.pad(0.14), { maxZoom: 12 });
+  }, [datasets, fitRequestId, map]);
+
+  return null;
+}
+
+function getDatasetsBounds(datasets = []) {
+  const featureCollections = datasets.filter(isFeatureCollection);
+  if (!featureCollections.length) return null;
+  const group = L.featureGroup(featureCollections.map((dataset) => L.geoJSON(dataset)));
+  const bounds = group.getBounds();
+  return bounds.isValid() ? bounds : null;
+}
+
+function getSturgeonHabitatStyle(feature, selectedHabitatId) {
   const habitatType = feature?.properties?.habitat_type;
+  const isSelected = feature?.properties?.id === selectedHabitatId;
   if (habitatType === "spawning_potential") {
     return {
       color: "#C94F00",
-      weight: 2,
+      weight: isSelected ? 3.4 : 2,
       opacity: 0.9,
       fillColor: "#FF7A00",
-      fillOpacity: 0.32,
+      fillOpacity: isSelected ? 0.42 : 0.32,
     };
   }
   if (habitatType === "feeding_yoy") {
     return {
       color: "#1E874B",
-      weight: 2,
+      weight: isSelected ? 3.4 : 2,
       opacity: 0.9,
       fillColor: "#2ECC71",
-      fillOpacity: 0.32,
+      fillOpacity: isSelected ? 0.42 : 0.32,
     };
   }
   return {
     color: "#0B3D91",
-    weight: 2,
+    weight: isSelected ? 3.4 : 2,
     opacity: 0.92,
     fillColor: "#2478FF",
-    fillOpacity: 0.38,
+    fillOpacity: isSelected ? 0.48 : 0.38,
   };
 }
 
@@ -488,11 +540,14 @@ export default function FastMap({
   selectionRequestId,
   onSelectPc,
   isPcDetailOpen,
+  onHabitatControlOpen,
 }) {
   const [basemap, setBasemap] = useState("map");
   const [fitRequestId, setFitRequestId] = useState(0);
+  const [habitatFitRequestId, setHabitatFitRequestId] = useState(0);
   const [activeLayers, setActiveLayers] = useState(INITIAL_LAYERS);
   const [availability, setAvailability] = useState(INITIAL_AVAILABILITY);
+  const [selectedHabitatId, setSelectedHabitatId] = useState(null);
   const [viewState, setViewState] = useState({
     zoom: 9,
     bounds: null,
@@ -568,15 +623,42 @@ export default function FastMap({
   }, []);
 
   const fitDatasets = useMemo(
-    () => [datasets.pcPlanningPolygons, datasets.pcKmSegments].filter(Boolean),
-    [datasets.pcKmSegments, datasets.pcPlanningPolygons]
+    () =>
+      [
+        datasets.pcPlanningPolygons,
+        datasets.pcKmSegments,
+        datasets.sturgeonHabitats,
+      ].filter(Boolean),
+    [datasets.pcKmSegments, datasets.pcPlanningPolygons, datasets.sturgeonHabitats]
+  );
+
+  const fastReferenceBounds = useMemo(
+    () => getDatasetsBounds(fitDatasets)?.pad(0.18) || null,
+    [fitDatasets]
   );
 
   const visibleKmFeatures = useMemo(() => {
     const features = datasets.afdjKm?.features || [];
     if (!viewState.bounds) return [];
-    return features.filter((feature) => isFeatureInBounds(feature, viewState.bounds));
+    return features.filter(
+      (feature) =>
+        isFastRelevantKmFeature(feature) && isFeatureInBounds(feature, viewState.bounds)
+    );
   }, [datasets.afdjKm, viewState.bounds]);
+
+  const visibleSubKmMarkerFeatures = useMemo(() => {
+    const features = datasets.afdjKm?.features || [];
+    if (!viewState.bounds || !fastReferenceBounds) return [];
+    return features.filter((feature) => {
+      const point = getPointLatLng(feature);
+      return (
+        point &&
+        isFastHectometricFeature(feature) &&
+        viewState.bounds.contains(point) &&
+        fastReferenceBounds.contains(point)
+      );
+    });
+  }, [datasets.afdjKm, fastReferenceBounds, viewState.bounds]);
 
   const featureSets = useMemo(
     () => ({
@@ -587,7 +669,10 @@ export default function FastMap({
         buildRepresentativeWholeKmPointFeatures(visibleKmFeatures, viewState.zoom)
       ),
       subKmPoints: toFeatureCollection(
-        buildRepresentativeSubKmPointFeatures(visibleKmFeatures, viewState.zoom)
+        buildRepresentativeSubKmPointFeatures(
+          [...visibleKmFeatures, ...visibleSubKmMarkerFeatures],
+          viewState.zoom
+        )
       ),
       pcLabels: toFeatureCollection(
         buildPcLabelFeatures(
@@ -623,6 +708,7 @@ export default function FastMap({
       selectedPcCode,
       viewState.zoom,
       visibleKmFeatures,
+      visibleSubKmMarkerFeatures,
     ]
   );
 
@@ -645,6 +731,21 @@ export default function FastMap({
       datasets.sturgeonHabitats,
     ]
   );
+
+  const habitatCounts = useMemo(() => {
+    const counts = {
+      total: 0,
+      spawning_potential: 0,
+      feeding_yoy: 0,
+      wintering_refuge: 0,
+    };
+    for (const feature of datasets.sturgeonHabitats?.features || []) {
+      const habitatType = feature?.properties?.habitat_type;
+      counts.total += 1;
+      if (habitatType in counts) counts[habitatType] += 1;
+    }
+    return counts;
+  }, [datasets.sturgeonHabitats]);
 
   const selectedFeature = useMemo(
     () =>
@@ -681,6 +782,10 @@ export default function FastMap({
         )}
 
         <FastFitBounds datasets={fitDatasets} fitRequestId={fitRequestId} />
+        <FastRequestedFitBounds
+          datasets={[visibleSturgeonHabitats]}
+          fitRequestId={habitatFitRequestId}
+        />
         <FastViewState onChange={setViewState} />
         <FastPcFocus
           selectedFeature={selectedFeature}
@@ -730,12 +835,16 @@ export default function FastMap({
 
         {visibleSturgeonHabitats.features.length > 0 && (
           <GeoJSON
-            key={`sturgeon-habitats-${activeLayers.sturgeonSpawning}-${activeLayers.sturgeonFeeding}-${activeLayers.sturgeonWintering}`}
+            key={`sturgeon-habitats-${activeLayers.sturgeonSpawning}-${activeLayers.sturgeonFeeding}-${activeLayers.sturgeonWintering}-${selectedHabitatId || "none"}`}
             data={visibleSturgeonHabitats}
-            style={getSturgeonHabitatStyle}
+            style={(feature) => getSturgeonHabitatStyle(feature, selectedHabitatId)}
             onEachFeature={(feature, layer) => {
               layer.bindPopup(buildSturgeonHabitatPopup(feature), {
                 className: "fast-popup fast-habitat-popup",
+              });
+              layer.on("click", () => {
+                setSelectedHabitatId(feature?.properties?.id || null);
+                layer.bringToFront?.();
               });
             }}
           />
@@ -909,9 +1018,12 @@ export default function FastMap({
         basemap={basemap}
         activeLayers={activeLayers}
         availability={availability}
+        habitatCounts={habitatCounts}
         isPcDetailOpen={isPcDetailOpen}
         onBasemapChange={setBasemap}
         onFitToFastSector={() => setFitRequestId((value) => value + 1)}
+        onFitToHabitats={() => setHabitatFitRequestId((value) => value + 1)}
+        onHabitatControlOpen={onHabitatControlOpen}
         onToggleLayer={(layerId) =>
           setActiveLayers((current) => ({
             ...current,

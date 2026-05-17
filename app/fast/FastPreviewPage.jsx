@@ -18,6 +18,7 @@ export default function FastPreviewPage() {
   const [selectionRequestId, setSelectionRequestId] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [detailCollapseRequestId, setDetailCollapseRequestId] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,11 +91,15 @@ export default function FastPreviewPage() {
             selectionRequestId={selectionRequestId}
             onSelectPc={handleSelectPc}
             isPcDetailOpen={detailOpen}
+            onHabitatControlOpen={() =>
+              setDetailCollapseRequestId((value) => value + 1)
+            }
           />
           <FastDetailCard
             interval={selectedInterval}
             isOpen={detailOpen}
             onClose={() => setDetailOpen(false)}
+            collapseRequestId={detailCollapseRequestId}
           />
         </div>
       </section>

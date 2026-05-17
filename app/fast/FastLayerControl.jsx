@@ -19,26 +19,45 @@ const OVERLAY_OPTIONS = [
 ];
 
 const HABITAT_OPTIONS = [
-  { id: "sturgeonSpawning", label: "Reproducere potențială", swatch: "spawning" },
-  { id: "sturgeonFeeding", label: "Hrănire / juvenili", swatch: "feeding" },
-  { id: "sturgeonWintering", label: "Iernare / refugiu", swatch: "wintering" },
+  {
+    id: "sturgeonSpawning",
+    label: "Reproducere potențială",
+    swatch: "spawning",
+    countKey: "spawning_potential",
+  },
+  {
+    id: "sturgeonFeeding",
+    label: "Hrănire / juvenili",
+    swatch: "feeding",
+    countKey: "feeding_yoy",
+  },
+  {
+    id: "sturgeonWintering",
+    label: "Iernare / refugiu",
+    swatch: "wintering",
+    countKey: "wintering_refuge",
+  },
 ];
 
 export default function FastLayerControl({
   basemap,
   activeLayers,
   availability,
+  habitatCounts,
   isPcDetailOpen,
   onBasemapChange,
   onFitToFastSector,
+  onFitToHabitats,
+  onHabitatControlOpen,
   onToggleLayer,
   onToggleAllHabitats,
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isHabitatPanelOpen, setIsHabitatPanelOpen] = useState(false);
-  const timerRef = useRef(null);
+  const [isMapControlOpen, setIsMapControlOpen] = useState(false);
+  const [isHabitatControlOpen, setIsHabitatControlOpen] = useState(false);
+  const mapTimerRef = useRef(null);
   const habitatTimerRef = useRef(null);
-  const habitatPanelRef = useRef(null);
+  const mapControlRef = useRef(null);
+  const habitatControlRef = useRef(null);
 
   const allHabitatsActive =
     activeLayers.sturgeonSpawning &&
@@ -53,10 +72,17 @@ export default function FastLayerControl({
     availability.sturgeonFeeding ||
     availability.sturgeonWintering;
 
-  function clearCloseTimer() {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
+  function getAutoCloseDelay() {
+    return typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 900px)").matches
+      ? 2000
+      : 3000;
+  }
+
+  function clearMapTimer() {
+    if (mapTimerRef.current) {
+      clearTimeout(mapTimerRef.current);
+      mapTimerRef.current = null;
     }
   }
 
@@ -67,22 +93,18 @@ export default function FastLayerControl({
     }
   }
 
-  function getAutoCloseDelay() {
-    return typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 900px)").matches
-      ? 2000
-      : 3200;
-  }
-
-  function scheduleClose() {
-    clearCloseTimer();
-    timerRef.current = setTimeout(() => setIsOpen(false), getAutoCloseDelay());
+  function scheduleMapClose() {
+    clearMapTimer();
+    mapTimerRef.current = setTimeout(
+      () => setIsMapControlOpen(false),
+      getAutoCloseDelay()
+    );
   }
 
   function scheduleHabitatClose() {
     clearHabitatTimer();
     habitatTimerRef.current = setTimeout(
-      () => setIsHabitatPanelOpen(false),
+      () => setIsHabitatControlOpen(false),
       getAutoCloseDelay()
     );
   }
@@ -90,220 +112,214 @@ export default function FastLayerControl({
   useEffect(() => {
     function handleOutsideClick(event) {
       if (
-        isHabitatPanelOpen &&
-        habitatPanelRef.current &&
-        !habitatPanelRef.current.contains(event.target)
+        isMapControlOpen &&
+        mapControlRef.current &&
+        !mapControlRef.current.contains(event.target)
       ) {
-        setIsHabitatPanelOpen(false);
+        setIsMapControlOpen(false);
+      }
+      if (
+        isHabitatControlOpen &&
+        habitatControlRef.current &&
+        !habitatControlRef.current.contains(event.target)
+      ) {
+        setIsHabitatControlOpen(false);
       }
     }
 
     document.addEventListener("pointerdown", handleOutsideClick);
     return () => {
       document.removeEventListener("pointerdown", handleOutsideClick);
-      clearCloseTimer();
+      clearMapTimer();
       clearHabitatTimer();
     };
-  }, [isHabitatPanelOpen]);
+  }, [isHabitatControlOpen, isMapControlOpen]);
 
   useEffect(() => {
     if (isPcDetailOpen) {
-      setIsHabitatPanelOpen(false);
+      setIsHabitatControlOpen(false);
     }
   }, [isPcDetailOpen]);
 
-  function handleInteraction(callback) {
+  function handleMapInteraction(callback) {
     callback?.();
-    setIsOpen(true);
-    scheduleClose();
+    setIsHabitatControlOpen(false);
+    setIsMapControlOpen(true);
+    scheduleMapClose();
   }
 
   function handleHabitatInteraction(callback) {
     callback?.();
-    setIsHabitatPanelOpen(true);
+    setIsMapControlOpen(false);
+    setIsHabitatControlOpen(true);
+    onHabitatControlOpen?.();
     scheduleHabitatClose();
   }
 
   return (
-    <div
-      className={`fast-layer-control${isOpen ? " is-open" : ""}`}
-      onMouseEnter={() => {
-        clearCloseTimer();
-        setIsOpen(true);
-      }}
-      onMouseLeave={scheduleClose}
-      onTouchStart={() => handleInteraction()}
-    >
-      <div className="fast-layer-control__toolbar">
-        <div className="fast-layer-control__basemaps">
-          {BASEMAP_OPTIONS.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              className={basemap === option.id ? "is-active" : ""}
-              onClick={() => handleInteraction(() => onBasemapChange(option.id))}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="fast-habitat-control" ref={habitatPanelRef}>
+    <>
+      <div
+        ref={mapControlRef}
+        className={`fast-layer-control${isMapControlOpen ? " is-open" : ""}`}
+        onPointerDown={scheduleMapClose}
+      >
+        <div className="fast-layer-control__toolbar">
+          <div className="fast-layer-control__basemaps">
+            {BASEMAP_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                className={basemap === option.id ? "is-active" : ""}
+                onClick={() => handleMapInteraction(() => onBasemapChange(option.id))}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
-            className={`fast-habitat-control__button${
-              anyHabitatsActive ? " is-active" : ""
-            }`}
-            disabled={!habitatsAvailable}
+            className="fast-layer-control__toggle"
+            aria-expanded={isMapControlOpen}
+            aria-label={isMapControlOpen ? "Ascunde controalele" : "Arată controalele"}
             onClick={() => {
-              setIsHabitatPanelOpen((value) => {
+              setIsHabitatControlOpen(false);
+              setIsMapControlOpen((value) => {
                 const next = !value;
-                if (next) scheduleHabitatClose();
+                if (next) scheduleMapClose();
                 return next;
               });
             }}
           >
-            Habitate sturioni
+            {isMapControlOpen ? "⌃" : "⌄"}
           </button>
-
-          {isHabitatPanelOpen && (
-            <section
-              className="fast-habitat-control__panel"
-              onMouseEnter={clearHabitatTimer}
-              onMouseLeave={scheduleHabitatClose}
-            >
-              <button
-                type="button"
-                className="fast-habitat-control__close"
-                onClick={() => setIsHabitatPanelOpen(false)}
-                aria-label="Închide"
-              >
-                ×
-              </button>
-              <label className={allHabitatsActive ? "is-active" : ""}>
-                <input
-                  type="checkbox"
-                  checked={allHabitatsActive}
-                  disabled={!habitatsAvailable}
-                  onChange={() => handleHabitatInteraction(onToggleAllHabitats)}
-                />
-                <span>Toate habitatele sturionilor</span>
-              </label>
-              {HABITAT_OPTIONS.map((option) => (
-                <label
-                  key={option.id}
-                  className={activeLayers[option.id] ? "is-active" : ""}
-                >
-                  <input
-                    type="checkbox"
-                    checked={Boolean(activeLayers[option.id])}
-                    disabled={!availability[option.id]}
-                    onChange={() => handleHabitatInteraction(() => onToggleLayer(option.id))}
-                  />
-                  <span>
-                    <i className={`fast-habitat-swatch is-${option.swatch}`} />
-                    {option.label}
-                  </span>
-                </label>
-              ))}
-            </section>
-          )}
         </div>
 
+        <div
+          className="fast-layer-control__drawer"
+          onPointerDown={scheduleMapClose}
+          onMouseEnter={clearMapTimer}
+          onMouseLeave={scheduleMapClose}
+        >
+          <button
+            type="button"
+            className="fast-layer-control__fit"
+            onClick={() => handleMapInteraction(onFitToFastSector)}
+          >
+            Fit to FAST sector
+          </button>
+
+          <div className="fast-layer-control__section">
+            <div className="fast-layer-control__title">Layere</div>
+            <div className="fast-layer-control__toggles">
+              {OVERLAY_OPTIONS.map((option) => {
+                const isAvailable = availability[option.id];
+                const isActive = Boolean(activeLayers[option.id]);
+                return (
+                  <label
+                    key={option.id}
+                    className={`${isAvailable ? "" : "is-unavailable"}${
+                      isActive ? " is-active" : ""
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isActive}
+                      onChange={() => handleMapInteraction(() => onToggleLayer(option.id))}
+                      disabled={!isAvailable}
+                    />
+                    <span>
+                      {option.label}
+                      <em>{option.kind}</em>
+                      {!isAvailable ? " · unavailable as GIS" : ""}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        ref={habitatControlRef}
+        className={`fast-habitat-control-shell${isHabitatControlOpen ? " is-open" : ""}`}
+        onPointerDown={scheduleHabitatClose}
+      >
         <button
           type="button"
-          className="fast-layer-control__toggle"
-          aria-expanded={isOpen}
-          aria-label={isOpen ? "Ascunde controalele" : "Arată controalele"}
+          className={`fast-habitat-control__button${anyHabitatsActive ? " is-active" : ""}`}
+          disabled={!habitatsAvailable}
           onClick={() => {
-            clearCloseTimer();
-            setIsOpen((value) => {
+            setIsMapControlOpen(false);
+            setIsHabitatControlOpen((value) => {
               const next = !value;
-              if (next) scheduleClose();
+              if (next) {
+                onHabitatControlOpen?.();
+                scheduleHabitatClose();
+              }
               return next;
             });
           }}
         >
-          {isOpen ? "⌃" : "⌄"}
-        </button>
-      </div>
-
-      <div className="fast-layer-control__drawer">
-        <button
-          type="button"
-          className="fast-layer-control__fit"
-          onClick={() => handleInteraction(onFitToFastSector)}
-        >
-          Fit to FAST sector
+          Habitate sturioni
         </button>
 
-        <div className="fast-layer-control__section">
-          <div className="fast-layer-control__title">Layere</div>
-          <div className="fast-layer-control__toggles">
-            {OVERLAY_OPTIONS.map((option) => {
-              const isAvailable = availability[option.id];
-              const isActive = Boolean(activeLayers[option.id]);
-              return (
-                <label
-                  key={option.id}
-                  className={`${isAvailable ? "" : "is-unavailable"}${
-                    isActive ? " is-active" : ""
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isActive}
-                    onChange={() => handleInteraction(() => onToggleLayer(option.id))}
-                    disabled={!isAvailable}
-                  />
-                  <span>
-                    {option.label}
-                    <em>{option.kind}</em>
-                    {!isAvailable ? " · unavailable as GIS" : ""}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="fast-layer-control__section">
-          <div className="fast-layer-control__title">Habitate sturioni</div>
-          <div className="fast-layer-control__toggles">
+        {isHabitatControlOpen && (
+          <section
+            className="fast-habitat-control__panel"
+            onPointerDown={scheduleHabitatClose}
+            onMouseEnter={clearHabitatTimer}
+            onMouseLeave={scheduleHabitatClose}
+          >
+            <button
+              type="button"
+              className="fast-habitat-control__close"
+              onClick={() => setIsHabitatControlOpen(false)}
+              aria-label="Închide"
+            >
+              ×
+            </button>
             <label className={allHabitatsActive ? "is-active" : ""}>
               <input
                 type="checkbox"
                 checked={allHabitatsActive}
                 disabled={!habitatsAvailable}
-                onChange={() => handleInteraction(onToggleAllHabitats)}
+                onChange={() => handleHabitatInteraction(onToggleAllHabitats)}
               />
               <span>
                 Toate habitatele sturionilor
-                <em>GIS</em>
+                <em>{habitatCounts.total}</em>
               </span>
             </label>
             {HABITAT_OPTIONS.map((option) => (
               <label
                 key={option.id}
-                className={`${availability[option.id] ? "" : "is-unavailable"}${
-                  activeLayers[option.id] ? " is-active" : ""
-                }`}
+                className={activeLayers[option.id] ? "is-active" : ""}
               >
                 <input
                   type="checkbox"
                   checked={Boolean(activeLayers[option.id])}
                   disabled={!availability[option.id]}
-                  onChange={() => handleInteraction(() => onToggleLayer(option.id))}
+                  onChange={() => handleHabitatInteraction(() => onToggleLayer(option.id))}
                 />
                 <span>
+                  <i className={`fast-habitat-swatch is-${option.swatch}`} />
                   {option.label}
-                  <em>GIS</em>
+                  <em>{habitatCounts[option.countKey]}</em>
                 </span>
               </label>
             ))}
-          </div>
-        </div>
+            <button
+              type="button"
+              className="fast-habitat-control__fit"
+              disabled={!anyHabitatsActive}
+              onClick={() => handleHabitatInteraction(onFitToHabitats)}
+            >
+              Zoom to habitats
+            </button>
+          </section>
+        )}
       </div>
-    </div>
+    </>
   );
 }

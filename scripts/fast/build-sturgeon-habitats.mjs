@@ -204,6 +204,15 @@ function polygonSelfIntersects(coordinates) {
   return segmentsIntersect(coordinates[0], coordinates[1], coordinates[2], coordinates[3]);
 }
 
+function isValidHabitatGeometry(feature) {
+  const geometry = feature?.geometry;
+  if (!geometry || !["Polygon", "MultiPolygon"].includes(geometry.type)) return false;
+  if (geometry.type === "Polygon") {
+    return Array.isArray(geometry.coordinates?.[0]) && geometry.coordinates[0].length >= 5;
+  }
+  return Array.isArray(geometry.coordinates) && geometry.coordinates.length > 0;
+}
+
 function getRelatedPcCodes(metadata, start, end) {
   const upper = Math.max(start, end);
   const lower = Math.min(start, end);
@@ -282,11 +291,14 @@ const counts = features.reduce(
   }),
   {}
 );
+const invalidGeometryCount = features.filter((feature) => !isValidHabitatGeometry(feature)).length;
 
 console.log(`Wrote ${features.length} sturgeon habitat polygons to ${OUTPUT_PATH}`);
 console.log(
   `Counts: spawning=${counts.spawning_potential || 0}, feeding=${counts.feeding_yoy || 0}, wintering=${counts.wintering_refuge || 0}`
 );
+console.log(`Invalid geometries: ${invalidGeometryCount}`);
+console.log(`Skipped habitats: ${errors.length}`);
 if (errors.length) {
   console.log("Skipped habitats:");
   for (const error of errors) console.log(`- ${error}`);

@@ -58,7 +58,7 @@ function MonitoringRequirement({ requirement }) {
   );
 }
 
-export default function FastDetailCard({ interval, isOpen, onClose }) {
+export default function FastDetailCard({ interval, isOpen, onClose, collapseRequestId }) {
   const [activeTab, setActiveTab] = useState("works");
   const [detailSheetState, setDetailSheetState] = useState("expanded");
   const dragStartYRef = useRef(null);
@@ -67,9 +67,15 @@ export default function FastDetailCard({ interval, isOpen, onClose }) {
   useEffect(() => {
     setActiveTab("works");
     if (isOpen) {
-      setDetailSheetState(isMobile ? "half" : "expanded");
+      setDetailSheetState(isMobile ? "collapsed" : "expanded");
     }
   }, [interval?.pc_code, isMobile, isOpen]);
+
+  useEffect(() => {
+    if (isMobile && isOpen && collapseRequestId > 0) {
+      setDetailSheetState("collapsed");
+    }
+  }, [collapseRequestId, isMobile, isOpen]);
 
   const fishRequirements = useMemo(
     () => interval?.monitoring_requirements?.filter((item) => item.category === "fish") || [],
@@ -124,14 +130,23 @@ export default function FastDetailCard({ interval, isOpen, onClose }) {
       aria-live="polite"
     >
       {isMobile ? (
-        <button
-          type="button"
-          className="fast-detail-card__handle"
-          aria-label="Extinde sau minimizează"
-          onClick={cycleSheetState}
-          onPointerDown={handlePointerDown}
-          onPointerUp={handlePointerUp}
-        />
+        <>
+          <button
+            type="button"
+            className="fast-detail-card__handle"
+            aria-label="Extinde sau minimizează"
+            onClick={cycleSheetState}
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
+          />
+          <button
+            type="button"
+            className="fast-detail-card__sheet-action"
+            onClick={cycleSheetState}
+          >
+            {detailSheetState === "collapsed" ? "Extinde detalii" : "Minimizează"}
+          </button>
+        </>
       ) : null}
 
       <button

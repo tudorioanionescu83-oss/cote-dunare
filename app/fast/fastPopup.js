@@ -60,10 +60,15 @@ export function buildKmPopup(feature) {
   const properties = feature?.properties || {};
   const kmValue = properties.wtwdis ?? properties.WTWDIS ?? "—";
   const catdis = properties.catdis ?? properties.CATDIS ?? "—";
+  const isHectometric =
+    Number(catdis) === 3 &&
+    Number.isInteger(Number(kmValue)) &&
+    Number(kmValue) >= 1 &&
+    Number(kmValue) <= 9;
 
   return `
     <div class="fast-popup-content">
-      <strong>Km AFDJ ${escapeHtml(kmValue)}</strong><br />
+      <strong>${isHectometric ? `Marcaj 100 m AFDJ +${escapeHtml(kmValue)}00 m` : `Km AFDJ ${escapeHtml(kmValue)}`}</strong><br />
       <span>catdis: ${escapeHtml(catdis)}</span><br />
       <span>Sursă: AFDJ</span>
     </div>

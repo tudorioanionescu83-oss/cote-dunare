@@ -1,8 +1,9 @@
 export default function FastLegend() {
   return (
     <section className="fast-sidebar-block">
-      <h2>Legendă</h2>
-      <div className="fast-legend">
+      <details className="fast-legend-details" open>
+        <summary>Legendă</summary>
+        <div className="fast-legend">
         <div className="fast-legend-group">
           <span className="fast-legend-chip">GIS layers</span>
         </div>
@@ -121,7 +122,8 @@ export default function FastLegend() {
           <strong>Powered by Tudor</strong>
           <em>tudor.ionescu@sturgeons.eu</em>
         </details>
-      </div>
+        </div>
+      </details>
     </section>
   );
 }
