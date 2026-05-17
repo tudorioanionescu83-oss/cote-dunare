@@ -93,31 +93,43 @@ export function buildSturgeonHabitatPopup(feature) {
     ? properties.related_fast_pc.join(", ")
     : properties.related_fast_pc;
   const activeType = properties.label_ro || "Habitat sensibil";
-  const sector =
-    properties.distance_unit === "mm"
-      ? `Mm ${displayValue(properties.mm_start)}-${displayValue(properties.mm_end)}`
-      : `Dunăre km ${displayValue(properties.rkm_start)}-${displayValue(properties.rkm_end)}`;
+  const sector = properties.mm_start !== undefined
+    ? `Mm ${displayValue(properties.mm_start)}–${displayValue(properties.mm_end)}`
+    : `Dunăre km ${displayValue(properties.rkm_start)}–${displayValue(properties.rkm_end)}`;
+  const bankOrBranch =
+    properties.branch ||
+    properties.bank_side_ro ||
+    properties.bank_side ||
+    "Nedisponibil în sursa curentă";
+  const name =
+    properties.name_ro ||
+    properties.location_name ||
+    properties.id ||
+    "Nedisponibil în sursa curentă";
 
   return `
     <div class="fast-popup-content fast-habitat-popup-content">
-      <strong>Habitat sensibil pentru sturioni</strong><br />
+      <strong>${displayValue(name)}</strong><br />
       <span>Tip: ${displayValue(activeType)}</span><br />
-      <span>Loc: ${displayValue(properties.location_name)}</span><br />
+      <span>Poziție originală: ${displayValue(properties.original_position)}</span><br />
       <span>Sector: ${sector}</span><br />
-      <span>Mal: ${displayValue(properties.bank_side_ro)}</span><br />
-      <span>Indiciu ecologic: ${displayValue(properties.substrate_ro)}</span><br />
+      <span>Mal / braț: ${displayValue(bankOrBranch)}</span><br />
+      <span>Substrat / indiciu ecologic: ${displayValue(properties.substrate_ro)}</span><br />
+      <span>Evidence: ${displayValue(properties.evidence_ro)}</span><br />
+      <span>Confidence: ${displayValue(properties.confidence_ro)}</span><br />
       <span>Relație FAST 2: ${displayValue(relatedFastPc)}</span><br />
-      <span>Prioritate: ${displayValue(properties.popup_priority || "evaluare de impact")}</span><br />
-      <span>Nivel interpretare: habitat potențial / zonă sensibilă pentru evaluare impact</span><br />
-      <span>Recomandare: evitare impact direct, monitorizare pre/post-lucrări, corelare cu batimetrie, substrat, șenal și lucrările FAST 2.</span><br />
-      <span>Atenție: nu reprezintă loc de pescuit; informația este destinată conservării, evaluării de mediu și planificării lucrărilor hidrotehnice.</span>
+      <span>Needs manual review: ${displayValue(
+        properties.needs_manual_review ? "da" : "nu"
+      )}</span><br />
+      <span>Metodă geometrie: ${displayValue(properties.geometry_method)}</span><br />
+      <span>Prioritate popup: ${displayValue(properties.popup_priority)}</span>
       <div class="fast-habitat-popup-types">
         <strong>Posibile habitate</strong>
         <span class="${properties.habitat_type === "spawning_potential" ? "is-active" : ""}">Reproducere potențială</span>
         <span class="${properties.habitat_type === "confirmed_spawning" ? "is-active" : ""}">Reproducere confirmată</span>
         <span class="${properties.habitat_type === "feeding_yoy" ? "is-active" : ""}">Hrănire / juvenili</span>
         <span class="${properties.habitat_type === "wintering_refuge" ? "is-active" : ""}">Iernare / refugiu</span>
-        <span class="${properties.habitat_type === "sensitive_protection" ? "is-active" : ""}">Protecție sensibilă</span>
+        <span class="${properties.habitat_type === "sensitive_protection" ? "is-active" : ""}">Zonă sensibilă / protecție</span>
       </div>
     </div>
   `;

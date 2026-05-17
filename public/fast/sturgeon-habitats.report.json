@@ -2,6 +2,7 @@
   "dataset_total": 32,
   "generated_features": 28,
   "skipped_features": 4,
+  "invalid_geometries": 0,
   "dataset_counts_by_habitat_type": {
     "spawning_potential": 15,
     "wintering_refuge": 6,
@@ -16,21 +17,56 @@
     "confirmed_spawning": 2,
     "sensitive_protection": 3
   },
+  "dataset_counts_by_group_and_type": {
+    "fast2_ddni_863_375": {
+      "spawning_potential": 15,
+      "wintering_refuge": 4,
+      "feeding_yoy": 2
+    },
+    "lower_danube_below_375": {
+      "confirmed_spawning": 2,
+      "sensitive_protection": 5,
+      "feeding_yoy": 2,
+      "wintering_refuge": 2
+    }
+  },
+  "generated_counts_by_group_and_type": {
+    "fast2_ddni_863_375": {
+      "spawning_potential": 15,
+      "wintering_refuge": 4,
+      "feeding_yoy": 2
+    },
+    "lower_danube_below_375": {
+      "confirmed_spawning": 2,
+      "sensitive_protection": 3,
+      "feeding_yoy": 2
+    }
+  },
+  "needs_manual_review": [
+    "STU-CONF-SPAWN-RASOVA-311",
+    "STU-CONF-SPAWN-ISACCEA-1005",
+    "STU-SENS-DANUBE-MM-53-54",
+    "STU-SENS-DANUBE-MM-645-655",
+    "STU-SENS-GROAPA-CATARGULUI-PLUTON-MM-67-685",
+    "STU-FEED-NURSERY-309",
+    "STU-FEED-NURSERY-123"
+  ],
+  "invalid_geometry_ids": [],
   "skipped": [
     {
-      "id": "STU-WIN-BORCEA-BRANCH",
+      "id": "STU-SENS-BORCEA-41-37",
       "reason": "skipped_due_to_missing_branch_geometry"
     },
     {
-      "id": "STU-WIN-BALA-BRANCH",
+      "id": "STU-SENS-CHILIA-PARDINA-77-72",
       "reason": "skipped_due_to_missing_branch_geometry"
     },
     {
-      "id": "STU-SENSITIVE-BORCEA-37-41",
+      "id": "STU-WIN-BORCEA-49",
       "reason": "skipped_due_to_missing_branch_geometry"
     },
     {
-      "id": "STU-SENSITIVE-CHILIA-72-77",
+      "id": "STU-WIN-BALA-7-7",
       "reason": "skipped_due_to_missing_branch_geometry"
     }
   ]

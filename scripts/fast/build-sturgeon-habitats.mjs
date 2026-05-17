@@ -8,7 +8,11 @@ const AFDJ_KM_PATH = path.join(FAST_DIR, "afdj-km.geojson");
 const METADATA_PATH = path.join(FAST_DIR, "metadata.json");
 const OUTPUT_PATH = path.join(FAST_DIR, "sturgeon-habitats.geojson");
 const REPORT_PATH = path.join(FAST_DIR, "sturgeon-habitats.report.json");
+
+const FAST2_GROUP = "fast2_ddni_863_375";
+const LOWER_DANUBE_GROUP = "lower_danube_below_375";
 const MAX_REFERENCE_GAP_KM = 5;
+const MAX_HECTOMETRIC_DISTANCE_SQUARED = 0.0002;
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -20,34 +24,31 @@ function distanceSquared(first, second) {
   return dx * dx + dy * dy;
 }
 
-function pickMedoidCoordinate(features) {
-  const coordinates = features.map((feature) => feature.geometry.coordinates);
-  return coordinates.reduce((best, candidate) => {
-    const score = coordinates.reduce(
-      (total, coordinate) => total + distanceSquared(candidate, coordinate),
-      0
-    );
-    if (!best || score < best.score) {
-      return { coordinate: candidate, score };
-    }
-    return best;
-  }, null)?.coordinate;
+function interpolateCoordinate(first, second, ratio) {
+  return [
+    first[0] + (second[0] - first[0]) * ratio,
+    first[1] + (second[1] - first[1]) * ratio,
+  ];
 }
 
-function chooseFarthestPair(features) {
+function averageCoordinates(coordinates) {
+  const total = coordinates.reduce(
+    (result, coordinate) => [result[0] + coordinate[0], result[1] + coordinate[1]],
+    [0, 0]
+  );
+  return [total[0] / coordinates.length, total[1] / coordinates.length];
+}
+
+function chooseFarthestPair(coordinates) {
   let selected = null;
 
-  for (let firstIndex = 0; firstIndex < features.length; firstIndex += 1) {
-    for (let secondIndex = firstIndex + 1; secondIndex < features.length; secondIndex += 1) {
-      const first = features[firstIndex];
-      const second = features[secondIndex];
-      const score = distanceSquared(first.geometry.coordinates, second.geometry.coordinates);
+  for (let firstIndex = 0; firstIndex < coordinates.length; firstIndex += 1) {
+    for (let secondIndex = firstIndex + 1; secondIndex < coordinates.length; secondIndex += 1) {
+      const first = coordinates[firstIndex];
+      const second = coordinates[secondIndex];
+      const score = distanceSquared(first, second);
       if (!selected || score > selected.score) {
-        selected = {
-          first: first.geometry.coordinates,
-          second: second.geometry.coordinates,
-          score,
-        };
+        selected = { first, second, score };
       }
     }
   }
@@ -72,19 +73,28 @@ function orientPair(pair, previousPair) {
     : [currentSecond, currentFirst];
 }
 
-function interpolateCoordinate(first, second, ratio) {
-  return [
-    first[0] + (second[0] - first[0]) * ratio,
-    first[1] + (second[1] - first[1]) * ratio,
-  ];
+function pickMedoidCoordinate(coordinates) {
+  return coordinates.reduce((best, candidate) => {
+    const score = coordinates.reduce(
+      (total, coordinate) => total + distanceSquared(candidate, coordinate),
+      0
+    );
+    if (!best || score < best.score) {
+      return { coordinate: candidate, score };
+    }
+    return best;
+  }, null)?.coordinate;
 }
 
-function averageCoordinates(coordinates) {
-  const total = coordinates.reduce(
-    (result, coordinate) => [result[0] + coordinate[0], result[1] + coordinate[1]],
-    [0, 0]
-  );
-  return [total[0] / coordinates.length, total[1] / coordinates.length];
+function getCoordinatesForValue(features, value, predicate = () => true) {
+  return features
+    .filter(
+      (feature) =>
+        feature?.geometry?.type === "Point" &&
+        Number(feature?.properties?.wtwdis) === value &&
+        predicate(feature.geometry.coordinates, feature)
+    )
+    .map((feature) => feature.geometry.coordinates);
 }
 
 function isMaritimeCoordinate(coordinate) {
@@ -92,92 +102,28 @@ function isMaritimeCoordinate(coordinate) {
   return lat >= 45.15 && (lng >= 28.15 || lat >= 45.4);
 }
 
-function getRawPointCoordinates(afdjKm, value, predicate = () => true) {
-  return (afdjKm.features || [])
-    .filter(
-      (feature) =>
-        Number(feature?.properties?.wtwdis) === value &&
-        feature?.geometry?.type === "Point" &&
-        predicate(feature.geometry.coordinates)
-    )
-    .map((feature) => feature.geometry.coordinates);
-}
+function buildRkmReferenceIndex(features) {
+  const byKm = new Map();
 
-function getRepresentativeRawPoint(afdjKm, value, predicate = () => true) {
-  const coordinates = getRawPointCoordinates(afdjKm, value, predicate);
-  return coordinates.length ? averageCoordinates(coordinates) : null;
-}
-
-function getScaledRkmPoint(afdjKm, value) {
-  const target = value * 10;
-  const scaledValues = [
-    ...new Set(
-      (afdjKm.features || [])
-        .map((feature) => Number(feature?.properties?.wtwdis))
-        .filter((distance) => Number.isFinite(distance) && distance > 1075)
-    ),
-  ].sort((first, second) => first - second);
-  const lower = [...scaledValues].reverse().find((distance) => distance <= target);
-  const upper = scaledValues.find((distance) => distance >= target);
-  if (lower === undefined || upper === undefined) return null;
-
-  const lowerPoint = getRepresentativeRawPoint(afdjKm, lower);
-  const upperPoint = getRepresentativeRawPoint(afdjKm, upper);
-  if (!lowerPoint || !upperPoint) return null;
-  if (lower === upper) return lowerPoint;
-
-  return interpolateCoordinate(lowerPoint, upperPoint, (target - lower) / (upper - lower));
-}
-
-function getMaritimeMilePoint(afdjKm, value) {
-  const exact = getRepresentativeRawPoint(afdjKm, value, isMaritimeCoordinate);
-  if (exact) return exact;
-
-  const mileValues = [
-    ...new Set(
-      (afdjKm.features || [])
-        .map((feature) => Number(feature?.properties?.wtwdis))
-        .filter(
-          (distance) =>
-            Number.isFinite(distance) &&
-            distance >= 0 &&
-            distance <= 80 &&
-            getRawPointCoordinates(afdjKm, distance, isMaritimeCoordinate).length > 0
-        )
-    ),
-  ].sort((first, second) => first - second);
-  const lower = [...mileValues].reverse().find((distance) => distance <= value);
-  const upper = mileValues.find((distance) => distance >= value);
-  if (lower === undefined || upper === undefined) return null;
-
-  const lowerPoint = getRepresentativeRawPoint(afdjKm, lower, isMaritimeCoordinate);
-  const upperPoint = getRepresentativeRawPoint(afdjKm, upper, isMaritimeCoordinate);
-  if (!lowerPoint || !upperPoint) return null;
-  if (lower === upper) return lowerPoint;
-
-  return interpolateCoordinate(lowerPoint, upperPoint, (value - lower) / (upper - lower));
-}
-
-function buildReferenceIndex(afdjKm) {
-  const featuresByKm = new Map();
-
-  for (const feature of afdjKm.features || []) {
+  for (const feature of features) {
+    if (feature?.geometry?.type !== "Point") continue;
     const km = Number(feature?.properties?.wtwdis);
-    if (!Number.isInteger(km) || feature?.geometry?.type !== "Point") continue;
-    const group = featuresByKm.get(km) || [];
-    group.push(feature);
-    featuresByKm.set(km, group);
+    if (!Number.isInteger(km) || km < 0 || km > 900) continue;
+
+    const bucket = byKm.get(km) || { center: [], banks: [] };
+    if (Number(feature?.properties?.catdis) === 1) {
+      bucket.center.push(feature.geometry.coordinates);
+    }
+    if (Number(feature?.properties?.catdis) === 3) {
+      bucket.banks.push(feature.geometry.coordinates);
+    }
+    byKm.set(km, bucket);
   }
 
   const rawReferences = [];
-  for (const [km, features] of featuresByKm) {
-    const center = pickMedoidCoordinate(
-      features.filter((feature) => Number(feature?.properties?.catdis) === 1)
-    );
-    const bankPair = chooseFarthestPair(
-      features.filter((feature) => Number(feature?.properties?.catdis) === 3)
-    );
-
+  for (const [km, bucket] of byKm) {
+    const center = pickMedoidCoordinate(bucket.center);
+    const bankPair = chooseFarthestPair(bucket.banks);
     if (center && bankPair) {
       rawReferences.push({ km, center, bankPair });
     }
@@ -191,6 +137,66 @@ function buildReferenceIndex(afdjKm) {
     previousPair = bankPair;
     return { ...reference, bankPair };
   });
+
+  return {
+    references,
+    byKm: new Map(references.map((reference) => [reference.km, reference])),
+  };
+}
+
+function buildMaritimeReferenceIndex(features) {
+  const byMile = new Map();
+
+  for (const feature of features) {
+    if (feature?.geometry?.type !== "Point") continue;
+    const mile = Number(feature?.properties?.wtwdis);
+    if (!Number.isFinite(mile) || mile < 0 || mile > 80) continue;
+    if (!isMaritimeCoordinate(feature.geometry.coordinates)) continue;
+
+    const bucket = byMile.get(mile) || [];
+    bucket.push(feature.geometry.coordinates);
+    byMile.set(mile, bucket);
+  }
+
+  const rawReferences = [];
+  for (const [mile, coordinates] of byMile) {
+    const pair = chooseFarthestPair(coordinates);
+    if (!pair) continue;
+    rawReferences.push({
+      km: mile,
+      center: averageCoordinates(pair),
+      bankPair: pair,
+    });
+  }
+
+  rawReferences.sort((first, second) => second.km - first.km);
+
+  let previousPair = null;
+  const references = rawReferences.map((reference) => {
+    const bankPair = orientPair(reference.bankPair, previousPair);
+    previousPair = bankPair;
+    return { ...reference, bankPair };
+  });
+
+  return {
+    references,
+    byKm: new Map(references.map((reference) => [reference.km, reference])),
+  };
+}
+
+function buildScaledCenterlineIndex(features) {
+  const references = features
+    .filter(
+      (feature) =>
+        feature?.geometry?.type === "Point" &&
+        Number(feature?.properties?.catdis) === 1 &&
+        Number(feature?.properties?.wtwdis) > 1000
+    )
+    .map((feature) => ({
+      km: Number(feature.properties.wtwdis) / 10,
+      center: feature.geometry.coordinates,
+    }))
+    .sort((first, second) => second.km - first.km);
 
   return {
     references,
@@ -221,10 +227,13 @@ function interpolateReference(referenceIndex, value) {
   return {
     km: value,
     center: interpolateCoordinate(upstream.center, downstream.center, ratio),
-    bankPair: [
-      interpolateCoordinate(upstream.bankPair[0], downstream.bankPair[0], ratio),
-      interpolateCoordinate(upstream.bankPair[1], downstream.bankPair[1], ratio),
-    ],
+    bankPair:
+      upstream.bankPair && downstream.bankPair
+        ? [
+            interpolateCoordinate(upstream.bankPair[0], downstream.bankPair[0], ratio),
+            interpolateCoordinate(upstream.bankPair[1], downstream.bankPair[1], ratio),
+          ]
+        : null,
     source_km_values: [upstream.km, downstream.km],
     interpolated: true,
   };
@@ -234,9 +243,9 @@ function crossProduct(first, second) {
   return first[0] * second[1] - first[1] * second[0];
 }
 
-function getHydrographicBankPoint(referenceIndex, value, bankSide) {
+function getHydrographicBanks(referenceIndex, value) {
   const reference = interpolateReference(referenceIndex, value);
-  if (!reference) return null;
+  if (!reference?.bankPair) return null;
 
   const upstream = interpolateReference(referenceIndex, value + 0.01);
   const downstream = interpolateReference(referenceIndex, value - 0.01);
@@ -257,11 +266,165 @@ function getHydrographicBankPoint(referenceIndex, value, bankSide) {
     .sort((first, second) => second.sideScore - first.sideScore);
 
   return {
+    km: value,
     center: reference.center,
-    bank: bankSide === "left" ? ranked[0].coordinate : ranked[1].coordinate,
+    leftBank: ranked[0].coordinate,
+    rightBank: ranked[1].coordinate,
     source_km_values: reference.source_km_values,
     interpolated: reference.interpolated,
   };
+}
+
+function buildSampleValues(start, end) {
+  const startTenths = Math.round(start * 10);
+  const endTenths = Math.round(end * 10);
+  const step = startTenths >= endTenths ? -1 : 1;
+  const values = [];
+
+  for (let value = startTenths; step < 0 ? value >= endTenths : value <= endTenths; value += step) {
+    values.push(value / 10);
+  }
+
+  return values;
+}
+
+function getHectometricDigit(value) {
+  const tenths = Math.round((value - Math.floor(value)) * 10);
+  return tenths >= 1 && tenths <= 9 ? tenths : null;
+}
+
+function pickNearestCoordinate(coordinates, target) {
+  let selected = null;
+  for (const coordinate of coordinates) {
+    const score = distanceSquared(coordinate, target);
+    if (!selected || score < selected.score) {
+      selected = { coordinate, score };
+    }
+  }
+  return selected && selected.score <= MAX_HECTOMETRIC_DISTANCE_SQUARED
+    ? selected.coordinate
+    : null;
+}
+
+function buildHectometricIndex(features) {
+  const byDigit = new Map();
+
+  for (const feature of features) {
+    if (feature?.geometry?.type !== "Point") continue;
+    const value = Number(feature?.properties?.wtwdis);
+    if (!Number.isFinite(value) || value < 1 || value > 9) continue;
+
+    const bucket = byDigit.get(value) || [];
+    bucket.push(feature.geometry.coordinates);
+    byDigit.set(value, bucket);
+  }
+
+  return byDigit;
+}
+
+function enrichWithHectometricPoint(hectometricIndex, value, target) {
+  const digit = getHectometricDigit(value);
+  if (!digit) return { coordinate: target, hectometric_used: false };
+
+  const nearest = pickNearestCoordinate(hectometricIndex.get(digit) || [], target);
+  return {
+    coordinate: nearest || target,
+    hectometric_used: Boolean(nearest),
+  };
+}
+
+function assignHectometricCoordinates(hectometricIndex, value, reference) {
+  const digit = getHectometricDigit(value);
+  if (!digit) return null;
+
+  const targets = [reference.leftBank, reference.center, reference.rightBank];
+  const candidates = (hectometricIndex.get(digit) || []).filter((coordinate) =>
+    targets.some(
+      (target) => distanceSquared(coordinate, target) <= MAX_HECTOMETRIC_DISTANCE_SQUARED
+    )
+  );
+  if (candidates.length < 3) return null;
+
+  let selected = null;
+  for (let first = 0; first < candidates.length; first += 1) {
+    for (let second = 0; second < candidates.length; second += 1) {
+      if (second === first) continue;
+      for (let third = 0; third < candidates.length; third += 1) {
+        if (third === first || third === second) continue;
+        const coordinates = [candidates[first], candidates[second], candidates[third]];
+        const scores = coordinates.map((coordinate, index) =>
+          distanceSquared(coordinate, targets[index])
+        );
+        if (scores.some((score) => score > MAX_HECTOMETRIC_DISTANCE_SQUARED)) continue;
+        const total = scores.reduce((sum, score) => sum + score, 0);
+        if (!selected || total < selected.score) {
+          selected = { coordinates, score: total };
+        }
+      }
+    }
+  }
+
+  if (!selected) return null;
+  return {
+    leftBank: selected.coordinates[0],
+    center: selected.coordinates[1],
+    rightBank: selected.coordinates[2],
+  };
+}
+
+function buildDenseBankReferenceChain(
+  referenceIndex,
+  hectometricIndex,
+  start,
+  end,
+  { useHectometric = true } = {}
+) {
+  return buildSampleValues(start, end)
+    .map((value) => {
+      const reference = getHydrographicBanks(referenceIndex, value);
+      if (!reference) return null;
+
+      const assigned = useHectometric
+        ? assignHectometricCoordinates(hectometricIndex, value, reference)
+        : null;
+      const center = useHectometric
+        ? enrichWithHectometricPoint(hectometricIndex, value, reference.center)
+        : { hectometric_used: false };
+
+      return {
+        ...reference,
+        center: assigned?.center || reference.center,
+        leftBank: assigned?.leftBank || reference.leftBank,
+        rightBank: assigned?.rightBank || reference.rightBank,
+        hectometric_used: Boolean(assigned) || center.hectometric_used,
+      };
+    })
+    .filter(Boolean);
+}
+
+function insetFromBank(center, bank, ratio = 0.84) {
+  return interpolateCoordinate(center, bank, ratio);
+}
+
+function corridorAroundCenter(chain, ratio = 0.32) {
+  const left = chain.map((reference) =>
+    interpolateCoordinate(reference.center, reference.leftBank, ratio)
+  );
+  const right = chain
+    .map((reference) => interpolateCoordinate(reference.center, reference.rightBank, ratio))
+    .reverse();
+  return [...left, ...right, left[0]];
+}
+
+function corridorToBank(chain, bankSide) {
+  const innerBank = chain.map((reference) =>
+    insetFromBank(
+      reference.center,
+      bankSide === "left" ? reference.leftBank : reference.rightBank
+    )
+  );
+  const fairway = chain.map((reference) => reference.center).reverse();
+  return [...innerBank, ...fairway, innerBank[0]];
 }
 
 function orientation(first, second, third) {
@@ -276,29 +439,27 @@ function segmentsIntersect(firstStart, firstEnd, secondStart, secondEnd) {
   const secondOrientation = orientation(firstStart, firstEnd, secondEnd);
   const thirdOrientation = orientation(secondStart, secondEnd, firstStart);
   const fourthOrientation = orientation(secondStart, secondEnd, firstEnd);
-
   return firstOrientation * secondOrientation < 0 && thirdOrientation * fourthOrientation < 0;
 }
 
-function polygonSelfIntersects(coordinates) {
-  return segmentsIntersect(coordinates[0], coordinates[1], coordinates[2], coordinates[3]);
-}
-
-function isValidHabitatGeometry(feature) {
-  const geometry = feature?.geometry;
-  if (!geometry || !["Point", "LineString", "Polygon", "MultiPolygon"].includes(geometry.type)) {
-    return false;
+function ringSelfIntersects(coordinates) {
+  for (let firstIndex = 0; firstIndex < coordinates.length - 1; firstIndex += 1) {
+    for (let secondIndex = firstIndex + 1; secondIndex < coordinates.length - 1; secondIndex += 1) {
+      if (Math.abs(firstIndex - secondIndex) <= 1) continue;
+      if (firstIndex === 0 && secondIndex === coordinates.length - 2) continue;
+      if (
+        segmentsIntersect(
+          coordinates[firstIndex],
+          coordinates[firstIndex + 1],
+          coordinates[secondIndex],
+          coordinates[secondIndex + 1]
+        )
+      ) {
+        return true;
+      }
+    }
   }
-  if (geometry.type === "Point") {
-    return Array.isArray(geometry.coordinates) && geometry.coordinates.length === 2;
-  }
-  if (geometry.type === "LineString") {
-    return Array.isArray(geometry.coordinates) && geometry.coordinates.length >= 2;
-  }
-  if (geometry.type === "Polygon") {
-    return Array.isArray(geometry.coordinates?.[0]) && geometry.coordinates[0].length >= 5;
-  }
-  return Array.isArray(geometry.coordinates) && geometry.coordinates.length > 0;
+  return false;
 }
 
 function getRelatedPcCodes(metadata, start, end) {
@@ -314,34 +475,68 @@ function getRelatedPcCodes(metadata, start, end) {
     .map((interval) => interval.pc_code);
 }
 
-function buildCorridorHabitatFeature(referenceIndex, metadata, habitat) {
-  const start = getHydrographicBankPoint(referenceIndex, habitat.rkm_start, habitat.bank_side);
-  const end = getHydrographicBankPoint(referenceIndex, habitat.rkm_end, habitat.bank_side);
-  if (!start || !end) {
+function normalizeHabitat(habitat) {
+  return {
+    dataset_group: FAST2_GROUP,
+    needs_manual_review: false,
+    ...habitat,
+  };
+}
+
+function buildPolygonFeature(metadata, habitat, chain, options = {}) {
+  if (chain.length < 2) {
     return {
       feature: null,
-      error: `${habitat.id}: referințe AFDJ insuficiente pentru km ${habitat.rkm_start}-${habitat.rkm_end}`,
+      error: {
+        id: habitat.id,
+        reason: "insufficient_reference_chain",
+      },
     };
   }
 
-  const coordinates = [start.center, end.center, end.bank, start.bank, start.center];
-  if (polygonSelfIntersects(coordinates)) {
+  const isFixedBank = habitat.bank_side === "left" || habitat.bank_side === "right";
+  const coordinates = isFixedBank
+    ? corridorToBank(chain, habitat.bank_side)
+    : corridorAroundCenter(chain, options.center_ratio ?? 0.32);
+
+  if (coordinates.length < 5 || ringSelfIntersects(coordinates)) {
     return {
       feature: null,
-      error: `${habitat.id}: poligon auto-intersectat la km ${habitat.rkm_start}-${habitat.rkm_end}`,
+      error: {
+        id: habitat.id,
+        reason: "invalid_generated_polygon",
+      },
     };
   }
+
+  const needsManualReview =
+    habitat.needs_manual_review ||
+    Boolean(options.needs_manual_review) ||
+    (!isFixedBank && habitat.dataset_group === LOWER_DANUBE_GROUP);
 
   return {
     feature: {
       type: "Feature",
       properties: {
         ...habitat,
-        related_fast_pc: getRelatedPcCodes(metadata, habitat.rkm_start, habitat.rkm_end),
-        source: "Honț et al. 2022 / DDNI + puncte AFDJ",
-        geometry_method: "corridor between interpolated fairway reference and hydrographic bank",
-        interpolation_used: start.interpolated || end.interpolated,
-        source_km_values: [...new Set([...start.source_km_values, ...end.source_km_values])],
+        related_fast_pc:
+          habitat.dataset_group === FAST2_GROUP
+            ? getRelatedPcCodes(metadata, habitat.rkm_start, habitat.rkm_end)
+            : [],
+        source:
+          habitat.dataset_group === FAST2_GROUP
+            ? "Honț et al. 2022 / DDNI + puncte AFDJ"
+            : "Set intern Lower Danube + puncte AFDJ",
+        geometry_method:
+          options.geometry_method ||
+          (isFixedBank ? "bank_and_fairway_corridor" : "bank_points_corridor"),
+        needs_manual_review: needsManualReview,
+        positioning_method: options.positioning_method,
+        interpolation_used: chain.some((reference) => reference.interpolated),
+        hectometric_points_used: chain.some((reference) => reference.hectometric_used),
+        source_km_values: [
+          ...new Set(chain.flatMap((reference) => reference.source_km_values || [])),
+        ],
       },
       geometry: {
         type: "Polygon",
@@ -352,39 +547,133 @@ function buildCorridorHabitatFeature(referenceIndex, metadata, habitat) {
   };
 }
 
-function buildCenterlinePointFeature(afdjKm, habitat) {
-  const coordinate = getRepresentativeRawPoint(afdjKm, habitat.rkm_start);
-  if (!coordinate) {
+function buildMainstemHabitatFeature(referenceIndex, hectometricIndex, metadata, habitat) {
+  const chain = buildDenseBankReferenceChain(
+    referenceIndex,
+    hectometricIndex,
+    habitat.rkm_start,
+    habitat.rkm_end
+  );
+  if (!chain.length) {
     return {
       feature: null,
-      error: `${habitat.id}: referinČ›Ä AFDJ insuficientÄ pentru km ${habitat.rkm_start}`,
+      error: {
+        id: habitat.id,
+        reason: "insufficient_afdj_bank_references",
+      },
     };
   }
 
-  return {
-    feature: {
-      type: "Feature",
-      properties: {
-        ...habitat,
-        source: "Lower Danube source registry + puncte AFDJ",
-        geometry_method: "centerline point from AFDJ km reference",
-        source_km_values: [habitat.rkm_start],
-      },
-      geometry: {
-        type: "Point",
-        coordinates: coordinate,
-      },
-    },
-    error: null,
-  };
+  const primaryResult = buildPolygonFeature(metadata, habitat, chain, {
+    geometry_method:
+      habitat.bank_side === "left" || habitat.bank_side === "right"
+        ? "bank_and_fairway_corridor"
+        : "bank_points_corridor",
+  });
+  if (!primaryResult.error || primaryResult.error.reason !== "invalid_generated_polygon") {
+    return primaryResult;
+  }
+
+  const fallbackChain = buildDenseBankReferenceChain(
+    referenceIndex,
+    hectometricIndex,
+    habitat.rkm_start,
+    habitat.rkm_end,
+    { useHectometric: false }
+  );
+  return buildPolygonFeature(metadata, habitat, fallbackChain, {
+    geometry_method:
+      habitat.bank_side === "left" || habitat.bank_side === "right"
+        ? "bank_and_fairway_corridor"
+        : "bank_points_corridor",
+  });
 }
 
-function buildScaledRkmPointFeature(afdjKm, habitat) {
-  const coordinate = getScaledRkmPoint(afdjKm, habitat.rkm_start);
-  if (!coordinate) {
+function buildMaritimeHabitatFeature(referenceIndex, metadata, habitat) {
+  const chain = buildSampleValues(habitat.mm_start, habitat.mm_end)
+    .map((value) => getHydrographicBanks(referenceIndex, value))
+    .filter(Boolean);
+  if (!chain.length) return null;
+
+  return buildPolygonFeature(metadata, habitat, chain, {
+    geometry_method: "bank_points_corridor",
+    positioning_method: "marine_mile_geometry",
+  });
+}
+
+function getAverageChannelHalfWidth(referenceIndex, targetKm) {
+  const nearest = [...referenceIndex.references]
+    .sort((first, second) => Math.abs(first.km - targetKm) - Math.abs(second.km - targetKm))
+    .find((reference) => reference.bankPair);
+  if (!nearest) return null;
+  return Math.sqrt(distanceSquared(nearest.bankPair[0], nearest.bankPair[1])) / 4;
+}
+
+function buildScaledCenterlineChain(referenceIndex, start, end) {
+  return buildSampleValues(start, end)
+    .map((value) => interpolateReference(referenceIndex, value))
+    .filter(Boolean);
+}
+
+function buildManualCenterlineCorridorFeature(
+  scaledReferenceIndex,
+  maritimeReferenceIndex,
+  metadata,
+  habitat
+) {
+  const chain = buildScaledCenterlineChain(
+    scaledReferenceIndex,
+    habitat.rkm_start,
+    habitat.rkm_end
+  );
+  if (chain.length < 2) {
     return {
       feature: null,
-      error: `${habitat.id}: referinČ›Ä AFDJ insuficientÄ pentru km scalat ${habitat.rkm_start}`,
+      error: {
+        id: habitat.id,
+        reason: "insufficient_scaled_rkm_references",
+      },
+    };
+  }
+
+  const averageWidth = getAverageChannelHalfWidth(maritimeReferenceIndex, habitat.rkm_start);
+  if (!averageWidth) {
+    return {
+      feature: null,
+      error: {
+        id: habitat.id,
+        reason: "insufficient_channel_width_reference",
+      },
+    };
+  }
+
+  const left = [];
+  const right = [];
+  for (let index = 0; index < chain.length; index += 1) {
+    const previous = chain[Math.max(index - 1, 0)].center;
+    const next = chain[Math.min(index + 1, chain.length - 1)].center;
+    const dx = next[0] - previous[0];
+    const dy = next[1] - previous[1];
+    const magnitude = Math.hypot(dx, dy) || 1;
+    const perpendicular = [-dy / magnitude, dx / magnitude];
+    left.push([
+      chain[index].center[0] + perpendicular[0] * averageWidth,
+      chain[index].center[1] + perpendicular[1] * averageWidth,
+    ]);
+    right.push([
+      chain[index].center[0] - perpendicular[0] * averageWidth,
+      chain[index].center[1] - perpendicular[1] * averageWidth,
+    ]);
+  }
+
+  const coordinates = [...left, ...right.reverse(), left[0]];
+  if (ringSelfIntersects(coordinates)) {
+    return {
+      feature: null,
+      error: {
+        id: habitat.id,
+        reason: "invalid_manual_review_polygon",
+      },
     };
   }
 
@@ -393,49 +682,59 @@ function buildScaledRkmPointFeature(afdjKm, habitat) {
       type: "Feature",
       properties: {
         ...habitat,
-        source: "Lower Danube source registry + puncte AFDJ",
-        geometry_method: "interpolated centerline point from scaled AFDJ km references",
+        related_fast_pc: [],
+        source: "Set intern Lower Danube + puncte AFDJ",
+        geometry_method: "manual_review_needed",
+        needs_manual_review: true,
+        positioning_method: "scaled_rkm_reference_centerline",
         interpolation_used: true,
+        hectometric_points_used: false,
+        source_km_values: [
+          ...new Set(chain.flatMap((reference) => reference.source_km_values || [])),
+        ],
       },
       geometry: {
-        type: "Point",
-        coordinates: coordinate,
+        type: "Polygon",
+        coordinates: [coordinates],
       },
     },
     error: null,
   };
 }
 
-function buildMaritimeMileSegmentFeature(afdjKm, habitat) {
-  const start = getMaritimeMilePoint(afdjKm, habitat.mm_start);
-  const end = getMaritimeMilePoint(afdjKm, habitat.mm_end);
-  if (!start || !end) {
+function buildApproxMaritimeHabitatFeature(
+  mainstemReferenceIndex,
+  hectometricIndex,
+  metadata,
+  habitat
+) {
+  const chain = buildDenseBankReferenceChain(
+    mainstemReferenceIndex,
+    hectometricIndex,
+    habitat.approx_rkm_start,
+    habitat.approx_rkm_end
+  );
+  if (!chain.length) {
     return {
       feature: null,
-      error: `${habitat.id}: referinČ›e AFDJ insuficiente pentru Mm ${habitat.mm_start}-${habitat.mm_end}`,
+      error: {
+        id: habitat.id,
+        reason: "insufficient_approx_rkm_references",
+      },
     };
   }
 
-  return {
-    feature: {
-      type: "Feature",
-      properties: {
-        ...habitat,
-        source: "Lower Danube source registry + puncte AFDJ",
-        geometry_method: "centerline segment from maritime-mile AFDJ references",
-        source_km_values: [habitat.mm_start, habitat.mm_end],
-      },
-      geometry: {
-        type: "LineString",
-        coordinates: [start, end],
-      },
-    },
-    error: null,
-  };
+  return buildPolygonFeature(metadata, habitat, chain, {
+    geometry_method: "approx_rkm_from_marine_mile",
+    positioning_method: "approx_rkm_from_marine_mile",
+    needs_manual_review: true,
+  });
 }
 
-function buildHabitatFeature(afdjKm, referenceIndex, metadata, habitat) {
-  if (habitat.geometry_kind === "branch_missing") {
+function buildHabitatFeature(indexes, metadata, rawHabitat) {
+  const habitat = normalizeHabitat(rawHabitat);
+
+  if (habitat.branch) {
     return {
       feature: null,
       error: {
@@ -444,78 +743,127 @@ function buildHabitatFeature(afdjKm, referenceIndex, metadata, habitat) {
       },
     };
   }
-  if (habitat.geometry_kind === "centerline_point") {
-    return buildCenterlinePointFeature(afdjKm, habitat);
+
+  if (habitat.river_unit === "marine_mile" || habitat.mm_start !== undefined) {
+    const maritimeFeature = buildMaritimeHabitatFeature(
+      indexes.maritime,
+      metadata,
+      habitat
+    );
+    if (maritimeFeature) return maritimeFeature;
+    if (habitat.approx_rkm_start !== undefined && habitat.approx_rkm_end !== undefined) {
+      return buildApproxMaritimeHabitatFeature(
+        indexes.mainstem,
+        indexes.hectometric,
+        metadata,
+        habitat
+      );
+    }
   }
-  if (habitat.geometry_kind === "scaled_rkm_point") {
-    return buildScaledRkmPointFeature(afdjKm, habitat);
+
+  if (
+    habitat.dataset_group === LOWER_DANUBE_GROUP &&
+    habitat.rkm_start >= 120 &&
+    habitat.rkm_end <= 124 &&
+    habitat.id === "STU-FEED-NURSERY-123"
+  ) {
+    return buildManualCenterlineCorridorFeature(
+      indexes.scaled,
+      indexes.maritime,
+      metadata,
+      habitat
+    );
   }
-  if (habitat.geometry_kind === "maritime_mile_segment") {
-    return buildMaritimeMileSegmentFeature(afdjKm, habitat);
-  }
-  return buildCorridorHabitatFeature(referenceIndex, metadata, habitat);
+
+  return buildMainstemHabitatFeature(indexes.mainstem, indexes.hectometric, metadata, habitat);
+}
+
+function isValidHabitatGeometry(feature) {
+  const geometry = feature?.geometry;
+  if (!geometry || geometry.type !== "Polygon") return false;
+  const ring = geometry.coordinates?.[0];
+  return Array.isArray(ring) && ring.length >= 5 && !ringSelfIntersects(ring);
+}
+
+function countBy(features, key) {
+  return features.reduce((result, item) => {
+    const value = item[key];
+    result[value] = (result[value] || 0) + 1;
+    return result;
+  }, {});
+}
+
+function countByGroupAndType(items) {
+  return items.reduce((result, item) => {
+    const group = item.dataset_group || FAST2_GROUP;
+    const type = item.habitat_type;
+    result[group] ||= {};
+    result[group][type] = (result[group][type] || 0) + 1;
+    return result;
+  }, {});
 }
 
 const afdjKm = readJson(AFDJ_KM_PATH);
 const metadata = readJson(METADATA_PATH);
-const referenceIndex = buildReferenceIndex(afdjKm);
+const normalizedDataset = STURGEON_HABITATS.map(normalizeHabitat);
+const indexes = {
+  mainstem: buildRkmReferenceIndex(afdjKm.features || []),
+  maritime: buildMaritimeReferenceIndex(afdjKm.features || []),
+  scaled: buildScaledCenterlineIndex(afdjKm.features || []),
+  hectometric: buildHectometricIndex(afdjKm.features || []),
+};
 const features = [];
-const errors = [];
+const skipped = [];
 
 for (const habitat of STURGEON_HABITATS) {
-  const { feature, error } = buildHabitatFeature(afdjKm, referenceIndex, metadata, habitat);
+  const { feature, error } = buildHabitatFeature(indexes, metadata, habitat);
   if (feature) features.push(feature);
-  if (error) errors.push(error);
+  if (error) skipped.push(error);
 }
+
+const invalidGeometryIds = features
+  .filter((feature) => !isValidHabitatGeometry(feature))
+  .map((feature) => feature.properties.id);
+const needsManualReviewIds = features
+  .filter((feature) => feature.properties.needs_manual_review)
+  .map((feature) => feature.properties.id);
 
 const output = {
   type: "FeatureCollection",
   features,
 };
 
-fs.writeFileSync(OUTPUT_PATH, `${JSON.stringify(output, null, 2)}\n`, "utf8");
-
-const counts = features.reduce(
-  (result, feature) => ({
-    ...result,
-    [feature.properties.habitat_type]:
-      (result[feature.properties.habitat_type] || 0) + 1,
-  }),
-  {}
-);
-const invalidGeometryCount = features.filter((feature) => !isValidHabitatGeometry(feature)).length;
-const datasetCounts = STURGEON_HABITATS.reduce(
-  (result, habitat) => ({
-    ...result,
-    [habitat.habitat_type]: (result[habitat.habitat_type] || 0) + 1,
-  }),
-  {}
-);
-const skipped = errors.map((error) =>
-  typeof error === "string"
-    ? { id: error.split(":")[0], reason: error }
-    : error
-);
 const report = {
-  dataset_total: STURGEON_HABITATS.length,
+  dataset_total: normalizedDataset.length,
   generated_features: features.length,
   skipped_features: skipped.length,
-  dataset_counts_by_habitat_type: datasetCounts,
-  generated_counts_by_habitat_type: counts,
+  invalid_geometries: invalidGeometryIds.length,
+  dataset_counts_by_habitat_type: countBy(normalizedDataset, "habitat_type"),
+  generated_counts_by_habitat_type: countBy(
+    features.map((feature) => feature.properties),
+    "habitat_type"
+  ),
+  dataset_counts_by_group_and_type: countByGroupAndType(normalizedDataset),
+  generated_counts_by_group_and_type: countByGroupAndType(
+    features.map((feature) => feature.properties)
+  ),
+  needs_manual_review: needsManualReviewIds,
+  invalid_geometry_ids: invalidGeometryIds,
   skipped,
 };
 
+fs.writeFileSync(OUTPUT_PATH, `${JSON.stringify(output, null, 2)}\n`, "utf8");
 fs.writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 
 console.log(`Wrote ${features.length} sturgeon habitat polygons to ${OUTPUT_PATH}`);
 console.log(
-  `Counts: spawning=${counts.spawning_potential || 0}, confirmed=${counts.confirmed_spawning || 0}, feeding=${counts.feeding_yoy || 0}, wintering=${counts.wintering_refuge || 0}, protection=${counts.sensitive_protection || 0}`
+  `Counts: spawning=${report.generated_counts_by_habitat_type.spawning_potential || 0}, confirmed=${report.generated_counts_by_habitat_type.confirmed_spawning || 0}, feeding=${report.generated_counts_by_habitat_type.feeding_yoy || 0}, wintering=${report.generated_counts_by_habitat_type.wintering_refuge || 0}, protection=${report.generated_counts_by_habitat_type.sensitive_protection || 0}`
 );
-console.log(`Invalid geometries: ${invalidGeometryCount}`);
-console.log(`Skipped habitats: ${errors.length}`);
-if (errors.length) {
+console.log(`Invalid geometries: ${invalidGeometryIds.length}`);
+console.log(`Skipped habitats: ${skipped.length}`);
+if (skipped.length) {
   console.log("Skipped habitats:");
-  for (const error of errors) {
-    console.log(`- ${typeof error === "string" ? error : `${error.id}: ${error.reason}`}`);
+  for (const item of skipped) {
+    console.log(`- ${item.id}: ${item.reason}`);
   }
 }

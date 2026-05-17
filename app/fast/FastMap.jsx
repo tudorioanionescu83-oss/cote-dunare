@@ -23,9 +23,31 @@ const LAYER_URLS = {
   pcPlanningPolygons: "/fast/pc-planning-polygons.geojson",
   pcPolygons: "/fast/pc-zones.geojson",
   sturgeonHabitats: "/fast/sturgeon-habitats.geojson",
+  sturgeonHabitatReport: "/fast/sturgeon-habitats.report.json",
   fairway: "/layers/danube_fairway.geojson",
   works: "/fast/works.geojson",
   disposalZones: "/fast/disposal-zones.geojson",
+};
+
+const FAST2_GROUP = "fast2_ddni_863_375";
+const LOWER_DANUBE_GROUP = "lower_danube_below_375";
+const HABITAT_SELECTIONS = {
+  fast2Spawning: { dataset_group: FAST2_GROUP, habitat_type: "spawning_potential" },
+  fast2Feeding: { dataset_group: FAST2_GROUP, habitat_type: "feeding_yoy" },
+  fast2Wintering: { dataset_group: FAST2_GROUP, habitat_type: "wintering_refuge" },
+  lowerConfirmedSpawning: {
+    dataset_group: LOWER_DANUBE_GROUP,
+    habitat_type: "confirmed_spawning",
+  },
+  lowerProtection: {
+    dataset_group: LOWER_DANUBE_GROUP,
+    habitat_type: "sensitive_protection",
+  },
+  lowerFeeding: { dataset_group: LOWER_DANUBE_GROUP, habitat_type: "feeding_yoy" },
+  lowerWintering: {
+    dataset_group: LOWER_DANUBE_GROUP,
+    habitat_type: "wintering_refuge",
+  },
 };
 
 const INITIAL_LAYERS = {
@@ -37,11 +59,13 @@ const INITIAL_LAYERS = {
   disposalZones: false,
   monitoringOverview: true,
   monitoringSturgeons: true,
-  sturgeonSpawning: false,
-  sturgeonConfirmedSpawning: false,
-  sturgeonFeeding: false,
-  sturgeonWintering: false,
-  sturgeonProtection: false,
+  fast2Spawning: false,
+  fast2Feeding: false,
+  fast2Wintering: false,
+  lowerConfirmedSpawning: false,
+  lowerProtection: false,
+  lowerFeeding: false,
+  lowerWintering: false,
 };
 
 const INITIAL_AVAILABILITY = {
@@ -53,11 +77,13 @@ const INITIAL_AVAILABILITY = {
   disposalZones: false,
   monitoringOverview: false,
   monitoringSturgeons: false,
-  sturgeonSpawning: false,
-  sturgeonConfirmedSpawning: false,
-  sturgeonFeeding: false,
-  sturgeonWintering: false,
-  sturgeonProtection: false,
+  fast2Spawning: false,
+  fast2Feeding: false,
+  fast2Wintering: false,
+  lowerConfirmedSpawning: false,
+  lowerProtection: false,
+  lowerFeeding: false,
+  lowerWintering: false,
 };
 
 const FAST_RKM_MIN = 0;
@@ -131,6 +157,23 @@ function isWholeKmValue(value) {
 
 function isSubKmValue(value) {
   return Number.isFinite(value) && !Number.isInteger(value);
+}
+
+async function fetchJson(url, layerName, optional = false) {
+  try {
+    const response = await fetch(url, { cache: "force-cache" });
+    if (!response.ok) {
+      console.warn(`[FAST] Resursă indisponibilă: ${layerName} (${response.status})`);
+      return null;
+    }
+    return await response.json();
+  } catch (error) {
+    console.warn(
+      `[FAST] Nu am putut încărca resursa ${layerName}${optional ? " opțională" : ""}.`,
+      error
+    );
+    return null;
+  }
 }
 
 function isFastRelevantKmFeature(feature) {
@@ -513,11 +556,11 @@ function getSturgeonHabitatStyle(feature, selectedHabitatId) {
   }
   if (habitatType === "confirmed_spawning") {
     return {
-      color: "#9A3412",
+      color: "#7A0015",
       weight: isSelected ? 3.8 : 2.4,
       opacity: 0.96,
-      fillColor: "#DC2626",
-      fillOpacity: isSelected ? 0.52 : 0.42,
+      fillColor: "#B00020",
+      fillOpacity: isSelected ? 0.55 : 0.45,
     };
   }
   if (habitatType === "feeding_yoy") {
@@ -531,11 +574,11 @@ function getSturgeonHabitatStyle(feature, selectedHabitatId) {
   }
   if (habitatType === "sensitive_protection") {
     return {
-      color: "#7C2D12",
+      color: "#5B2C6F",
       weight: isSelected ? 3.8 : 2.4,
       opacity: 0.96,
-      fillColor: "#F59E0B",
-      fillOpacity: isSelected ? 0.5 : 0.38,
+      fillColor: "#8E44AD",
+      fillOpacity: isSelected ? 0.38 : 0.3,
       dashArray: "7 5",
     };
   }
@@ -594,6 +637,7 @@ export default function FastMap({
     pcPlanningPolygons: null,
     pcPolygons: null,
     sturgeonHabitats: null,
+    sturgeonHabitatReport: null,
     fairway: null,
     works: null,
     disposalZones: null,
@@ -610,6 +654,7 @@ export default function FastMap({
         pcPlanningPolygons,
         pcPolygons,
         sturgeonHabitats,
+        sturgeonHabitatReport,
         fairway,
         works,
         disposalZones,
@@ -620,6 +665,7 @@ export default function FastMap({
           fetchGeoJson(LAYER_URLS.pcPlanningPolygons, "PC planning polygons", true),
           fetchGeoJson(LAYER_URLS.pcPolygons, "PC polygons"),
           fetchGeoJson(LAYER_URLS.sturgeonHabitats, "Habitate sturioni", true),
+          fetchJson(LAYER_URLS.sturgeonHabitatReport, "Raport habitate sturioni", true),
           fetchGeoJson(LAYER_URLS.fairway, "Șenal navigabil"),
           fetchGeoJson(LAYER_URLS.works, "Lucrări principale", true),
           fetchGeoJson(LAYER_URLS.disposalZones, "Zone depozitare material dragat", true),
@@ -633,6 +679,7 @@ export default function FastMap({
         pcPlanningPolygons,
         pcPolygons,
         sturgeonHabitats,
+        sturgeonHabitatReport,
         fairway,
         works,
         disposalZones,
@@ -642,11 +689,16 @@ export default function FastMap({
         pcPlanningPolygons: Boolean(pcPlanningPolygons),
         pcKmSegments: Boolean(pcKmSegments),
         pcPolygons: Boolean(pcPolygons),
-        sturgeonSpawning: Boolean(sturgeonHabitats),
-        sturgeonConfirmedSpawning: Boolean(sturgeonHabitats),
-        sturgeonFeeding: Boolean(sturgeonHabitats),
-        sturgeonWintering: Boolean(sturgeonHabitats),
-        sturgeonProtection: Boolean(sturgeonHabitats),
+        ...Object.fromEntries(
+          Object.entries(HABITAT_SELECTIONS).map(([id, selection]) => [
+            id,
+            Boolean(
+              sturgeonHabitats?.features?.some((feature) =>
+                matchesHabitatSelection(feature, selection)
+              )
+            ),
+          ])
+        ),
         works: Boolean(works),
         disposalZones: Boolean(disposalZones),
         monitoringOverview: hasMonitoringOverview(pcKmSegments),
@@ -723,17 +775,9 @@ export default function FastMap({
       ),
       habitatLabels: toFeatureCollection(
         buildHabitatLabelFeatures(
-          datasets.sturgeonHabitats?.features?.filter((feature) => {
-            const habitatType = feature?.properties?.habitat_type;
-            return (
-              (habitatType === "spawning_potential" && activeLayers.sturgeonSpawning) ||
-              (habitatType === "confirmed_spawning" &&
-                activeLayers.sturgeonConfirmedSpawning) ||
-              (habitatType === "feeding_yoy" && activeLayers.sturgeonFeeding) ||
-              (habitatType === "wintering_refuge" && activeLayers.sturgeonWintering) ||
-              (habitatType === "sensitive_protection" && activeLayers.sturgeonProtection)
-            );
-          }) || [],
+          datasets.sturgeonHabitats?.features?.filter((feature) =>
+            isHabitatVisible(feature, activeLayers)
+          ) || [],
           viewState.zoom
         )
       ),
@@ -741,11 +785,13 @@ export default function FastMap({
     [
       activeLayers.monitoringOverview,
       activeLayers.monitoringSturgeons,
-      activeLayers.sturgeonConfirmedSpawning,
-      activeLayers.sturgeonFeeding,
-      activeLayers.sturgeonProtection,
-      activeLayers.sturgeonSpawning,
-      activeLayers.sturgeonWintering,
+      activeLayers.fast2Feeding,
+      activeLayers.fast2Spawning,
+      activeLayers.fast2Wintering,
+      activeLayers.lowerConfirmedSpawning,
+      activeLayers.lowerFeeding,
+      activeLayers.lowerProtection,
+      activeLayers.lowerWintering,
       datasets.pcKmSegments,
       datasets.sturgeonHabitats,
       selectedPcCode,
@@ -758,44 +804,44 @@ export default function FastMap({
   const visibleSturgeonHabitats = useMemo(
     () =>
       toFeatureCollection(
-        datasets.sturgeonHabitats?.features?.filter((feature) => {
-          const habitatType = feature?.properties?.habitat_type;
-          return (
-            (habitatType === "spawning_potential" && activeLayers.sturgeonSpawning) ||
-            (habitatType === "confirmed_spawning" &&
-              activeLayers.sturgeonConfirmedSpawning) ||
-            (habitatType === "feeding_yoy" && activeLayers.sturgeonFeeding) ||
-            (habitatType === "wintering_refuge" && activeLayers.sturgeonWintering) ||
-            (habitatType === "sensitive_protection" && activeLayers.sturgeonProtection)
-          );
-        }) || []
+        datasets.sturgeonHabitats?.features?.filter((feature) =>
+          isHabitatVisible(feature, activeLayers)
+        ) || []
       ),
     [
-      activeLayers.sturgeonConfirmedSpawning,
-      activeLayers.sturgeonFeeding,
-      activeLayers.sturgeonProtection,
-      activeLayers.sturgeonSpawning,
-      activeLayers.sturgeonWintering,
+      activeLayers.fast2Feeding,
+      activeLayers.fast2Spawning,
+      activeLayers.fast2Wintering,
+      activeLayers.lowerConfirmedSpawning,
+      activeLayers.lowerFeeding,
+      activeLayers.lowerProtection,
+      activeLayers.lowerWintering,
       datasets.sturgeonHabitats,
     ]
   );
 
   const habitatCounts = useMemo(() => {
-    const counts = {
-      total: 0,
-      spawning_potential: 0,
-      confirmed_spawning: 0,
-      feeding_yoy: 0,
-      wintering_refuge: 0,
-      sensitive_protection: 0,
+    const report = datasets.sturgeonHabitatReport || {};
+    const datasetGroups = report.dataset_counts_by_group_and_type || {};
+    const generatedGroups = report.generated_counts_by_group_and_type || {};
+    return {
+      datasetTotal: report.dataset_total || 0,
+      generatedTotal: report.generated_features || datasets.sturgeonHabitats?.features?.length || 0,
+      skippedTotal: report.skipped_features || 0,
+      manualReviewTotal: report.needs_manual_review?.length || 0,
+      skipped: report.skipped || [],
+      fast2: {
+        total: sumGroupCounts(datasetGroups[FAST2_GROUP]),
+        generated: sumGroupCounts(generatedGroups[FAST2_GROUP]),
+        ...(datasetGroups[FAST2_GROUP] || {}),
+      },
+      lowerDanube: {
+        total: sumGroupCounts(datasetGroups[LOWER_DANUBE_GROUP]),
+        generated: sumGroupCounts(generatedGroups[LOWER_DANUBE_GROUP]),
+        ...(datasetGroups[LOWER_DANUBE_GROUP] || {}),
+      },
     };
-    for (const feature of datasets.sturgeonHabitats?.features || []) {
-      const habitatType = feature?.properties?.habitat_type;
-      counts.total += 1;
-      if (habitatType in counts) counts[habitatType] += 1;
-    }
-    return counts;
-  }, [datasets.sturgeonHabitats]);
+  }, [datasets.sturgeonHabitatReport, datasets.sturgeonHabitats]);
 
   const selectedFeature = useMemo(
     () =>
@@ -885,7 +931,7 @@ export default function FastMap({
 
         {visibleSturgeonHabitats.features.length > 0 && (
           <GeoJSON
-            key={`sturgeon-habitats-${activeLayers.sturgeonSpawning}-${activeLayers.sturgeonConfirmedSpawning}-${activeLayers.sturgeonFeeding}-${activeLayers.sturgeonWintering}-${activeLayers.sturgeonProtection}-${selectedHabitatId || "none"}`}
+            key={`sturgeon-habitats-${getHabitatLayerStateKey(activeLayers)}-${selectedHabitatId || "none"}`}
             data={visibleSturgeonHabitats}
             style={(feature) => getSturgeonHabitatStyle(feature, selectedHabitatId)}
             pointToLayer={(feature, latlng) => {
@@ -978,7 +1024,7 @@ export default function FastMap({
 
         {featureSets.habitatLabels.features.length > 0 && (
           <GeoJSON
-            key={`habitat-labels-${viewState.zoom}-${activeLayers.sturgeonSpawning}-${activeLayers.sturgeonConfirmedSpawning}-${activeLayers.sturgeonFeeding}-${activeLayers.sturgeonWintering}-${activeLayers.sturgeonProtection}`}
+            key={`habitat-labels-${viewState.zoom}-${getHabitatLayerStateKey(activeLayers)}`}
             data={featureSets.habitatLabels}
             pointToLayer={(feature, latlng) =>
               L.marker(latlng, {
@@ -1089,21 +1135,16 @@ export default function FastMap({
         }
         onToggleAllHabitats={() =>
           setActiveLayers((current) => {
-            const shouldEnableAll = !(
-              current.sturgeonSpawning &&
-              current.sturgeonConfirmedSpawning &&
-              current.sturgeonFeeding &&
-              current.sturgeonWintering &&
-              current.sturgeonProtection
+            const shouldEnableAll = !Object.keys(HABITAT_SELECTIONS).every(
+              (id) => !availability[id] || current[id]
             );
-            return {
-              ...current,
-              sturgeonSpawning: shouldEnableAll,
-              sturgeonConfirmedSpawning: shouldEnableAll,
-              sturgeonFeeding: shouldEnableAll,
-              sturgeonWintering: shouldEnableAll,
-              sturgeonProtection: shouldEnableAll,
-            };
+            return Object.keys(HABITAT_SELECTIONS).reduce(
+              (next, id) => ({
+                ...next,
+                [id]: availability[id] ? shouldEnableAll : current[id],
+              }),
+              current
+            );
           })
         }
       />
@@ -1150,6 +1191,29 @@ function getHabitatLabelParts(feature) {
     return { shortLabel: "STU-P", extendedLabel: "Protecție sensibilă" };
   }
   return { shortLabel: "STU-I", extendedLabel: "Iernare / refugiu" };
+}
+
+function matchesHabitatSelection(feature, selection) {
+  return (
+    feature?.properties?.dataset_group === selection.dataset_group &&
+    feature?.properties?.habitat_type === selection.habitat_type
+  );
+}
+
+function isHabitatVisible(feature, activeLayers) {
+  return Object.entries(HABITAT_SELECTIONS).some(
+    ([id, selection]) => activeLayers[id] && matchesHabitatSelection(feature, selection)
+  );
+}
+
+function getHabitatLayerStateKey(activeLayers) {
+  return Object.keys(HABITAT_SELECTIONS)
+    .map((id) => `${id}:${activeLayers[id] ? 1 : 0}`)
+    .join("-");
+}
+
+function sumGroupCounts(group = {}) {
+  return Object.values(group).reduce((sum, count) => sum + count, 0);
 }
 
 function buildHabitatLabelFeatures(features = [], zoom) {

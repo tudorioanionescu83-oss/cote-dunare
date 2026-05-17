@@ -833,8 +833,8 @@ input:focus, select:focus{
 }
 
 .fast-swatch-sturgeon-confirmed{
-  border: 2px solid #9a3412;
-  background: rgba(220, 38, 38, 0.42);
+  border: 2px solid #7a0015;
+  background: rgba(176, 0, 32, 0.45);
 }
 
 .fast-swatch-sturgeon-feeding{
@@ -848,8 +848,8 @@ input:focus, select:focus{
 }
 
 .fast-swatch-sturgeon-protection{
-  border: 2px solid #7c2d12;
-  background: rgba(245, 158, 11, 0.38);
+  border: 2px solid #5b2c6f;
+  background: rgba(142, 68, 173, 0.3);
 }
 
 .fast-legend-sources{
@@ -876,6 +876,16 @@ input:focus, select:focus{
 .fast-legend-sources em{
   color: #0e7490;
   font-style: normal;
+}
+
+.fast-legend-note{
+  margin: 0;
+  border-radius: 10px;
+  background: rgba(14, 116, 144, 0.08);
+  color: #0f172a;
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 8px 10px;
 }
 
 .fast-map-panel{
@@ -961,7 +971,7 @@ input:focus, select:focus{
   top: calc(100% + 10px);
   right: 0;
   z-index: 2;
-  width: min(280px, calc(100vw - 36px));
+  width: min(360px, calc(100vw - 36px));
   border: 1px solid rgba(255,255,255,0.78);
   border-radius: 16px;
   background: rgba(255,255,255,0.96);
@@ -1006,6 +1016,56 @@ input:focus, select:focus{
   padding: 2px 6px;
 }
 
+.fast-habitat-control__stats{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.fast-habitat-control__stats span{
+  justify-content: space-between;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.05);
+  color: #334155;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 8px;
+}
+
+.fast-habitat-control__stats strong{
+  color: #0f172a;
+}
+
+.fast-habitat-control__group{
+  display: grid;
+  gap: 4px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  padding-top: 8px;
+}
+
+.fast-habitat-control__group-title{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #334155;
+  font-size: 11px;
+}
+
+.fast-habitat-control__group-title strong{
+  color: #0f172a;
+}
+
+.fast-habitat-control__note{
+  margin: 0;
+  border-radius: 10px;
+  background: rgba(142, 68, 173, 0.08);
+  color: #5b2c6f;
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 8px;
+}
+
 .fast-habitat-control__close{
   justify-self: end;
   width: 24px;
@@ -1029,7 +1089,7 @@ input:focus, select:focus{
 }
 
 .fast-habitat-swatch.is-confirmed{
-  background: #dc2626;
+  background: #b00020;
 }
 
 .fast-habitat-swatch.is-feeding{
@@ -1041,7 +1101,7 @@ input:focus, select:focus{
 }
 
 .fast-habitat-swatch.is-protection{
-  background: #f59e0b;
+  background: #8e44ad;
 }
 
 .fast-habitat-control__fit{
