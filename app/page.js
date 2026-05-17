@@ -867,12 +867,6 @@ export default function Page() {
       </aside>
 
       <main className="page-main">
-        <div className="fast-preview-entry">
-          <Link href="/fast" className="fast-preview-link">
-            FAST Danube
-          </Link>
-        </div>
-
         {/* FULLSCREEN MAP OVERLAY */}
         {mapFullscreen && (
           <div className="map-fullscreen-overlay">
@@ -895,6 +889,9 @@ export default function Page() {
         )}
 
         <div id="map-section" className="map-container-mobile">
+          <Link href="/fast" className="fast-map-entry-overlay">
+            FAST Danube
+          </Link>
           <button 
             className="map-fullscreen-btn"
             onClick={() => setMapFullscreen(true)}

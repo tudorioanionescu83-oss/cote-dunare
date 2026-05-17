@@ -29,7 +29,26 @@ export function buildPcPopup(feature) {
       <span>Lucrări principale: ${displayValue(properties.main_works)}</span><br />
       <span>Monitorizare ihtiofaună/sturioni – overview: ${displayValue(properties.fish_monitoring_overview)}</span><br />
       <span>Tip reprezentare: ${displayValue(properties.representation_type)}</span><br />
-      <span>Observații: ${displayValue(properties.observations)}</span>
+      <span>Observații: Reprezentare pe interval kilometric, nu poligon tehnic de execuție.</span>
+    </div>
+  `;
+}
+
+export function buildPcPolygonPopup(feature) {
+  const properties = feature?.properties || {};
+  const sourceFiles = Array.isArray(properties.source_files)
+    ? properties.source_files.join(", ")
+    : properties.source_files;
+  const sourceNames = Array.isArray(properties.source_names)
+    ? properties.source_names.join(", ")
+    : properties.source_names;
+
+  return `
+    <div class="fast-popup-content">
+      <strong>Source polygon</strong><br />
+      <span>Nume sursă: ${displayValue(properties.name || sourceNames)}</span><br />
+      <span>Fișiere sursă: ${displayValue(sourceFiles)}</span><br />
+      <span>Observații: Sursa disponibilă nu conține toate metadatele FAST pentru acest poligon.</span>
     </div>
   `;
 }

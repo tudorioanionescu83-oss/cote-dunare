@@ -10,7 +10,7 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import FastLayerControl from "./FastLayerControl";
-import { buildKmPopup, buildPcPopup } from "./fastPopup";
+import { buildKmPopup, buildPcPolygonPopup, buildPcPopup } from "./fastPopup";
 
 const LAYER_URLS = {
   afdjKm: "/fast/afdj-km.geojson",
@@ -22,10 +22,10 @@ const LAYER_URLS = {
 
 const INITIAL_LAYERS = {
   pcKmSegments: true,
-  pcPolygons: true,
+  pcPolygons: false,
   afdjKm: true,
-  works: true,
-  disposalZones: true,
+  works: false,
+  disposalZones: false,
   monitoringOverview: true,
 };
 
@@ -64,15 +64,14 @@ async function fetchGeoJson(url, layerName, optional = false) {
   }
 }
 
-function FastFitBounds({ datasets }) {
+function FastFitBounds({ datasets, fitRequestId }) {
   const map = useMap();
   const fittedRef = useRef(false);
 
   useEffect(() => {
-    if (fittedRef.current) return;
-
     const featureCollections = datasets.filter(isFeatureCollection);
     if (!featureCollections.length) return;
+    if (fitRequestId === 0 && fittedRef.current) return;
 
     const group = L.featureGroup(
       featureCollections.map((dataset) => L.geoJSON(dataset))
@@ -82,7 +81,7 @@ function FastFitBounds({ datasets }) {
 
     map.fitBounds(bounds.pad(0.14), { maxZoom: 12 });
     fittedRef.current = true;
-  }, [datasets, map]);
+  }, [datasets, fitRequestId, map]);
 
   return null;
 }
@@ -148,6 +147,8 @@ function hasMonitoringOverview(featureCollection) {
 
 export default function FastMap() {
   const [basemap, setBasemap] = useState("map");
+  const [fitRequestId, setFitRequestId] = useState(0);
+  const [layersLoaded, setLayersLoaded] = useState(false);
   const [activeLayers, setActiveLayers] = useState(INITIAL_LAYERS);
   const [availability, setAvailability] = useState(INITIAL_AVAILABILITY);
   const [datasets, setDatasets] = useState({
@@ -182,6 +183,7 @@ export default function FastMap() {
         disposalZones: Boolean(disposalZones),
         monitoringOverview: hasMonitoringOverview(pcKmSegments),
       });
+      setLayersLoaded(true);
     }
 
     loadLayers();
@@ -191,8 +193,8 @@ export default function FastMap() {
   }, []);
 
   const fitDatasets = useMemo(
-    () => [datasets.pcKmSegments, datasets.pcPolygons].filter(Boolean),
-    [datasets.pcKmSegments, datasets.pcPolygons]
+    () => [datasets.pcKmSegments].filter(Boolean),
+    [datasets.pcKmSegments]
   );
 
   const monitoringFeatures = useMemo(() => {
@@ -206,6 +208,15 @@ export default function FastMap() {
       ),
     };
   }, [datasets.pcKmSegments]);
+
+  const pcSegmentCount = useMemo(
+    () =>
+      datasets.pcKmSegments?.features?.filter(
+        (feature) => feature?.properties?.geometry_role === "segment"
+      ).length || 0,
+    [datasets.pcKmSegments]
+  );
+  const optionalLayerUnavailable = !availability.works || !availability.disposalZones;
 
   return (
     <div className="fast-map-root">
@@ -228,7 +239,7 @@ export default function FastMap() {
           />
         )}
 
-        <FastFitBounds datasets={fitDatasets} />
+        <FastFitBounds datasets={fitDatasets} fitRequestId={fitRequestId} />
         <ScaleControl position="bottomleft" imperial={false} />
 
         {activeLayers.pcKmSegments && datasets.pcKmSegments && (
@@ -257,7 +268,7 @@ export default function FastMap() {
             data={datasets.pcPolygons}
             style={getPcPolygonStyle}
             onEachFeature={(feature, layer) => {
-              layer.bindPopup(buildPcPopup(feature), { className: "fast-popup" });
+              layer.bindPopup(buildPcPolygonPopup(feature), { className: "fast-popup" });
             }}
           />
         )}
@@ -302,6 +313,7 @@ export default function FastMap() {
         activeLayers={activeLayers}
         availability={availability}
         onBasemapChange={setBasemap}
+        onFitToFastSector={() => setFitRequestId((value) => value + 1)}
         onToggleLayer={(layerId) =>
           setActiveLayers((current) => ({
             ...current,
@@ -309,6 +321,22 @@ export default function FastMap() {
           }))
         }
       />
+
+      <div className="fast-status-panel">
+        <div>
+          {layersLoaded
+            ? `${pcSegmentCount} critical point intervals loaded`
+            : "critical point intervals loading"}
+        </div>
+        <div>
+          {availability.afdjKm
+            ? "AFDJ km layer loaded"
+            : layersLoaded
+              ? "AFDJ km layer unavailable"
+              : "AFDJ km layer loading"}
+        </div>
+        {layersLoaded && optionalLayerUnavailable ? <div>optional layer unavailable</div> : null}
+      </div>
     </div>
   );
 }

@@ -5,15 +5,23 @@ export default function FastLegend() {
       <div className="fast-legend">
         <div className="fast-legend-row">
           <span className="fast-swatch fast-swatch-pc-segment" />
-          <span>PC km segments — km interval representation</span>
+          <span>
+            <strong>PC km segments</strong> — reprezentare pe interval kilometric generată din
+            km AFDJ; nu este poligon tehnic de execuție.
+          </span>
         </div>
         <div className="fast-legend-row">
           <span className="fast-swatch fast-swatch-pc-polygon" />
-          <span>PC polygons — source polygons</span>
+          <span>
+            <strong>PC polygons</strong> — geometrii sursă KMZ disponibile; nu acoperă
+            neapărat toate cele 12 puncte critice.
+          </span>
         </div>
         <div className="fast-legend-row">
           <span className="fast-swatch fast-swatch-km" />
-          <span>Km AFDJ</span>
+          <span>
+            <strong>Km AFDJ</strong> — kilometraj fluvial folosit pentru orientare.
+          </span>
         </div>
         <div className="fast-legend-row">
           <span className="fast-swatch fast-swatch-works" />

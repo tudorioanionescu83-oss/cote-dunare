@@ -379,12 +379,7 @@ input:focus, select:focus{
 /* =========================================================
    FAST DANUBE PREVIEW
    ========================================================= */
-.fast-preview-entry{
-  display: flex;
-  justify-content: flex-end;
-}
-
-.fast-preview-link,
+.fast-map-entry-overlay,
 .fast-back-link{
   display: inline-flex;
   align-items: center;
@@ -399,11 +394,27 @@ input:focus, select:focus{
   box-shadow: 0 10px 24px rgba(2, 132, 199, 0.18);
 }
 
-.fast-preview-link:hover,
+.fast-map-entry-overlay:hover,
 .fast-back-link:hover{
   color: #ffffff;
   text-decoration: none;
   filter: brightness(1.04);
+}
+
+.fast-map-entry-overlay{
+  position: absolute;
+  top: 12px;
+  right: 54px;
+  z-index: 1200;
+  background: rgba(255,255,255,0.94);
+  color: #082f49;
+  box-shadow: 0 10px 24px rgba(0, 45, 70, 0.18);
+  backdrop-filter: blur(10px);
+}
+
+.fast-map-entry-overlay:hover{
+  color: #082f49;
+  background: #ffffff;
 }
 
 .fast-page{
@@ -583,6 +594,22 @@ input:focus, select:focus{
   margin-top: 12px;
 }
 
+.fast-layer-control__fit{
+  width: 100%;
+  margin-top: 12px;
+  border: 1px solid rgba(2, 132, 199, 0.18);
+  border-radius: 999px;
+  background: #082f49;
+  color: #ffffff;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.fast-layer-control__fit:hover{
+  background: #0c4a6e;
+}
+
 .fast-layer-control__title{
   margin-bottom: 7px;
   color: #082f49;
@@ -644,6 +671,23 @@ input:focus, select:focus{
   color: #075985;
 }
 
+.fast-status-panel{
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 1000;
+  border: 1px solid rgba(255,255,255,0.72);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.92);
+  color: #082f49;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+  box-shadow: 0 14px 30px rgba(0, 45, 70, 0.16);
+  backdrop-filter: blur(12px);
+}
+
 @media (max-width: 900px){
   .fast-page{
     padding: 12px;
@@ -663,5 +707,31 @@ input:focus, select:focus{
   .fast-map,
   .fast-map-loading{
     min-height: 520px;
+  }
+
+  .fast-layer-control{
+    top: auto;
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: auto;
+    max-height: min(290px, 42vh);
+    overflow-y: auto;
+  }
+
+  .fast-status-panel{
+    top: 12px;
+    bottom: auto;
+    left: 12px;
+    max-width: calc(100% - 24px);
+  }
+}
+
+@media (max-width: 768px){
+  .fast-map-entry-overlay{
+    top: 12px;
+    right: 54px;
+    padding: 9px 12px;
+    font-size: 12px;
   }
 }

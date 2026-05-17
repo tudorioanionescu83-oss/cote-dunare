@@ -17,6 +17,7 @@ export default function FastLayerControl({
   activeLayers,
   availability,
   onBasemapChange,
+  onFitToFastSector,
   onToggleLayer,
 }) {
   return (
@@ -37,6 +38,14 @@ export default function FastLayerControl({
         </div>
       </div>
 
+      <button
+        type="button"
+        className="fast-layer-control__fit"
+        onClick={onFitToFastSector}
+      >
+        Fit to FAST sector
+      </button>
+
       <div className="fast-layer-control__section">
         <div className="fast-layer-control__title">Layere</div>
         <div className="fast-layer-control__toggles">
@@ -53,7 +62,10 @@ export default function FastLayerControl({
                   onChange={() => onToggleLayer(option.id)}
                   disabled={!isAvailable}
                 />
-                <span>{option.label}</span>
+                <span>
+                  {option.label}
+                  {!isAvailable ? " — not available" : ""}
+                </span>
               </label>
             );
           })}

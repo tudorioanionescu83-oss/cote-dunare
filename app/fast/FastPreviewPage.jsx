@@ -19,13 +19,13 @@ export default function FastPreviewPage() {
       <header className="fast-header">
         <div>
           <p className="fast-kicker">FAST Danube</p>
-          <h1>Preview / Planning Map</h1>
+          <h1>FAST Danube 2 – Planning Map</h1>
           <p>
-            Hartă de orientare pentru zone FAST, kilometraj AFDJ și straturi de planificare.
+            Critical points, Danube km references and ichthyofauna/sturgeon monitoring overview
           </p>
         </div>
         <Link href="/" className="fast-back-link">
-          Înapoi la cote
+          Back to Cote
         </Link>
       </header>
 
