@@ -8,8 +8,6 @@ function getKmRange(interval) {
 
 export default function FastSidebar({
   pcIntervals,
-  monitoringOverview,
-  generalNote,
   selectedPcCode,
   onSelectPc,
   isOpen,
@@ -22,11 +20,6 @@ export default function FastSidebar({
       </button>
 
       <div className="fast-sidebar-scroll">
-        <section className="fast-sidebar-block">
-          <h2>Conținut</h2>
-          <p>{generalNote}</p>
-        </section>
-
         <section className="fast-sidebar-block">
           <div className="fast-sidebar-heading">
             <h2>Puncte critice</h2>
@@ -56,12 +49,6 @@ export default function FastSidebar({
               </button>
             ))}
           </div>
-        </section>
-
-        <section className="fast-sidebar-block">
-          <h2>Monitorizare overview</h2>
-          <p>{monitoringOverview?.summary}</p>
-          <p className="fast-sidebar-note">{monitoringOverview?.note}</p>
         </section>
 
         <FastLegend />

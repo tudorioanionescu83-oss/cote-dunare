@@ -46,8 +46,6 @@ export default function FastPreviewPage() {
   }, []);
 
   const pcIntervals = metadata?.pc_intervals || [];
-  const monitoringOverview = metadata?.monitoring_overview || null;
-  const generalNote = metadata?.general_note || "";
   const selectedInterval =
     pcIntervals.find((interval) => interval.pc_code === selectedPcCode) || null;
 
@@ -63,10 +61,8 @@ export default function FastPreviewPage() {
       <header className="fast-header">
         <div>
           <p className="fast-kicker">FAST Danube</p>
-          <h1>FAST Danube 2 – Planning Map</h1>
-          <p>
-            Critical points, Danube km references and ichthyofauna/sturgeon monitoring overview
-          </p>
+          <h1>FAST Danube 2</h1>
+          <p>Monitorizarea impactului asupra mediului</p>
         </div>
         <Link href="/" className="fast-back-link">
           Back to Cote
@@ -82,8 +78,6 @@ export default function FastPreviewPage() {
       <section className="fast-workspace">
         <FastSidebar
           pcIntervals={pcIntervals}
-          monitoringOverview={monitoringOverview}
-          generalNote={generalNote}
           selectedPcCode={selectedPcCode}
           onSelectPc={handleSelectPc}
           isOpen={sidebarOpen}

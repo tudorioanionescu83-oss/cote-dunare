@@ -437,7 +437,6 @@ function bindPcPopupInteractions(layer, feature, onSelectPc) {
 export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc }) {
   const [basemap, setBasemap] = useState("map");
   const [fitRequestId, setFitRequestId] = useState(0);
-  const [layersLoaded, setLayersLoaded] = useState(false);
   const [activeLayers, setActiveLayers] = useState(INITIAL_LAYERS);
   const [availability, setAvailability] = useState(INITIAL_AVAILABILITY);
   const [viewState, setViewState] = useState({
@@ -499,7 +498,6 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
         monitoringOverview: hasMonitoringOverview(pcKmSegments),
         monitoringSturgeons: hasMonitoringOverview(pcKmSegments),
       });
-      setLayersLoaded(true);
     }
 
     loadLayers();
@@ -562,17 +560,6 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
       ) || null,
     [datasets.pcKmSegments, datasets.pcPlanningPolygons, selectedPcCode]
   );
-
-  const pcSegmentCount = useMemo(
-    () =>
-      datasets.pcKmSegments?.features?.filter(
-        (feature) => feature?.properties?.geometry_role === "segment"
-      ).length || 0,
-    [datasets.pcKmSegments]
-  );
-  const planningPolygonCount = datasets.pcPlanningPolygons?.features?.length || 0;
-  const sourcePolygonCount = datasets.pcPolygons?.features?.length || 0;
-  const optionalLayerUnavailable = !availability.works || !availability.disposalZones;
 
   return (
     <div className="fast-map-root">
@@ -802,37 +789,6 @@ export default function FastMap({ selectedPcCode, selectionRequestId, onSelectPc
         }
       />
 
-      <div className="fast-status-panel">
-        <div>
-          {layersLoaded
-            ? `${pcSegmentCount} critical point intervals loaded`
-            : "critical point intervals loading"}
-        </div>
-        <div>
-          {availability.afdjKm
-            ? "AFDJ km layer loaded"
-            : layersLoaded
-              ? "AFDJ km layer unavailable"
-              : "AFDJ km layer loading"}
-        </div>
-        <div>
-          {availability.pcPlanningPolygons
-            ? `${planningPolygonCount} PC planning polygons loaded`
-            : layersLoaded
-              ? "PC planning polygons unavailable"
-              : "PC planning polygons loading"}
-        </div>
-        <div>
-          {availability.pcPolygons
-            ? `${sourcePolygonCount} source polygons available`
-            : layersLoaded
-              ? "source polygons unavailable"
-              : "source polygons loading"}
-        </div>
-        {layersLoaded && optionalLayerUnavailable ? (
-          <div>optional GIS layers unavailable</div>
-        ) : null}
-      </div>
     </div>
   );
 }
