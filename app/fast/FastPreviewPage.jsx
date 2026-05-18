@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import FastDetailCard from "./FastDetailCard";
 import { t } from "./fastI18n";
 import FastPcSlider from "./FastPcSlider";
@@ -22,6 +22,7 @@ export default function FastPreviewPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailCollapseRequestId, setDetailCollapseRequestId] = useState(0);
+  const mapPanelRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,6 +62,30 @@ export default function FastPreviewPage() {
     if (!languageReady) return;
     window.localStorage.setItem("fastLanguage", language);
   }, [language, languageReady]);
+
+  useEffect(() => {
+    if (!detailOpen || selectionRequestId === 0) return;
+    if (window.matchMedia("(max-width: 900px)").matches) return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      const detailCard = mapPanelRef.current?.querySelector(".fast-detail-card");
+      if (!detailCard) return;
+
+      const detailCardRect = detailCard.getBoundingClientRect();
+      const visiblePeekHeight = 120;
+      const targetScrollTop =
+        window.scrollY + detailCardRect.top - window.innerHeight + visiblePeekHeight;
+
+      if (targetScrollTop > window.scrollY + 2) {
+        window.scrollTo({
+          top: targetScrollTop,
+          behavior: "smooth",
+        });
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [detailOpen, selectionRequestId]);
 
   const pcIntervals = metadata?.pc_intervals || [];
   const selectedInterval =
@@ -123,7 +148,7 @@ export default function FastPreviewPage() {
           language={language}
         />
 
-        <div className="fast-map-panel">
+        <div ref={mapPanelRef} className="fast-map-panel">
           <FastMap
             selectedPcCode={selectedPcCode}
             selectionRequestId={selectionRequestId}
