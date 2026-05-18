@@ -85,7 +85,7 @@ function toFeatureCollection(features = []) {
 
 async function fetchGeoJson(url, layerName, optional = false) {
   try {
-    const response = await fetch(url, { cache: "force-cache" });
+    const response = await fetch(url, { cache: "no-store" });
     if (!response.ok) {
       console.warn(`[FAST] Layer indisponibil: ${layerName} (${response.status})`);
       return null;
@@ -144,7 +144,7 @@ function isSubKmValue(value) {
 
 async function fetchJson(url, layerName, optional = false) {
   try {
-    const response = await fetch(url, { cache: "force-cache" });
+    const response = await fetch(url, { cache: "no-store" });
     if (!response.ok) {
       console.warn(`[FAST] Resursă indisponibilă: ${layerName} (${response.status})`);
       return null;
@@ -544,6 +544,15 @@ function getDatasetsBounds(datasets = []) {
   return bounds.isValid() ? bounds : null;
 }
 
+function countHabitatTypes(features = []) {
+  return features.reduce((result, feature) => {
+    const type = feature?.properties?.habitat_type;
+    if (!type) return result;
+    result[type] = (result[type] || 0) + 1;
+    return result;
+  }, {});
+}
+
 function getSturgeonHabitatStyle(feature, selectedHabitatId) {
   const habitatType = feature?.properties?.habitat_type;
   const isSelected = feature?.properties?.id === selectedHabitatId;
@@ -719,9 +728,8 @@ export default function FastMap({
       [
         datasets.pcPlanningPolygons,
         datasets.pcKmSegments,
-        datasets.sturgeonHabitats,
       ].filter(Boolean),
-    [datasets.pcKmSegments, datasets.pcPlanningPolygons, datasets.sturgeonHabitats]
+    [datasets.pcKmSegments, datasets.pcPlanningPolygons]
   );
 
   const fastSectorReferenceBounds = useMemo(
@@ -847,14 +855,15 @@ export default function FastMap({
 
   const habitatCounts = useMemo(() => {
     const report = datasets.sturgeonHabitatReport || {};
+    const generatedByType = countHabitatTypes(datasets.sturgeonHabitats?.features || []);
     return {
       datasetTotal: report.dataset_total || 0,
-      generatedTotal: report.generated_features || datasets.sturgeonHabitats?.features?.length || 0,
+      generatedTotal: datasets.sturgeonHabitats?.features?.length || 0,
       skippedTotal: report.skipped_features || 0,
       manualReviewTotal: report.needs_manual_review?.length || 0,
       skipped: report.skipped || [],
       datasetByType: report.dataset_counts_by_habitat_type || {},
-      generatedByType: report.generated_counts_by_habitat_type || {},
+      generatedByType,
     };
   }, [datasets.sturgeonHabitatReport, datasets.sturgeonHabitats]);
 
@@ -1157,14 +1166,6 @@ export default function FastMap({
         onFitToFastSector={() => setFitRequestId((value) => value + 1)}
         onFitToHabitats={() => setHabitatFitRequestId((value) => value + 1)}
         onHabitatControlOpen={onHabitatControlOpen}
-        onEnableAllHabitats={() =>
-          setActiveLayers((current) => ({
-            ...current,
-            ...Object.fromEntries(
-              Object.keys(HABITAT_SELECTIONS).map((id) => [id, availability[id]])
-            ),
-          }))
-        }
         onToggleLayer={(layerId) =>
           setActiveLayers((current) => ({
             ...current,

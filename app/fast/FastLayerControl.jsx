@@ -61,7 +61,6 @@ export default function FastLayerControl({
   onFitToFastSector,
   onFitToHabitats,
   onHabitatControlOpen,
-  onEnableAllHabitats,
   onToggleLayer,
   onToggleAllHabitats,
 }) {
@@ -150,12 +149,6 @@ export default function FastLayerControl({
     }
   }, [isPcDetailOpen]);
 
-  useEffect(() => {
-    if (isHabitatControlOpen && habitatsAvailable && !anyHabitatsActive) {
-      onEnableAllHabitats?.();
-    }
-  }, [anyHabitatsActive, habitatsAvailable, isHabitatControlOpen, onEnableAllHabitats]);
-
   function handleMapInteraction(callback) {
     callback?.();
     setIsHabitatControlOpen(false);
@@ -164,9 +157,6 @@ export default function FastLayerControl({
   }
 
   function openHabitatControl() {
-    if (!anyHabitatsActive) {
-      onEnableAllHabitats?.();
-    }
     setIsMapControlOpen(false);
     setIsHabitatControlOpen(true);
     onHabitatControlOpen?.();

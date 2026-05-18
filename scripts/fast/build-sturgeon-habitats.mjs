@@ -489,10 +489,6 @@ function buildDenseBankReferenceChain(
     .filter(Boolean);
 }
 
-function insetFromBank(center, bank, ratio = 0.84) {
-  return interpolateCoordinate(center, bank, ratio);
-}
-
 function corridorAroundCenter(chain, ratio = 0.32) {
   const left = chain.map((reference) =>
     interpolateCoordinate(reference.center, reference.leftBank, ratio)
@@ -504,14 +500,19 @@ function corridorAroundCenter(chain, ratio = 0.32) {
 }
 
 function corridorToBank(chain, bankSide) {
-  const innerBank = chain.map((reference) =>
-    insetFromBank(
-      reference.center,
-      bankSide === "left" ? reference.leftBank : reference.rightBank
-    )
+  const bankBoundary = chain.map((reference) =>
+    bankSide === "left" ? reference.leftBank : reference.rightBank
   );
-  const fairway = chain.map((reference) => reference.center).reverse();
-  return [...innerBank, ...fairway, innerBank[0]];
+  const waterwardBoundary = chain
+    .map((reference) =>
+      interpolateCoordinate(
+        bankSide === "left" ? reference.leftBank : reference.rightBank,
+        reference.center,
+        0.42
+      )
+    )
+    .reverse();
+  return [...bankBoundary, ...waterwardBoundary, bankBoundary[0]];
 }
 
 function orientation(first, second, third) {
