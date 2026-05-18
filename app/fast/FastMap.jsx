@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   GeoJSON,
   MapContainer,
+  Pane,
   ScaleControl,
   TileLayer,
   useMap,
@@ -379,8 +380,8 @@ function getFastSectorPadding(map) {
 
   const mapHeight = map.getSize().y;
   return {
-    paddingTopLeft: [24, 20],
-    paddingBottomRight: [24, Math.min(220, Math.round(mapHeight * 0.22))],
+    paddingTopLeft: [28, 24],
+    paddingBottomRight: [28, Math.min(320, Math.round(mapHeight * 0.34))],
   };
 }
 
@@ -396,13 +397,13 @@ function getPcFocusPadding(map) {
   const mapHeight = map.getSize().y;
   const openDetailCardHeight =
     document.querySelector(".fast-detail-card.is-open")?.getBoundingClientRect().height || 0;
-  const reservedBottomSpace = Math.max(
-    Math.min(240, Math.round(mapHeight * 0.3)),
-    Math.min(openDetailCardHeight + 24, Math.round(mapHeight * 0.42))
+  const reservedBottomSpace = Math.min(
+    Math.max(Math.round(mapHeight * 0.38), openDetailCardHeight + 36),
+    Math.max(180, mapHeight - 120)
   );
 
   return {
-    paddingTopLeft: [24, 24],
+    paddingTopLeft: [28, 28],
     paddingBottomRight: [24, reservedBottomSpace],
   };
 }
@@ -481,9 +482,9 @@ function getFairwayStyle(zoom) {
   return {
     fillColor: "#35D399",
     color: "#A7FFE6",
-    fillOpacity: isVeryLowZoom ? 0.11 : isLowZoom ? 0.14 : isHighZoom ? 0.22 : 0.18,
-    opacity: isVeryLowZoom ? 0.42 : isLowZoom ? 0.52 : 0.62,
-    weight: isLowZoom ? 0.8 : isHighZoom ? 1.18 : 1,
+    fillOpacity: isVeryLowZoom ? 0.13 : isLowZoom ? 0.16 : isHighZoom ? 0.24 : 0.2,
+    opacity: isVeryLowZoom ? 0.48 : isLowZoom ? 0.58 : 0.68,
+    weight: isLowZoom ? 0.95 : isHighZoom ? 1.35 : 1.15,
   };
 }
 
@@ -495,8 +496,8 @@ function getFairwayBoundaryStyle(zoom) {
   return {
     fill: false,
     color: "#F59E0B",
-    opacity: isVeryLowZoom ? 0.24 : isLowZoom ? 0.32 : isHighZoom ? 0.48 : 0.4,
-    weight: isLowZoom ? 0.8 : isHighZoom ? 1.15 : 0.95,
+    opacity: isVeryLowZoom ? 0.3 : isLowZoom ? 0.38 : isHighZoom ? 0.54 : 0.46,
+    weight: isLowZoom ? 0.95 : isHighZoom ? 1.3 : 1.1,
     dashArray: isLowZoom ? "3 6" : "4 6",
   };
 }
@@ -580,6 +581,16 @@ function FastRequestedFitBounds({ datasets, fitRequestId }) {
   return null;
 }
 
+function FastPopupController({ closeRequestId, language, activeLayerStateKey }) {
+  const map = useMap();
+
+  useEffect(() => {
+    map.closePopup();
+  }, [activeLayerStateKey, closeRequestId, language, map]);
+
+  return null;
+}
+
 function getDatasetsBounds(datasets = []) {
   const featureCollections = datasets.filter(isFeatureCollection);
   if (!featureCollections.length) return null;
@@ -603,8 +614,8 @@ function getSturgeonHabitatStyle(feature, selectedHabitatId) {
   if (habitatType === "spawning_potential") {
     return {
       color: "#C94F00",
-      weight: isSelected ? 3.4 : 2,
-      opacity: 0.9,
+      weight: isSelected ? 4.2 : 2.8,
+      opacity: isSelected ? 1 : 0.94,
       fillColor: "#FF7A00",
       fillOpacity: isSelected ? 0.42 : 0.32,
     };
@@ -612,7 +623,7 @@ function getSturgeonHabitatStyle(feature, selectedHabitatId) {
   if (habitatType === "confirmed_spawning") {
     return {
       color: "#7A0015",
-      weight: isSelected ? 3.8 : 2.4,
+      weight: isSelected ? 4.4 : 3,
       opacity: 0.96,
       fillColor: "#B00020",
       fillOpacity: isSelected ? 0.55 : 0.45,
@@ -621,8 +632,8 @@ function getSturgeonHabitatStyle(feature, selectedHabitatId) {
   if (habitatType === "feeding_yoy") {
     return {
       color: "#1E874B",
-      weight: isSelected ? 3.4 : 2,
-      opacity: 0.9,
+      weight: isSelected ? 4.2 : 2.8,
+      opacity: isSelected ? 1 : 0.94,
       fillColor: "#2ECC71",
       fillOpacity: isSelected ? 0.42 : 0.32,
     };
@@ -630,7 +641,7 @@ function getSturgeonHabitatStyle(feature, selectedHabitatId) {
   if (habitatType === "sensitive_protection") {
     return {
       color: "#5B2C6F",
-      weight: isSelected ? 3.8 : 2.4,
+      weight: isSelected ? 4.4 : 3,
       opacity: 0.96,
       fillColor: "#8E44AD",
       fillOpacity: isSelected ? 0.38 : 0.3,
@@ -639,8 +650,8 @@ function getSturgeonHabitatStyle(feature, selectedHabitatId) {
   }
   return {
     color: "#0B3D91",
-    weight: isSelected ? 3.4 : 2,
-    opacity: 0.92,
+    weight: isSelected ? 4.2 : 2.8,
+    opacity: isSelected ? 1 : 0.94,
     fillColor: "#2478FF",
     fillOpacity: isSelected ? 0.48 : 0.38,
   };
@@ -664,6 +675,7 @@ function bindPcPopupInteractions(layer, feature, onSelectPc, language) {
 export default function FastMap({
   selectedPcCode,
   selectionRequestId,
+  popupCloseRequestId,
   onSelectPc,
   isPcDetailOpen,
   onHabitatControlOpen,
@@ -672,6 +684,7 @@ export default function FastMap({
   const [basemap, setBasemap] = useState("map");
   const [fitRequestId, setFitRequestId] = useState(0);
   const [habitatFitRequestId, setHabitatFitRequestId] = useState(0);
+  const [popupContextRequestId, setPopupContextRequestId] = useState(0);
   const [activeLayers, setActiveLayers] = useState(INITIAL_LAYERS);
   const [availability, setAvailability] = useState(INITIAL_AVAILABILITY);
   const [selectedHabitatId, setSelectedHabitatId] = useState(null);
@@ -918,6 +931,17 @@ export default function FastMap({
       ) || null,
     [datasets.pcKmSegments, datasets.pcPlanningPolygons, selectedPcCode]
   );
+  const activeLayerStateKey = useMemo(
+    () =>
+      Object.entries(activeLayers)
+        .map(([key, value]) => `${key}:${value ? 1 : 0}`)
+        .join("-"),
+    [activeLayers]
+  );
+
+  function requestPopupClose() {
+    setPopupContextRequestId((value) => value + 1);
+  }
 
   return (
     <div className="fast-map-root">
@@ -926,6 +950,7 @@ export default function FastMap({
         zoom={9}
         zoomControl
         scrollWheelZoom
+        closePopupOnClick
         className="fast-map"
       >
         {basemap === "map" ? (
@@ -950,7 +975,13 @@ export default function FastMap({
           selectedFeature={selectedFeature}
           selectionRequestId={selectionRequestId}
         />
+        <FastPopupController
+          closeRequestId={popupCloseRequestId + popupContextRequestId}
+          language={language}
+          activeLayerStateKey={activeLayerStateKey}
+        />
         <ScaleControl position="bottomleft" imperial={false} />
+        <Pane name="fastHabitats" style={{ zIndex: 450 }} />
 
         {datasets.fairway && viewState.zoom >= 7 && (
           <>
@@ -996,6 +1027,8 @@ export default function FastMap({
           <GeoJSON
             key={`sturgeon-habitats-${getHabitatLayerStateKey(activeLayers)}-${selectedHabitatId || "none"}-${language}`}
             data={visibleSturgeonHabitats}
+            pane="fastHabitats"
+            interactive
             style={(feature) => getSturgeonHabitatStyle(feature, selectedHabitatId)}
             pointToLayer={(feature, latlng) => {
               const style = getSturgeonHabitatStyle(feature, selectedHabitatId);
@@ -1011,6 +1044,18 @@ export default function FastMap({
               layer.on("click", () => {
                 setSelectedHabitatId(feature?.properties?.id || null);
                 layer.bringToFront?.();
+              });
+              layer.on("mouseover", () => {
+                const style = getSturgeonHabitatStyle(feature, selectedHabitatId);
+                layer.bringToFront?.();
+                layer.setStyle({
+                  weight: style.weight + 0.8,
+                  opacity: 1,
+                  fillOpacity: Math.min(style.fillOpacity + 0.04, 0.62),
+                });
+              });
+              layer.on("mouseout", () => {
+                layer.setStyle(getSturgeonHabitatStyle(feature, selectedHabitatId));
               });
             }}
           />
@@ -1203,17 +1248,31 @@ export default function FastMap({
         habitatCounts={habitatCounts}
         isPcDetailOpen={isPcDetailOpen}
         language={language}
-        onBasemapChange={setBasemap}
-        onFitToFastSector={() => setFitRequestId((value) => value + 1)}
-        onFitToHabitats={() => setHabitatFitRequestId((value) => value + 1)}
+        onBasemapChange={(nextBasemap) => {
+          requestPopupClose();
+          setBasemap(nextBasemap);
+        }}
+        onFitToFastSector={() => {
+          requestPopupClose();
+          setFitRequestId((value) => value + 1);
+        }}
+        onFitToHabitats={() => {
+          requestPopupClose();
+          setHabitatFitRequestId((value) => value + 1);
+        }}
         onHabitatControlOpen={onHabitatControlOpen}
+        onHabitatControlToggle={requestPopupClose}
         onToggleLayer={(layerId) =>
-          setActiveLayers((current) => ({
-            ...current,
-            [layerId]: !current[layerId],
-          }))
+          {
+            requestPopupClose();
+            setActiveLayers((current) => ({
+              ...current,
+              [layerId]: !current[layerId],
+            }));
+          }
         }
-        onToggleAllHabitats={() =>
+        onToggleAllHabitats={() => {
+          requestPopupClose();
           setActiveLayers((current) => {
             const habitatIds = Object.keys(HABITAT_SELECTIONS).filter(
               (id) => availability[id]
@@ -1227,7 +1286,7 @@ export default function FastMap({
               current
             );
           })
-        }
+        }}
       />
 
     </div>

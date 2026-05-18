@@ -62,6 +62,7 @@ export default function FastLayerControl({
   onFitToFastSector,
   onFitToHabitats,
   onHabitatControlOpen,
+  onHabitatControlToggle,
   onToggleLayer,
   onToggleAllHabitats,
   language,
@@ -114,7 +115,10 @@ export default function FastLayerControl({
   function scheduleHabitatClose() {
     clearHabitatTimer();
     habitatTimerRef.current = setTimeout(
-      () => setIsHabitatControlOpen(false),
+      () => {
+        setIsHabitatControlOpen(false);
+        onHabitatControlToggle?.();
+      },
       getAutoCloseDelay()
     );
   }
@@ -134,6 +138,7 @@ export default function FastLayerControl({
         !habitatControlRef.current.contains(event.target)
       ) {
         setIsHabitatControlOpen(false);
+        onHabitatControlToggle?.();
       }
     }
 
@@ -161,8 +166,14 @@ export default function FastLayerControl({
   function openHabitatControl() {
     setIsMapControlOpen(false);
     setIsHabitatControlOpen(true);
+    onHabitatControlToggle?.();
     onHabitatControlOpen?.();
     scheduleHabitatClose();
+  }
+
+  function closeHabitatControl() {
+    setIsHabitatControlOpen(false);
+    onHabitatControlToggle?.();
   }
 
   function handleHabitatInteraction(callback) {
@@ -275,7 +286,7 @@ export default function FastLayerControl({
           className={`fast-habitat-control__button${anyHabitatsActive ? " is-active" : ""}`}
           onClick={() => {
             if (isHabitatControlOpen) {
-              setIsHabitatControlOpen(false);
+              closeHabitatControl();
               return;
             }
             openHabitatControl();
@@ -294,7 +305,7 @@ export default function FastLayerControl({
             <button
               type="button"
               className="fast-habitat-control__close"
-              onClick={() => setIsHabitatControlOpen(false)}
+              onClick={closeHabitatControl}
               aria-label={t("close", language)}
             >
               ×

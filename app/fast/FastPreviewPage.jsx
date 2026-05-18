@@ -19,6 +19,7 @@ export default function FastPreviewPage() {
   const [languageReady, setLanguageReady] = useState(false);
   const [selectedPcCode, setSelectedPcCode] = useState(null);
   const [selectionRequestId, setSelectionRequestId] = useState(0);
+  const [popupCloseRequestId, setPopupCloseRequestId] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailCollapseRequestId, setDetailCollapseRequestId] = useState(0);
@@ -66,11 +67,19 @@ export default function FastPreviewPage() {
   const selectedInterval =
     pcIntervals.find((interval) => interval.pc_code === selectedPcCode) || null;
 
-  function handleSelectPc(pcCode) {
+  function handleSelectPc(pcCode, { closePopup = true } = {}) {
+    if (closePopup) {
+      setPopupCloseRequestId((value) => value + 1);
+    }
     setSelectedPcCode(pcCode);
     setSelectionRequestId((value) => value + 1);
     setDetailOpen(true);
     setSidebarOpen(false);
+  }
+
+  function handleLanguageChange(nextLanguage) {
+    setPopupCloseRequestId((value) => value + 1);
+    setLanguage(nextLanguage);
   }
 
   return (
@@ -89,7 +98,7 @@ export default function FastPreviewPage() {
             <button
               type="button"
               className={language === "ro" ? "is-active" : ""}
-              onClick={() => setLanguage("ro")}
+              onClick={() => handleLanguageChange("ro")}
               aria-pressed={language === "ro"}
             >
               <span aria-hidden="true">🇷🇴</span> RO
@@ -97,7 +106,7 @@ export default function FastPreviewPage() {
             <button
               type="button"
               className={language === "en" ? "is-active" : ""}
-              onClick={() => setLanguage("en")}
+              onClick={() => handleLanguageChange("en")}
               aria-pressed={language === "en"}
             >
               <span aria-hidden="true">🇬🇧</span> EN
@@ -127,7 +136,8 @@ export default function FastPreviewPage() {
           <FastMap
             selectedPcCode={selectedPcCode}
             selectionRequestId={selectionRequestId}
-            onSelectPc={handleSelectPc}
+            popupCloseRequestId={popupCloseRequestId}
+            onSelectPc={(pcCode) => handleSelectPc(pcCode, { closePopup: false })}
             isPcDetailOpen={detailOpen}
             onHabitatControlOpen={() =>
               setDetailCollapseRequestId((value) => value + 1)

@@ -60,13 +60,6 @@ function formatHabitatSector(properties, language) {
 }
 
 function formatHabitatType(properties, language) {
-  if (
-    properties.habitat_type === "feeding_yoy" &&
-    String(properties.label_ro || "").toLowerCase().includes("nursery")
-  ) {
-    return t("feedingNursery", language);
-  }
-
   const habitatTypeByCode = {
     spawning_potential: "potentialSpawning",
     confirmed_spawning: "confirmedSpawning",
@@ -96,7 +89,7 @@ function formatHabitatName(properties, language, sector) {
 function formatBranchOrBank(properties, language) {
   if (properties.branch) return properties.branch;
   if (properties.bank_side_ro) return getLocalizedValue(properties, "bank_side", language);
-  return t("unavailableCurrentSource", language);
+  return "";
 }
 
 function formatEcologicalIndication(properties, language) {
@@ -104,7 +97,7 @@ function formatEcologicalIndication(properties, language) {
   return (
     mappedValue ||
     getLocalizedValue(properties, "substrate", language) ||
-    t("unavailableCurrentSource", language)
+    ""
   );
 }
 
@@ -131,7 +124,7 @@ function formatConfidence(properties, language) {
   if (confidence.includes("mediu")) return t("mediumConfidence", language);
   if (confidence.includes("evaluare preliminar")) return t("mediumConfidence", language);
 
-  return t("popupMissingValue", language);
+  return "";
 }
 
 function formatFastRelation(properties, language) {
@@ -141,7 +134,7 @@ function formatFastRelation(properties, language) {
       ? [properties.related_fast_pc]
       : [];
 
-  if (!relatedFastPc.length) return t("unavailableCurrentSource", language);
+  if (!relatedFastPc.length) return "";
 
   return relatedFastPc
     .map((pcCode) => `${pcCode}${PC_NAMES_BY_CODE[pcCode] ? ` ${PC_NAMES_BY_CODE[pcCode]}` : ""}`)
@@ -250,43 +243,27 @@ export function buildSturgeonHabitatPopup(feature, language = "en") {
   const scientificBasis = formatScientificBasis(properties, language);
   const confidence = formatConfidence(properties, language);
   const fastRelation = formatFastRelation(properties, language);
+  const rows = [
+    [t("habitatType", language), activeType],
+    [t("sector", language), sector],
+    [t("branchBank", language), bankOrBranch],
+    [t("ecologicalIndication", language), ecologicalIndication],
+    [t("scientificBasis", language), scientificBasis],
+    [t("confidence", language), confidence],
+    [t("fastRelation", language), fastRelation],
+  ].filter(([, value]) => value);
 
   return `
     <div class="fast-popup-content fast-habitat-popup-content">
       <strong>${displayValue(name, language)}</strong><br />
-      <span>${t("habitatType", language)}: ${displayValue(activeType, language)}</span><br />
-      <span>${t("sector", language)}: ${sector}</span><br />
-      <span>${t("branchBank", language)}: ${displayValue(bankOrBranch, language)}</span><br />
-      <span>${t("ecologicalIndication", language)}: ${displayValue(
-        ecologicalIndication,
-        language
-      )}</span><br />
-      <span>${t("scientificBasis", language)}: ${displayValue(scientificBasis, language)}</span><br />
-      <span>${t("confidence", language)}: ${displayValue(confidence, language)}</span><br />
-      <span>${t("fastRelation", language)}: ${displayValue(fastRelation, language)}</span>
-      <div class="fast-habitat-popup-types">
-        <strong>${t("possibleHabitats", language)}</strong>
-        <span class="${properties.habitat_type === "spawning_potential" ? "is-active" : ""}">${t(
-          "potentialSpawning",
-          language
-        )}</span>
-        <span class="${properties.habitat_type === "confirmed_spawning" ? "is-active" : ""}">${t(
-          "confirmedSpawning",
-          language
-        )}</span>
-        <span class="${properties.habitat_type === "feeding_yoy" ? "is-active" : ""}">${t(
-          "feedingJuveniles",
-          language
-        )}</span>
-        <span class="${properties.habitat_type === "wintering_refuge" ? "is-active" : ""}">${t(
-          "winteringRefuge",
-          language
-        )}</span>
-        <span class="${properties.habitat_type === "sensitive_protection" ? "is-active" : ""}">${t(
-          "sensitiveProtectionArea",
-          language
-        )}</span>
-      </div>
+      ${rows
+        .map(
+          ([label, value]) =>
+            `<span>${label}: ${
+              label === t("sector", language) ? value : displayValue(value, language)
+            }</span>`
+        )
+        .join("<br />")}
     </div>
   `;
 }
