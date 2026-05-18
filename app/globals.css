@@ -1342,8 +1342,7 @@ input:focus, select:focus{
 .fast-detail-card{
   position: absolute;
   right: 16px;
-  top: 84px;
-  bottom: auto;
+  bottom: 16px;
   z-index: 1100;
   width: min(470px, calc(100% - 32px));
   max-height: min(72vh, 720px);

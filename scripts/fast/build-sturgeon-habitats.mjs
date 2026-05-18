@@ -367,19 +367,6 @@ function getHectometricDigit(value) {
   return tenths >= 1 && tenths <= 9 ? tenths : null;
 }
 
-function pickNearestCoordinate(coordinates, target) {
-  let selected = null;
-  for (const coordinate of coordinates) {
-    const score = distanceSquared(coordinate, target);
-    if (!selected || score < selected.score) {
-      selected = { coordinate, score };
-    }
-  }
-  return selected && selected.score <= MAX_HECTOMETRIC_DISTANCE_SQUARED
-    ? selected.coordinate
-    : null;
-}
-
 function buildHectometricIndex(features, predicate = () => true) {
   const byDigit = new Map();
 
@@ -395,17 +382,6 @@ function buildHectometricIndex(features, predicate = () => true) {
   }
 
   return byDigit;
-}
-
-function enrichWithHectometricPoint(hectometricIndex, value, target) {
-  const digit = getHectometricDigit(value);
-  if (!digit) return { coordinate: target, hectometric_used: false };
-
-  const nearest = pickNearestCoordinate(hectometricIndex.get(digit) || [], target);
-  return {
-    coordinate: nearest || target,
-    hectometric_used: Boolean(nearest),
-  };
 }
 
 function assignHectometricCoordinates(hectometricIndex, value, reference) {
@@ -459,31 +435,23 @@ function buildDenseBankReferenceChain(
       const reference = getHydrographicBanks(referenceIndex, value);
       if (!reference) return null;
 
-      const center = useHectometric
-        ? enrichWithHectometricPoint(hectometricIndex, value, reference.center)
-        : { coordinate: reference.center, hectometric_used: false };
-      const preferredBank =
-        useHectometric && preferredBankSide
-          ? enrichWithHectometricPoint(
-              hectometricIndex,
-              value,
-              preferredBankSide === "left" ? reference.leftBank : reference.rightBank
-            )
-          : null;
+      const hectometricCoordinates = useHectometric
+        ? assignHectometricCoordinates(hectometricIndex, value, reference)
+        : null;
+      const useFixedBankCorridor = preferredBankSide === "left" || preferredBankSide === "right";
 
       return {
         ...reference,
-        center: center.coordinate || reference.center,
-        leftBank:
-          preferredBankSide === "left"
-            ? preferredBank?.coordinate || reference.leftBank
-            : reference.leftBank,
-        rightBank:
-          preferredBankSide === "right"
-            ? preferredBank?.coordinate || reference.rightBank
-            : reference.rightBank,
-        hectometric_used:
-          Boolean(preferredBank?.hectometric_used) || center.hectometric_used,
+        // For fixed-bank habitats, keep the waterward edge stable by using the smooth
+        // interpolated centerline. Hectometric points are used only when a coherent
+        // left-center-right triplet exists, never as isolated nearest-neighbour jumps.
+        center:
+          !useFixedBankCorridor && hectometricCoordinates?.center
+            ? hectometricCoordinates.center
+            : reference.center,
+        leftBank: hectometricCoordinates?.leftBank || reference.leftBank,
+        rightBank: hectometricCoordinates?.rightBank || reference.rightBank,
+        hectometric_used: Boolean(hectometricCoordinates),
       };
     })
     .filter(Boolean);
