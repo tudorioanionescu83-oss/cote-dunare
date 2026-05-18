@@ -421,15 +421,9 @@ function FastPcFocus({ selectedFeature, selectionRequestId }) {
     const bounds = L.geoJSON(selectedFeature).getBounds();
     if (!bounds.isValid()) return;
 
-    const isMobile = window.matchMedia("(max-width: 900px)").matches;
-    const desktopBottomPadding = isMobile
-      ? 0
-      : Math.min(180, Math.round(map.getSize().y * 0.18));
-
     map.flyToBounds(bounds.pad(0.38), {
       maxZoom: 13,
       duration: 0.8,
-      paddingBottomRight: [0, desktopBottomPadding],
     });
   }, [map, selectedFeature, selectionRequestId]);
 

@@ -1391,6 +1391,14 @@ input:focus, select:focus{
   flex-direction: column;
 }
 
+@media (min-width: 901px){
+  .fast-detail-card.is-open{
+    position: fixed;
+    right: 16px;
+    bottom: -1px;
+  }
+}
+
 .fast-detail-card__close{
   position: absolute;
   top: 10px;
