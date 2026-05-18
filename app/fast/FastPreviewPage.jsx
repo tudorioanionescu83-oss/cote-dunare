@@ -67,7 +67,7 @@ export default function FastPreviewPage() {
     if (!detailOpen || selectionRequestId === 0) return;
     if (window.matchMedia("(max-width: 900px)").matches) return;
 
-    const frameId = window.requestAnimationFrame(() => {
+    function revealDetailPeek() {
       const detailCard = mapPanelRef.current?.querySelector(".fast-detail-card");
       if (!detailCard) return;
 
@@ -82,9 +82,15 @@ export default function FastPreviewPage() {
           behavior: "smooth",
         });
       }
-    });
+    }
 
-    return () => window.cancelAnimationFrame(frameId);
+    const frameId = window.requestAnimationFrame(revealDetailPeek);
+    const timeoutId = window.setTimeout(revealDetailPeek, 900);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.clearTimeout(timeoutId);
+    };
   }, [detailOpen, selectionRequestId]);
 
   const pcIntervals = metadata?.pc_intervals || [];
