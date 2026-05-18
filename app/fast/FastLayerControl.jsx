@@ -350,8 +350,8 @@ export default function FastLayerControl({
 
             {habitatCounts.skippedTotal > 0 && (
               <p className="fast-habitat-control__note">
-                Borcea, Bala și Chilia rămân în dataset, dar nu sunt desenate până există geometrie
-                dedicată pentru brațe.
+                Unele intrări nu sunt desenate fiindcă lipsesc repere AFDJ suficiente pentru o
+                geometrie corectă.
               </p>
             )}
 

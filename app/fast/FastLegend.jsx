@@ -136,10 +136,7 @@ export default function FastLegend() {
               Zone extinse Dunărea Inferioară sub km 375 – set intern de lucru pentru
               evaluare/monitorizare sturioni
             </span>
-            <span>
-              Lower Danube dataset: Rasova, Isaccea; branch entries retained for Borcea and Chilia
-              where dedicated branch geometry is still missing.
-            </span>
+            <span>Lower Danube dataset: Rasova, Isaccea, Borcea și Bala.</span>
             <strong>Powered by Tudor</strong>
             <em>tudor.ionescu@sturgeons.eu</em>
           </details>

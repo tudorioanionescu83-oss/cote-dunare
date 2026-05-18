@@ -13,6 +13,22 @@ const FAST2_GROUP = "fast2_ddni_863_375";
 const LOWER_DANUBE_GROUP = "lower_danube_below_375";
 const MAX_REFERENCE_GAP_KM = 5;
 const MAX_HECTOMETRIC_DISTANCE_SQUARED = 0.0002;
+const BRANCH_CONFIGS = {
+  Borcea: {
+    coordinateFilter: ([lng, lat], feature) =>
+      lng >= 27.7 &&
+      lng <= 28.0 &&
+      lat >= 44.2 &&
+      lat <= 44.45 &&
+      Number(feature?.properties?.wtwdis) <= 60,
+    geometry_method: "bank_and_fairway_corridor",
+  },
+  Bala: {
+    coordinateFilter: ([lng, lat]) =>
+      lng >= 28.58 && lng <= 28.61 && lat >= 44.27 && lat <= 44.29,
+    geometry_method: "manual_review_needed",
+  },
+};
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -102,11 +118,12 @@ function isMaritimeCoordinate(coordinate) {
   return lat >= 45.15 && (lng >= 28.15 || lat >= 45.4);
 }
 
-function buildRkmReferenceIndex(features) {
+function buildRkmReferenceIndex(features, predicate = () => true) {
   const byKm = new Map();
 
   for (const feature of features) {
     if (feature?.geometry?.type !== "Point") continue;
+    if (!predicate(feature.geometry.coordinates, feature)) continue;
     const km = Number(feature?.properties?.wtwdis);
     if (!Number.isInteger(km) || km < 0 || km > 900) continue;
 
@@ -141,6 +158,63 @@ function buildRkmReferenceIndex(features) {
   return {
     references,
     byKm: new Map(references.map((reference) => [reference.km, reference])),
+  };
+}
+
+function buildBranchReferenceIndex(features, predicate) {
+  const byKm = new Map();
+
+  for (const feature of features) {
+    if (feature?.geometry?.type !== "Point") continue;
+    if (!predicate(feature.geometry.coordinates, feature)) continue;
+    const km = Number(feature?.properties?.wtwdis);
+    if (!Number.isFinite(km) || km < 0 || km > 900) continue;
+
+    const bucket = byKm.get(km) || { center: [], banks: [] };
+    if (Number(feature?.properties?.catdis) === 1) {
+      bucket.center.push(feature.geometry.coordinates);
+    }
+    if (Number(feature?.properties?.catdis) === 3) {
+      bucket.banks.push(feature.geometry.coordinates);
+    }
+    byKm.set(km, bucket);
+  }
+
+  const references = [];
+  const halfWidths = [];
+
+  for (const [km, bucket] of byKm) {
+    const center = pickMedoidCoordinate(bucket.center);
+    if (!center) continue;
+
+    const bankPair = chooseFarthestPair(bucket.banks);
+    const singleBank = !bankPair ? pickMedoidCoordinate(bucket.banks) : null;
+    if (bankPair) {
+      halfWidths.push(Math.sqrt(distanceSquared(bankPair[0], bankPair[1])) / 2);
+    } else if (singleBank) {
+      halfWidths.push(Math.sqrt(distanceSquared(center, singleBank)));
+    }
+
+    references.push({
+      km,
+      center,
+      bankPair,
+      singleBank,
+    });
+  }
+
+  references.sort((first, second) => second.km - first.km);
+
+  return {
+    references,
+    byKm: new Map(references.map((reference) => [reference.km, reference])),
+    averageHalfWidth: halfWidths.length
+      ? halfWidths.reduce((sum, value) => sum + value, 0) / halfWidths.length
+      : null,
+    bankReferenceCount: references.filter(
+      (reference) => reference.bankPair || reference.singleBank
+    ).length,
+    fullBankPairCount: references.filter((reference) => reference.bankPair).length,
   };
 }
 
@@ -306,11 +380,12 @@ function pickNearestCoordinate(coordinates, target) {
     : null;
 }
 
-function buildHectometricIndex(features) {
+function buildHectometricIndex(features, predicate = () => true) {
   const byDigit = new Map();
 
   for (const feature of features) {
     if (feature?.geometry?.type !== "Point") continue;
+    if (!predicate(feature)) continue;
     const value = Number(feature?.properties?.wtwdis);
     if (!Number.isFinite(value) || value < 1 || value > 9) continue;
 
@@ -377,26 +452,38 @@ function buildDenseBankReferenceChain(
   hectometricIndex,
   start,
   end,
-  { useHectometric = true } = {}
+  { useHectometric = true, preferredBankSide = null } = {}
 ) {
   return buildSampleValues(start, end)
     .map((value) => {
       const reference = getHydrographicBanks(referenceIndex, value);
       if (!reference) return null;
 
-      const assigned = useHectometric
-        ? assignHectometricCoordinates(hectometricIndex, value, reference)
-        : null;
       const center = useHectometric
         ? enrichWithHectometricPoint(hectometricIndex, value, reference.center)
-        : { hectometric_used: false };
+        : { coordinate: reference.center, hectometric_used: false };
+      const preferredBank =
+        useHectometric && preferredBankSide
+          ? enrichWithHectometricPoint(
+              hectometricIndex,
+              value,
+              preferredBankSide === "left" ? reference.leftBank : reference.rightBank
+            )
+          : null;
 
       return {
         ...reference,
-        center: assigned?.center || reference.center,
-        leftBank: assigned?.leftBank || reference.leftBank,
-        rightBank: assigned?.rightBank || reference.rightBank,
-        hectometric_used: Boolean(assigned) || center.hectometric_used,
+        center: center.coordinate || reference.center,
+        leftBank:
+          preferredBankSide === "left"
+            ? preferredBank?.coordinate || reference.leftBank
+            : reference.leftBank,
+        rightBank:
+          preferredBankSide === "right"
+            ? preferredBank?.coordinate || reference.rightBank
+            : reference.rightBank,
+        hectometric_used:
+          Boolean(preferredBank?.hectometric_used) || center.hectometric_used,
       };
     })
     .filter(Boolean);
@@ -547,12 +634,23 @@ function buildPolygonFeature(metadata, habitat, chain, options = {}) {
   };
 }
 
-function buildMainstemHabitatFeature(referenceIndex, hectometricIndex, metadata, habitat) {
+function buildMainstemHabitatFeature(
+  referenceIndex,
+  hectometricIndex,
+  metadata,
+  habitat
+) {
+  const preferredBankSide =
+    habitat.dataset_group === FAST2_GROUP &&
+    (habitat.bank_side === "left" || habitat.bank_side === "right")
+      ? habitat.bank_side
+      : null;
   const chain = buildDenseBankReferenceChain(
     referenceIndex,
     hectometricIndex,
     habitat.rkm_start,
-    habitat.rkm_end
+    habitat.rkm_end,
+    { preferredBankSide }
   );
   if (!chain.length) {
     return {
@@ -731,17 +829,135 @@ function buildApproxMaritimeHabitatFeature(
   });
 }
 
-function buildHabitatFeature(indexes, metadata, rawHabitat) {
-  const habitat = normalizeHabitat(rawHabitat);
+function clampIntervalToReferences(referenceIndex, start, end) {
+  if (!referenceIndex.references.length) return [start, end];
+  const kmValues = referenceIndex.references.map((reference) => reference.km);
+  const maxKm = Math.max(...kmValues);
+  const minKm = Math.min(...kmValues);
+  const clampedStart = Math.min(Math.max(start, minKm), maxKm);
+  const clampedEnd = Math.min(Math.max(end, minKm), maxKm);
+  return [clampedStart, clampedEnd];
+}
 
-  if (habitat.branch) {
+function buildBranchCenterlineChain(referenceIndex, start, end) {
+  const [supportedStart, supportedEnd] = clampIntervalToReferences(referenceIndex, start, end);
+  return buildSampleValues(supportedStart, supportedEnd)
+    .map((value) => interpolateReference(referenceIndex, value))
+    .filter(Boolean);
+}
+
+function buildCenterlineCorridorCoordinates(chain, halfWidth) {
+  const left = [];
+  const right = [];
+  for (let index = 0; index < chain.length; index += 1) {
+    const previous = chain[Math.max(index - 1, 0)].center;
+    const next = chain[Math.min(index + 1, chain.length - 1)].center;
+    const dx = next[0] - previous[0];
+    const dy = next[1] - previous[1];
+    const magnitude = Math.hypot(dx, dy) || 1;
+    const perpendicular = [-dy / magnitude, dx / magnitude];
+    left.push([
+      chain[index].center[0] + perpendicular[0] * halfWidth,
+      chain[index].center[1] + perpendicular[1] * halfWidth,
+    ]);
+    right.push([
+      chain[index].center[0] - perpendicular[0] * halfWidth,
+      chain[index].center[1] - perpendicular[1] * halfWidth,
+    ]);
+  }
+
+  return [...left, ...right.reverse(), left[0]];
+}
+
+function buildBranchHabitatFeature(referenceIndex, metadata, habitat, geometryMethod) {
+  const chain = buildBranchCenterlineChain(
+    referenceIndex,
+    habitat.rkm_start,
+    habitat.rkm_end
+  );
+  if (chain.length < 2) {
     return {
       feature: null,
       error: {
         id: habitat.id,
-        reason: "skipped_due_to_missing_branch_geometry",
+        reason: "insufficient_branch_km_references",
       },
     };
+  }
+
+  if (!referenceIndex.averageHalfWidth) {
+    return {
+      feature: null,
+      error: {
+        id: habitat.id,
+        reason: "insufficient_branch_width_reference",
+      },
+    };
+  }
+
+  const widthScales = [0.82, 0.64, 0.48, 0.34, 0.22];
+  const coordinates = widthScales
+    .map((scale) =>
+      buildCenterlineCorridorCoordinates(chain, referenceIndex.averageHalfWidth * scale)
+    )
+    .find((candidate) => candidate.length >= 5 && !ringSelfIntersects(candidate));
+  if (!coordinates) {
+    return {
+      feature: null,
+      error: {
+        id: habitat.id,
+        reason: "invalid_branch_polygon",
+      },
+    };
+  }
+
+  return {
+    feature: {
+      type: "Feature",
+      properties: {
+        ...habitat,
+        related_fast_pc: [],
+        source: "Set intern Lower Danube + puncte AFDJ",
+        geometry_method: geometryMethod,
+        needs_manual_review:
+          geometryMethod === "manual_review_needed" ||
+          chain.some((reference) => !reference.bankPair),
+        positioning_method: "branch_km_geometry",
+        interpolation_used: chain.some((reference) => reference.interpolated),
+        hectometric_points_used: chain.some((reference) => !Number.isInteger(reference.km)),
+        source_km_values: [
+          ...new Set(chain.flatMap((reference) => reference.source_km_values || [])),
+        ],
+      },
+      geometry: {
+        type: "Polygon",
+        coordinates: [coordinates],
+      },
+    },
+    error: null,
+  };
+}
+
+function buildHabitatFeature(indexes, metadata, rawHabitat) {
+  const habitat = normalizeHabitat(rawHabitat);
+
+  if (habitat.branch) {
+    const branchIndex = indexes.branches[habitat.branch];
+    if (!branchIndex) {
+      return {
+        feature: null,
+        error: {
+          id: habitat.id,
+          reason: "skipped_due_to_missing_branch_geometry",
+        },
+      };
+    }
+    return buildBranchHabitatFeature(
+      branchIndex,
+      metadata,
+      habitat,
+      BRANCH_CONFIGS[habitat.branch].geometry_method
+    );
   }
 
   if (habitat.river_unit === "marine_mile" || habitat.mm_start !== undefined) {
@@ -775,7 +991,12 @@ function buildHabitatFeature(indexes, metadata, rawHabitat) {
     );
   }
 
-  return buildMainstemHabitatFeature(indexes.mainstem, indexes.hectometric, metadata, habitat);
+  return buildMainstemHabitatFeature(
+    indexes.mainstem,
+    indexes.hectometric,
+    metadata,
+    habitat
+  );
 }
 
 function isValidHabitatGeometry(feature) {
@@ -811,6 +1032,12 @@ const indexes = {
   maritime: buildMaritimeReferenceIndex(afdjKm.features || []),
   scaled: buildScaledCenterlineIndex(afdjKm.features || []),
   hectometric: buildHectometricIndex(afdjKm.features || []),
+  branches: Object.fromEntries(
+    Object.entries(BRANCH_CONFIGS).map(([branch, config]) => [
+      branch,
+      buildBranchReferenceIndex(afdjKm.features || [], config.coordinateFilter),
+    ])
+  ),
 };
 const features = [];
 const skipped = [];

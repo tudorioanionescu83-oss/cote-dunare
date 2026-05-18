@@ -186,11 +186,15 @@ function isFastHectometricFeature(feature) {
   const value = Number(feature?.properties?.wtwdis);
   return (
     feature?.geometry?.type === "Point" &&
-    Number(feature?.properties?.catdis) === 3 &&
     Number.isInteger(value) &&
     value >= 1 &&
     value <= 9
   );
+}
+
+function getPointFeatureKey(feature) {
+  const coordinates = feature?.geometry?.coordinates || [];
+  return `${feature?.properties?.wtwdis}:${coordinates[0]}:${coordinates[1]}`;
 }
 
 function getFeaturePriority(feature) {
@@ -261,6 +265,21 @@ function buildRepresentativeSubKmPointFeatures(features = [], zoom) {
   }
 
   return [...bestByValue.values()];
+}
+
+function buildRepresentativeHectometricLabelFeatures(features = [], zoom) {
+  if (zoom < 15) return [];
+
+  return features.map((feature) => {
+    const value = Number(feature?.properties?.wtwdis);
+    return {
+      ...feature,
+      properties: {
+        ...feature.properties,
+        __fastKmLabel: `${value}00 m`,
+      },
+    };
+  });
 }
 
 function escapeHtml(value) {
@@ -705,9 +724,11 @@ export default function FastMap({
     [datasets.pcKmSegments, datasets.pcPlanningPolygons, datasets.sturgeonHabitats]
   );
 
-  const fastReferenceBounds = useMemo(
-    () => getDatasetsBounds(fitDatasets)?.pad(0.18) || null,
-    [fitDatasets]
+  const fastSectorReferenceBounds = useMemo(
+    () =>
+      getDatasetsBounds([datasets.pcPlanningPolygons, datasets.pcKmSegments])?.pad(0.18) ||
+      null,
+    [datasets.pcKmSegments, datasets.pcPlanningPolygons]
   );
 
   const visibleKmFeatures = useMemo(() => {
@@ -721,29 +742,53 @@ export default function FastMap({
 
   const visibleSubKmMarkerFeatures = useMemo(() => {
     const features = datasets.afdjKm?.features || [];
-    if (!viewState.bounds || !fastReferenceBounds) return [];
+    if (!viewState.bounds || !fastSectorReferenceBounds) return [];
     return features.filter((feature) => {
       const point = getPointLatLng(feature);
       return (
         point &&
         isFastHectometricFeature(feature) &&
         viewState.bounds.contains(point) &&
-        fastReferenceBounds.contains(point)
+        fastSectorReferenceBounds.contains(point)
       );
     });
-  }, [datasets.afdjKm, fastReferenceBounds, viewState.bounds]);
+  }, [datasets.afdjKm, fastSectorReferenceBounds, viewState.bounds]);
+
+  const visibleHectometricFeatureKeys = useMemo(
+    () => new Set(visibleSubKmMarkerFeatures.map(getPointFeatureKey)),
+    [visibleSubKmMarkerFeatures]
+  );
+
+  const visibleWholeKmFeatures = useMemo(
+    () =>
+      visibleKmFeatures.filter(
+        (feature) => !visibleHectometricFeatureKeys.has(getPointFeatureKey(feature))
+      ),
+    [visibleHectometricFeatureKeys, visibleKmFeatures]
+  );
 
   const featureSets = useMemo(
     () => ({
       kmLabels: toFeatureCollection(
-        buildRepresentativeKmFeatures(visibleKmFeatures, viewState.zoom)
+        buildRepresentativeKmFeatures(visibleWholeKmFeatures, viewState.zoom)
+      ),
+      hectometricLabels: toFeatureCollection(
+        buildRepresentativeHectometricLabelFeatures(
+          visibleSubKmMarkerFeatures,
+          viewState.zoom
+        )
       ),
       wholeKmPoints: toFeatureCollection(
-        buildRepresentativeWholeKmPointFeatures(visibleKmFeatures, viewState.zoom)
+        buildRepresentativeWholeKmPointFeatures(visibleWholeKmFeatures, viewState.zoom)
       ),
       subKmPoints: toFeatureCollection(
         buildRepresentativeSubKmPointFeatures(
-          [...visibleKmFeatures, ...visibleSubKmMarkerFeatures],
+          [
+            ...visibleKmFeatures.filter((feature) =>
+              isSubKmValue(Number(feature?.properties?.wtwdis))
+            ),
+            ...visibleSubKmMarkerFeatures,
+          ],
           viewState.zoom
         )
       ),
@@ -777,6 +822,7 @@ export default function FastMap({
       datasets.sturgeonHabitats,
       selectedPcCode,
       viewState.zoom,
+      visibleWholeKmFeatures,
       visibleKmFeatures,
       visibleSubKmMarkerFeatures,
     ]
@@ -1072,6 +1118,21 @@ export default function FastMap({
                 interactive: false,
                 keyboard: false,
                 zIndexOffset: 900,
+              })
+            }
+          />
+        )}
+
+        {activeLayers.afdjKm && featureSets.hectometricLabels.features.length > 0 && (
+          <GeoJSON
+            key={`hectometric-labels-${viewState.zoom}-${viewState.bounds?.toBBoxString() || "no-bounds"}`}
+            data={featureSets.hectometricLabels}
+            pointToLayer={(feature, latlng) =>
+              L.marker(latlng, {
+                icon: buildKmLabelIcon(feature?.properties?.__fastKmLabel || ""),
+                interactive: false,
+                keyboard: false,
+                zIndexOffset: 910,
               })
             }
           />
