@@ -381,7 +381,15 @@ function FastFitBounds({ datasets, fitRequestId }) {
     const bounds = group.getBounds();
     if (!bounds.isValid()) return;
 
-    map.fitBounds(bounds.pad(0.14), { maxZoom: 12 });
+    const isMobile = window.matchMedia("(max-width: 900px)").matches;
+    const desktopBottomPadding = isMobile
+      ? 0
+      : Math.min(160, Math.round(map.getSize().y * 0.16));
+
+    map.fitBounds(bounds.pad(0.14), {
+      maxZoom: 12,
+      paddingBottomRight: [0, desktopBottomPadding],
+    });
     fittedRef.current = true;
   }, [datasets, fitRequestId, map]);
 
