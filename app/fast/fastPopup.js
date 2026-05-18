@@ -30,9 +30,7 @@ export function buildPcPopup(feature) {
       <span>Lucrări principale: ${displayValue(properties.works_summary)}</span><br />
       <span>Monitorizare overview: ${displayValue(properties.monitoring_overview)}</span><br />
       <span>Observație: ${displayValue(representationNote)}</span><br />
-      <button type="button" class="fast-popup-detail-button" data-fast-pc-code="${displayValue(
-        pcCode
-      )}">Vezi detalii</button>
+      <span class="fast-popup-detail-note">Detalii mai jos</span>
     </div>
   `;
 }

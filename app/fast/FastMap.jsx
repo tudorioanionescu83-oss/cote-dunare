@@ -615,14 +615,6 @@ function hasMonitoringOverview(featureCollection) {
 function bindPcPopupInteractions(layer, feature, onSelectPc) {
   layer.bindPopup(buildPcPopup(feature), { className: "fast-popup" });
   layer.on("click", () => onSelectPc(feature?.properties?.pc_code));
-  layer.on("popupopen", (event) => {
-    const detailButton = event.popup
-      .getElement()
-      ?.querySelector("[data-fast-pc-code]");
-    detailButton?.addEventListener("click", () => {
-      onSelectPc(feature?.properties?.pc_code);
-    });
-  });
 }
 
 export default function FastMap({
