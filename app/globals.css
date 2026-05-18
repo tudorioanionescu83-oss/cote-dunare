@@ -1395,7 +1395,26 @@ input:focus, select:focus{
   .fast-detail-card.is-open{
     position: fixed;
     right: 16px;
-    bottom: -1px;
+    bottom: 16px;
+    width: min(420px, calc(100vw - 32px));
+    max-height: min(44vh, 420px);
+  }
+
+  .fast-detail-card__header{
+    gap: 8px;
+    padding: 14px 16px 12px;
+  }
+
+  .fast-detail-card__header h2{
+    font-size: 18px;
+  }
+
+  .fast-detail-card__tabs{
+    padding: 10px 16px 0;
+  }
+
+  .fast-detail-card__body{
+    padding: 12px 16px 16px;
   }
 }
 
