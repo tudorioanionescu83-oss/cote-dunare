@@ -73,8 +73,12 @@ export default function FastLegend() {
             <span>mov = zonă sensibilă / protecție</span>
           </div>
           <p className="fast-legend-note">
-            Poligoanele habitatelor sunt coridoare orientative generate din puncte AFDJ de km și
-            sute de metri de pe mal / șenal; nu reprezintă limite tehnice finale.
+            <span>
+              Poligoanele habitatelor sunt coridoare orientative generate din puncte AFDJ de km și
+              sute de metri de pe mal / șenal; nu reprezintă limite tehnice finale.
+            </span>
+            <span>Surse date: AFDJ, APPD, Honț et al. (2022), Vassilev, M. (2003).</span>
+            <strong>Powered by Tudor I</strong>
           </p>
 
           <div className="fast-legend-group">
@@ -137,8 +141,6 @@ export default function FastLegend() {
               evaluare/monitorizare sturioni
             </span>
             <span>Lower Danube dataset: Rasova, Isaccea, Borcea și Bala.</span>
-            <strong>Powered by Tudor</strong>
-            <em>tudor.ionescu@sturgeons.eu</em>
           </details>
         </div>
       </details>

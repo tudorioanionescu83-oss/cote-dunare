@@ -879,6 +879,8 @@ input:focus, select:focus{
 }
 
 .fast-legend-note{
+  display: grid;
+  gap: 5px;
   margin: 0;
   border-radius: 10px;
   background: rgba(14, 116, 144, 0.08);
@@ -1030,6 +1032,10 @@ input:focus, select:focus{
   font-size: 11px;
   font-weight: 700;
   padding: 8px 10px;
+}
+
+.fast-legend-note strong{
+  color: #082f49;
 }
 
 .fast-habitat-control__summary strong{
@@ -1336,7 +1342,8 @@ input:focus, select:focus{
 .fast-detail-card{
   position: absolute;
   right: 16px;
-  bottom: 16px;
+  top: 84px;
+  bottom: auto;
   z-index: 1100;
   width: min(470px, calc(100% - 32px));
   max-height: min(72vh, 720px);
@@ -1699,6 +1706,7 @@ input:focus, select:focus{
     position: fixed;
     right: 12px;
     bottom: 12px;
+    top: auto;
     left: 12px;
     z-index: 1300;
     width: auto;

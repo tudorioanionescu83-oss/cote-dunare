@@ -248,6 +248,45 @@ function buildRepresentativeWholeKmPointFeatures(features = [], zoom) {
   return [...bestByKm.values()];
 }
 
+function buildFairwayCenterlineFeature(features = []) {
+  const bestByKm = new Map();
+
+  for (const feature of features) {
+    const km = Number(feature?.properties?.wtwdis);
+    const catdis = Number(feature?.properties?.catdis);
+    if (!isWholeKmValue(km) || catdis !== 1 || km < 375) continue;
+
+    const existing = bestByKm.get(km);
+    if (!existing || getFeaturePriority(feature) < getFeaturePriority(existing)) {
+      bestByKm.set(km, feature);
+    }
+  }
+
+  const coordinates = [...bestByKm.entries()]
+    .sort(([firstKm], [secondKm]) => secondKm - firstKm)
+    .map(([, feature]) => feature.geometry.coordinates)
+    .filter(
+      (coordinate) =>
+        Array.isArray(coordinate) &&
+        Number.isFinite(coordinate[0]) &&
+        Number.isFinite(coordinate[1])
+    );
+
+  if (coordinates.length < 2) return null;
+
+  return {
+    type: "Feature",
+    properties: {
+      source: "AFDJ",
+      geometry_role: "fairway_centerline",
+    },
+    geometry: {
+      type: "LineString",
+      coordinates,
+    },
+  };
+}
+
 function buildRepresentativeSubKmPointFeatures(features = [], zoom) {
   if (zoom < 15) return [];
 
@@ -454,6 +493,21 @@ function getFairwayBoundaryStyle(zoom) {
     opacity: isVeryLowZoom ? 0.24 : isLowZoom ? 0.32 : isHighZoom ? 0.48 : 0.4,
     weight: isLowZoom ? 0.8 : isHighZoom ? 1.15 : 0.95,
     dashArray: isLowZoom ? "3 6" : "4 6",
+  };
+}
+
+function getFairwayCenterlineStyle(zoom) {
+  const isVeryLowZoom = zoom < 8;
+  const isLowZoom = zoom < 10;
+  const isHighZoom = zoom >= 14;
+
+  return {
+    color: "#0f766e",
+    opacity: isVeryLowZoom ? 0.55 : isLowZoom ? 0.68 : 0.8,
+    weight: isVeryLowZoom ? 1.1 : isLowZoom ? 1.35 : isHighZoom ? 2 : 1.6,
+    lineCap: "round",
+    lineJoin: "round",
+    smoothFactor: 1.2,
   };
 }
 
@@ -775,6 +829,11 @@ export default function FastMap({
     [visibleHectometricFeatureKeys, visibleKmFeatures]
   );
 
+  const fairwayCenterline = useMemo(() => {
+    const feature = buildFairwayCenterlineFeature(datasets.afdjKm?.features || []);
+    return toFeatureCollection(feature ? [feature] : []);
+  }, [datasets.afdjKm]);
+
   const featureSets = useMemo(
     () => ({
       kmLabels: toFeatureCollection(
@@ -928,6 +987,15 @@ export default function FastMap({
               interactive={false}
             />
           </>
+        )}
+
+        {fairwayCenterline.features.length > 0 && viewState.zoom >= 7 && (
+          <GeoJSON
+            key={`fast-fairway-centerline-${viewState.zoom < 8 ? "very-low" : viewState.zoom < 10 ? "low" : viewState.zoom < 14 ? "mid" : "high"}`}
+            data={fairwayCenterline}
+            style={() => getFairwayCenterlineStyle(viewState.zoom)}
+            interactive={false}
+          />
         )}
 
         {activeLayers.pcPlanningPolygons && datasets.pcPlanningPolygons && (
