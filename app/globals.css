@@ -971,7 +971,11 @@ input:focus, select:focus{
   top: calc(100% + 10px);
   right: 0;
   z-index: 2;
-  width: min(360px, calc(100vw - 36px));
+  width: min(330px, calc(100vw - 36px));
+  min-width: min(330px, calc(100vw - 36px));
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  box-sizing: border-box;
   border: 1px solid rgba(255,255,255,0.78);
   border-radius: 16px;
   background: rgba(255,255,255,0.96);
@@ -1004,6 +1008,7 @@ input:focus, select:focus{
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  min-width: 0;
 }
 
 .fast-habitat-control__panel em{
@@ -1016,44 +1021,34 @@ input:focus, select:focus{
   padding: 2px 6px;
 }
 
-.fast-habitat-control__stats{
+.fast-habitat-control__summary{
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.fast-habitat-control__stats span{
-  justify-content: space-between;
+  gap: 2px;
   border-radius: 10px;
   background: rgba(15, 23, 42, 0.05);
   color: #334155;
   font-size: 11px;
   font-weight: 700;
-  padding: 6px 8px;
+  padding: 8px 10px;
 }
 
-.fast-habitat-control__stats strong{
+.fast-habitat-control__summary strong{
   color: #0f172a;
+  font-size: 18px;
+  line-height: 1;
 }
 
-.fast-habitat-control__group{
+.fast-habitat-control__summary em{
+  justify-self: start;
+  background: rgba(142, 68, 173, 0.1);
+  color: #5b2c6f;
+}
+
+.fast-habitat-control__options{
   display: grid;
   gap: 4px;
   border-top: 1px solid rgba(15, 23, 42, 0.08);
   padding-top: 8px;
-}
-
-.fast-habitat-control__group-title{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  color: #334155;
-  font-size: 11px;
-}
-
-.fast-habitat-control__group-title strong{
-  color: #0f172a;
 }
 
 .fast-habitat-control__note{

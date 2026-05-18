@@ -18,68 +18,38 @@ const OVERLAY_OPTIONS = [
   { id: "monitoringSturgeons", label: "Monitorizare sturioni", kind: "metadata" },
 ];
 
-const HABITAT_GROUPS = [
+const HABITAT_OPTIONS = [
   {
-    id: "fast2",
-    title: "FAST 2 / DDNI km 863–375",
-    countGroup: "fast2",
-    options: [
-      {
-        id: "fast2Spawning",
-        label: "Reproducere potențială",
-        swatch: "spawning",
-        countKey: "spawning_potential",
-      },
-      {
-        id: "fast2Feeding",
-        label: "Hrănire / juvenili",
-        swatch: "feeding",
-        countKey: "feeding_yoy",
-      },
-      {
-        id: "fast2Wintering",
-        label: "Iernare / refugiu",
-        swatch: "wintering",
-        countKey: "wintering_refuge",
-      },
-    ],
+    id: "sturgeonSpawning",
+    label: "Reproducere potențială",
+    swatch: "spawning",
+    countKey: "spawning_potential",
   },
   {
-    id: "lower",
-    title: "Dunărea Inferioară sub km 375",
-    countGroup: "lowerDanube",
-    options: [
-      {
-        id: "lowerConfirmedSpawning",
-        label: "Reproducere confirmată",
-        swatch: "confirmed",
-        countKey: "confirmed_spawning",
-      },
-      {
-        id: "lowerProtection",
-        label: "Zone sensibile / protecție",
-        swatch: "protection",
-        countKey: "sensitive_protection",
-      },
-      {
-        id: "lowerFeeding",
-        label: "Hrănire / nursery",
-        swatch: "feeding",
-        countKey: "feeding_yoy",
-      },
-      {
-        id: "lowerWintering",
-        label: "Iernare / refugiu",
-        swatch: "wintering",
-        countKey: "wintering_refuge",
-      },
-    ],
+    id: "sturgeonConfirmedSpawning",
+    label: "Reproducere confirmată",
+    swatch: "confirmed",
+    countKey: "confirmed_spawning",
+  },
+  {
+    id: "sturgeonFeeding",
+    label: "Hrănire / juvenili / nursery",
+    swatch: "feeding",
+    countKey: "feeding_yoy",
+  },
+  {
+    id: "sturgeonWintering",
+    label: "Iernare / refugiu",
+    swatch: "wintering",
+    countKey: "wintering_refuge",
+  },
+  {
+    id: "sturgeonProtection",
+    label: "Zone sensibile / protecție",
+    swatch: "protection",
+    countKey: "sensitive_protection",
   },
 ];
-
-const HABITAT_OPTION_IDS = HABITAT_GROUPS.flatMap((group) =>
-  group.options.map((option) => option.id)
-);
 
 export default function FastLayerControl({
   basemap,
@@ -91,6 +61,7 @@ export default function FastLayerControl({
   onFitToFastSector,
   onFitToHabitats,
   onHabitatControlOpen,
+  onEnableAllHabitats,
   onToggleLayer,
   onToggleAllHabitats,
 }) {
@@ -101,7 +72,9 @@ export default function FastLayerControl({
   const mapControlRef = useRef(null);
   const habitatControlRef = useRef(null);
 
-  const selectableHabitatIds = HABITAT_OPTION_IDS.filter((id) => availability[id]);
+  const selectableHabitatIds = HABITAT_OPTIONS.map((option) => option.id).filter(
+    (id) => availability[id]
+  );
   const allHabitatsActive =
     selectableHabitatIds.length > 0 &&
     selectableHabitatIds.every((id) => activeLayers[id]);
@@ -177,11 +150,27 @@ export default function FastLayerControl({
     }
   }, [isPcDetailOpen]);
 
+  useEffect(() => {
+    if (isHabitatControlOpen && habitatsAvailable && !anyHabitatsActive) {
+      onEnableAllHabitats?.();
+    }
+  }, [anyHabitatsActive, habitatsAvailable, isHabitatControlOpen, onEnableAllHabitats]);
+
   function handleMapInteraction(callback) {
     callback?.();
     setIsHabitatControlOpen(false);
     setIsMapControlOpen(true);
     scheduleMapClose();
+  }
+
+  function openHabitatControl() {
+    if (!anyHabitatsActive) {
+      onEnableAllHabitats?.();
+    }
+    setIsMapControlOpen(false);
+    setIsHabitatControlOpen(true);
+    onHabitatControlOpen?.();
+    scheduleHabitatClose();
   }
 
   function handleHabitatInteraction(callback) {
@@ -190,6 +179,12 @@ export default function FastLayerControl({
     setIsHabitatControlOpen(true);
     onHabitatControlOpen?.();
     scheduleHabitatClose();
+  }
+
+  function getCountLabel(countKey) {
+    const generated = habitatCounts.generatedByType?.[countKey] || 0;
+    const dataset = habitatCounts.datasetByType?.[countKey] || generated;
+    return dataset > generated ? `${generated}/${dataset}` : generated;
   }
 
   return (
@@ -261,6 +256,7 @@ export default function FastLayerControl({
                       type="checkbox"
                       checked={isActive}
                       onChange={() => handleMapInteraction(() => onToggleLayer(option.id))}
+                      disabled={!isAvailable}
                     />
                     <span>
                       {option.label}
@@ -284,15 +280,11 @@ export default function FastLayerControl({
           type="button"
           className={`fast-habitat-control__button${anyHabitatsActive ? " is-active" : ""}`}
           onClick={() => {
-            setIsMapControlOpen(false);
-            setIsHabitatControlOpen((value) => {
-              const next = !value;
-              if (next) {
-                onHabitatControlOpen?.();
-                scheduleHabitatClose();
-              }
-              return next;
-            });
+            if (isHabitatControlOpen) {
+              setIsHabitatControlOpen(false);
+              return;
+            }
+            openHabitatControl();
           }}
         >
           Habitate sturioni
@@ -314,68 +306,62 @@ export default function FastLayerControl({
               ×
             </button>
 
+            <div className="fast-habitat-control__summary">
+              <strong>{habitatCounts.generatedTotal}</strong>
+              <span>zone afișabile pe hartă</span>
+              {habitatCounts.skippedTotal > 0 && (
+                <em>{habitatCounts.skippedTotal} în dataset fără geometrie de braț</em>
+              )}
+            </div>
+
             <label className={allHabitatsActive ? "is-active" : ""}>
               <input
                 type="checkbox"
                 checked={allHabitatsActive}
+                disabled={!habitatsAvailable}
                 onChange={() => handleHabitatInteraction(onToggleAllHabitats)}
               />
               <span>
-                Toate habitatele
-                <em>{habitatCounts.datasetTotal}</em>
+                Toate habitatele afișabile
+                <em>{habitatCounts.generatedTotal}</em>
               </span>
             </label>
 
-            <div className="fast-habitat-control__stats">
-              <span>Generated on map <strong>{habitatCounts.generatedTotal}</strong></span>
-              <span>Skipped <strong>{habitatCounts.skippedTotal}</strong></span>
-              <span>Manual review <strong>{habitatCounts.manualReviewTotal}</strong></span>
+            <div className="fast-habitat-control__options">
+              {HABITAT_OPTIONS.map((option) => (
+                <label
+                  key={option.id}
+                  className={activeLayers[option.id] ? "is-active" : ""}
+                >
+                  <input
+                    type="checkbox"
+                    checked={Boolean(activeLayers[option.id])}
+                    disabled={!availability[option.id]}
+                    onChange={() => handleHabitatInteraction(() => onToggleLayer(option.id))}
+                  />
+                  <span>
+                    <i className={`fast-habitat-swatch is-${option.swatch}`} />
+                    {option.label}
+                    <em>{getCountLabel(option.countKey)}</em>
+                  </span>
+                </label>
+              ))}
             </div>
-
-            {HABITAT_GROUPS.map((group) => {
-              const counts = habitatCounts[group.countGroup] || {};
-              return (
-                <div key={group.id} className="fast-habitat-control__group">
-                  <div className="fast-habitat-control__group-title">
-                    <strong>{group.title}</strong>
-                    <em>{counts.total || 0}</em>
-                  </div>
-                  {group.options.map((option) => (
-                    <label
-                      key={option.id}
-                      className={activeLayers[option.id] ? "is-active" : ""}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={Boolean(activeLayers[option.id])}
-                        onChange={() =>
-                          handleHabitatInteraction(() => onToggleLayer(option.id))
-                        }
-                      />
-                      <span>
-                        <i className={`fast-habitat-swatch is-${option.swatch}`} />
-                        {option.label}
-                        <em>{counts[option.countKey] || 0}</em>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              );
-            })}
 
             {habitatCounts.skippedTotal > 0 && (
               <p className="fast-habitat-control__note">
-                {habitatCounts.skippedTotal} intrări sunt păstrate în dataset, dar nu sunt desenate
-                din lipsă de geometrie dedicată pentru brațe.
+                Borcea, Bala și Chilia rămân în dataset, dar nu sunt desenate până există geometrie
+                dedicată pentru brațe.
               </p>
             )}
 
             <button
               type="button"
               className="fast-habitat-control__fit"
+              disabled={!anyHabitatsActive}
               onClick={() => handleHabitatInteraction(onFitToHabitats)}
             >
-              Zoom to habitats
+              Zoom la habitate
             </button>
           </section>
         )}
