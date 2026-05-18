@@ -1760,6 +1760,33 @@ input:focus, select:focus{
     padding: 4px 10px;
   }
 
+  .fast-detail-card__header{
+    gap: 6px;
+    padding: 8px 18px 10px;
+  }
+
+  .fast-detail-card__header h2{
+    margin-block: 1px 2px;
+    font-size: 20px;
+  }
+
+  .fast-detail-card__badges em{
+    padding-block: 3px;
+  }
+
+  .fast-detail-card__tabs{
+    gap: 5px;
+    padding-top: 8px;
+  }
+
+  .fast-detail-card__tabs button{
+    padding-block: 6px;
+  }
+
+  .fast-detail-card__body{
+    padding-top: 12px;
+  }
+
   .fast-detail-card[data-sheet-state="collapsed"]{
     max-height: 108px;
   }
@@ -1787,7 +1814,7 @@ input:focus, select:focus{
   }
 
   .fast-detail-card[data-sheet-state="half"] .fast-detail-card__body{
-    max-height: min(25vh, 240px);
+    max-height: min(29vh, 280px);
   }
 
   .fast-layer-control{
@@ -1825,8 +1852,24 @@ input:focus, select:focus{
   }
 
   .fast-habitat-popup .leaflet-popup-content{
-    max-height: 32vh;
+    width: min(78vw, 360px) !important;
+    max-height: 24vh;
     overflow-y: auto;
+  }
+
+  .fast-habitat-popup .leaflet-popup-content-wrapper{
+    min-width: min(78vw, 360px);
+  }
+
+  .fast-habitat-popup-content{
+    max-width: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 12px;
+  }
+
+  .fast-habitat-popup-content > strong,
+  .fast-habitat-popup-types{
+    grid-column: 1 / -1;
   }
 
   .fast-legend-details:not([open]) .fast-legend{

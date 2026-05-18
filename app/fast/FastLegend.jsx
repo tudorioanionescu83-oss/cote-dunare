@@ -78,35 +78,6 @@ export default function FastLegend() {
           </p>
 
           <div className="fast-legend-group">
-            <span className="fast-legend-chip is-metadata">Metadata / thematic info</span>
-          </div>
-          <div className="fast-legend-row">
-            <span className="fast-swatch fast-swatch-monitoring" />
-            <span>
-              <strong>Monitorizare ihtiofaună overview</strong> — informație tematică în cardul
-              tehnic, fără geometrii inventate.
-            </span>
-          </div>
-          <div className="fast-legend-row">
-            <span className="fast-swatch fast-swatch-sturgeon" />
-            <span>
-              <strong>Monitorizare sturioni</strong> — cerințe MON21, MON22, MON25–MON27 afișate ca
-              metadata tehnică, fără geometrii GIS false.
-            </span>
-          </div>
-          <div className="fast-legend-row">
-            <span className="fast-swatch fast-swatch-works" />
-            <span>Lucrări principale — metadata tehnică; indisponibil ca layer GIS fără sursă clară.</span>
-          </div>
-          <div className="fast-legend-row">
-            <span className="fast-swatch fast-swatch-disposal" />
-            <span>
-              Zone depozitare material dragat — metadata tehnică; indisponibil ca layer GIS fără
-              sursă clară.
-            </span>
-          </div>
-
-          <div className="fast-legend-group">
             <span className="fast-legend-chip is-phases">Faze monitorizare</span>
           </div>
           <div className="fast-legend-phases">
