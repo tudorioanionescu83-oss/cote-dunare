@@ -368,6 +368,45 @@ function buildPcLabelFeatures(
     .filter(Boolean);
 }
 
+function getFastSectorPadding(map) {
+  const isMobile = window.matchMedia("(max-width: 900px)").matches;
+  if (isMobile) {
+    return {
+      paddingTopLeft: [12, 12],
+      paddingBottomRight: [12, 12],
+    };
+  }
+
+  const mapHeight = map.getSize().y;
+  return {
+    paddingTopLeft: [24, 20],
+    paddingBottomRight: [24, Math.min(220, Math.round(mapHeight * 0.22))],
+  };
+}
+
+function getPcFocusPadding(map) {
+  const isMobile = window.matchMedia("(max-width: 900px)").matches;
+  if (isMobile) {
+    return {
+      paddingTopLeft: [16, 16],
+      paddingBottomRight: [16, 72],
+    };
+  }
+
+  const mapHeight = map.getSize().y;
+  const openDetailCardHeight =
+    document.querySelector(".fast-detail-card.is-open")?.getBoundingClientRect().height || 0;
+  const reservedBottomSpace = Math.max(
+    Math.min(240, Math.round(mapHeight * 0.3)),
+    Math.min(openDetailCardHeight + 24, Math.round(mapHeight * 0.42))
+  );
+
+  return {
+    paddingTopLeft: [24, 24],
+    paddingBottomRight: [24, reservedBottomSpace],
+  };
+}
+
 function FastFitBounds({ datasets, fitRequestId }) {
   const map = useMap();
   const fittedRef = useRef(false);
@@ -381,14 +420,9 @@ function FastFitBounds({ datasets, fitRequestId }) {
     const bounds = group.getBounds();
     if (!bounds.isValid()) return;
 
-    const isMobile = window.matchMedia("(max-width: 900px)").matches;
-    const desktopBottomPadding = isMobile
-      ? 0
-      : Math.min(160, Math.round(map.getSize().y * 0.16));
-
     map.fitBounds(bounds.pad(0.14), {
       maxZoom: 12,
-      paddingBottomRight: [0, desktopBottomPadding],
+      ...getFastSectorPadding(map),
     });
     fittedRef.current = true;
   }, [datasets, fitRequestId, map]);
@@ -432,6 +466,7 @@ function FastPcFocus({ selectedFeature, selectionRequestId }) {
     map.flyToBounds(bounds.pad(0.38), {
       maxZoom: 13,
       duration: 0.8,
+      ...getPcFocusPadding(map),
     });
   }, [map, selectedFeature, selectionRequestId]);
 

@@ -16,6 +16,138 @@ function displayValue(value, language) {
   return escapeHtml(translateFastValue(value, language));
 }
 
+const PC_NAMES_BY_CODE = {
+  PC1: "Gârla Mare",
+  PC2: "Salcia",
+  PC3: "Bogdan Secian",
+  PC4: "Dobrina",
+  PC5: "Bechet",
+  PC6: "Corabia",
+  PC7: "Belene",
+  PC8: "Vardim",
+  PC9: "Iantra",
+  PC10: "Batin",
+  PC11: "Kosui",
+  PC12: "Popina",
+};
+
+const ECOLOGICAL_INDICATIONS = {
+  "zonă adâncă / habitat de iernare": {
+    ro: "zonă adâncă, favorabilă pentru iernare",
+    en: "deep area, suitable for wintering",
+  },
+};
+
+function formatPopupNumber(value, language) {
+  if (!Number.isFinite(Number(value))) return displayValue(value, language);
+  return new Intl.NumberFormat(language === "ro" ? "ro-RO" : "en-US", {
+    maximumFractionDigits: 1,
+  }).format(Number(value));
+}
+
+function formatHabitatSector(properties, language) {
+  if (properties.mm_start !== undefined) {
+    return `Mm ${formatPopupNumber(properties.mm_start, language)}–${formatPopupNumber(
+      properties.mm_end,
+      language
+    )}`;
+  }
+
+  return `km ${formatPopupNumber(properties.rkm_start, language)}–${formatPopupNumber(
+    properties.rkm_end,
+    language
+  )}`;
+}
+
+function formatHabitatType(properties, language) {
+  if (
+    properties.habitat_type === "feeding_yoy" &&
+    String(properties.label_ro || "").toLowerCase().includes("nursery")
+  ) {
+    return t("feedingNursery", language);
+  }
+
+  const habitatTypeByCode = {
+    spawning_potential: "potentialSpawning",
+    confirmed_spawning: "confirmedSpawning",
+    feeding_yoy: "feedingJuveniles",
+    wintering_refuge: "winteringRefuge",
+    sensitive_protection: "sensitiveProtectionArea",
+  };
+
+  return t(habitatTypeByCode[properties.habitat_type] || "sensitiveHabitat", language);
+}
+
+function formatHabitatName(properties, language, sector) {
+  const localizedName = getLocalizedValue(properties, "name", language);
+  if (localizedName) {
+    if (language === "en") {
+      return localizedName
+        .replace(/^Brațul ([^–]+?) km /, "$1 Branch km ")
+        .replace(/^Brațul ([^–]+?) – /, "$1 Branch – ")
+        .replace(/^Dunăre\b/, "Danube");
+    }
+    return localizedName;
+  }
+
+  return `${language === "en" ? "Danube" : "Dunăre"} ${sector}`;
+}
+
+function formatBranchOrBank(properties, language) {
+  if (properties.branch) return properties.branch;
+  if (properties.bank_side_ro) return getLocalizedValue(properties, "bank_side", language);
+  return t("unavailableCurrentSource", language);
+}
+
+function formatEcologicalIndication(properties, language) {
+  const mappedValue = ECOLOGICAL_INDICATIONS[properties.substrate_ro]?.[language];
+  return (
+    mappedValue ||
+    getLocalizedValue(properties, "substrate", language) ||
+    t("unavailableCurrentSource", language)
+  );
+}
+
+function formatScientificBasis(properties, language) {
+  const source = String(properties.source || "");
+  const evidence = String(properties.evidence_ro || "");
+
+  if (source.includes("Honț")) return t("hontDdniBasis", language);
+  if (evidence.includes("DDNI") || evidence.includes("batimetrie 3D")) {
+    return t("ddniHabitatAssessment", language);
+  }
+  if (properties.dataset_group === "lower_danube_below_375") {
+    return t("internalSturgeonDataset", language);
+  }
+  return t("supportingDataPreliminaryAssessment", language);
+}
+
+function formatConfidence(properties, language) {
+  const confidence = String(properties.confidence_ro || "").toLowerCase();
+
+  if (confidence.includes("foarte ridic")) return t("veryHighConfidence", language);
+  if (confidence.includes("ridicat")) return t("highConfidence", language);
+  if (confidence.includes("scăzut")) return t("lowConfidence", language);
+  if (confidence.includes("mediu")) return t("mediumConfidence", language);
+  if (confidence.includes("evaluare preliminar")) return t("mediumConfidence", language);
+
+  return t("popupMissingValue", language);
+}
+
+function formatFastRelation(properties, language) {
+  const relatedFastPc = Array.isArray(properties.related_fast_pc)
+    ? properties.related_fast_pc
+    : properties.related_fast_pc
+      ? [properties.related_fast_pc]
+      : [];
+
+  if (!relatedFastPc.length) return t("unavailableCurrentSource", language);
+
+  return relatedFastPc
+    .map((pcCode) => `${pcCode}${PC_NAMES_BY_CODE[pcCode] ? ` ${PC_NAMES_BY_CODE[pcCode]}` : ""}`)
+    .join(", ");
+}
+
 export function buildPcPopup(feature, language = "en") {
   const properties = feature?.properties || {};
   const pcCode = properties.pc_code || "Zonă PC";
@@ -110,67 +242,28 @@ export function buildKmPopup(feature, language = "en") {
 
 export function buildSturgeonHabitatPopup(feature, language = "en") {
   const properties = feature?.properties || {};
-  const relatedFastPc = Array.isArray(properties.related_fast_pc)
-    ? properties.related_fast_pc.join(", ")
-    : properties.related_fast_pc;
-  const activeType = getLocalizedValue(properties, "label", language) || t("sensitiveHabitat", language);
-  const sector = properties.mm_start !== undefined
-    ? `Mm ${displayValue(properties.mm_start, language)}–${displayValue(
-        properties.mm_end,
-        language
-      )}`
-    : `${language === "en" ? "Danube" : "Dunăre"} km ${displayValue(
-        properties.rkm_start,
-        language
-      )}–${displayValue(
-        properties.rkm_end,
-        language
-      )}`;
-  const bankOrBranch =
-    properties.branch ||
-    getLocalizedValue(properties, "bank_side", language) ||
-    t("popupMissingValue", language);
-  const name =
-    getLocalizedValue(properties, "name", language) ||
-    properties.location_name ||
-    properties.id ||
-    t("popupMissingValue", language);
+  const sector = formatHabitatSector(properties, language);
+  const activeType = formatHabitatType(properties, language);
+  const name = formatHabitatName(properties, language, sector);
+  const bankOrBranch = formatBranchOrBank(properties, language);
+  const ecologicalIndication = formatEcologicalIndication(properties, language);
+  const scientificBasis = formatScientificBasis(properties, language);
+  const confidence = formatConfidence(properties, language);
+  const fastRelation = formatFastRelation(properties, language);
 
   return `
     <div class="fast-popup-content fast-habitat-popup-content">
       <strong>${displayValue(name, language)}</strong><br />
-      <span>${t("type", language)}: ${displayValue(activeType, language)}</span><br />
-      <span>${t("originalPosition", language)}: ${displayValue(
-        properties.original_position,
+      <span>${t("habitatType", language)}: ${displayValue(activeType, language)}</span><br />
+      <span>${t("sector", language)}: ${sector}</span><br />
+      <span>${t("branchBank", language)}: ${displayValue(bankOrBranch, language)}</span><br />
+      <span>${t("ecologicalIndication", language)}: ${displayValue(
+        ecologicalIndication,
         language
       )}</span><br />
-      <span>Sector: ${sector}</span><br />
-      <span>${t("bankBranch", language)}: ${displayValue(bankOrBranch, language)}</span><br />
-      <span>${t("substrateEcology", language)}: ${displayValue(
-        getLocalizedValue(properties, "substrate", language),
-        language
-      )}</span><br />
-      <span>${t("evidence", language)}: ${displayValue(
-        getLocalizedValue(properties, "evidence", language),
-        language
-      )}</span><br />
-      <span>${t("confidence", language)}: ${displayValue(
-        getLocalizedValue(properties, "confidence", language),
-        language
-      )}</span><br />
-      <span>${t("fastRelation", language)}: ${displayValue(relatedFastPc, language)}</span><br />
-      <span>${t("manualReviewRequired", language)}: ${displayValue(
-        properties.needs_manual_review ? t("yes", language) : t("no", language),
-        language
-      )}</span><br />
-      <span>${t("geometryMethod", language)}: ${displayValue(
-        properties.geometry_method,
-        language
-      )}</span><br />
-      <span>${t("popupPriority", language)}: ${displayValue(
-        getLocalizedValue(properties, "popup_priority", language),
-        language
-      )}</span>
+      <span>${t("scientificBasis", language)}: ${displayValue(scientificBasis, language)}</span><br />
+      <span>${t("confidence", language)}: ${displayValue(confidence, language)}</span><br />
+      <span>${t("fastRelation", language)}: ${displayValue(fastRelation, language)}</span>
       <div class="fast-habitat-popup-types">
         <strong>${t("possibleHabitats", language)}</strong>
         <span class="${properties.habitat_type === "spawning_potential" ? "is-active" : ""}">${t(
