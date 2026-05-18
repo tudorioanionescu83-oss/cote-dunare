@@ -432,6 +432,40 @@ input:focus, select:focus{
   gap: 16px;
 }
 
+.fast-header-actions{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fast-language-switch{
+  display: inline-flex;
+  gap: 4px;
+  border: 1px solid rgba(2, 132, 199, 0.16);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 10px 24px rgba(2, 132, 199, 0.12);
+  padding: 4px;
+}
+
+.fast-language-switch button{
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #075985;
+  padding: 6px 9px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.fast-language-switch button.is-active{
+  background: #0284c7;
+  color: #ffffff;
+}
+
 .fast-header h1{
   margin: 4px 0 6px;
   color: #082f49;
@@ -1634,6 +1668,11 @@ input:focus, select:focus{
 
   .fast-header{
     flex-direction: column;
+  }
+
+  .fast-header-actions{
+    width: 100%;
+    justify-content: space-between;
   }
 
   .fast-workspace{

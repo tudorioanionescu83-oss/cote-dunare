@@ -1,3 +1,5 @@
+import { getLocalizedValue, t, translateFastValue } from "./fastI18n";
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -7,35 +9,53 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function displayValue(value) {
+function displayValue(value, language) {
   if (value === null || value === undefined || value === "") {
-    return "Nedisponibil în sursa curentă";
+    return t("popupMissingValue", language);
   }
-  return escapeHtml(value);
+  return escapeHtml(translateFastValue(value, language));
 }
 
-export function buildPcPopup(feature) {
+export function buildPcPopup(feature, language = "en") {
   const properties = feature?.properties || {};
   const pcCode = properties.pc_code || "Zonă PC";
   const kmInterval =
     properties.km_interval ||
-    `${displayValue(properties.km_upstream)} – ${displayValue(properties.km_downstream)}`;
+    `${displayValue(properties.km_upstream, language)} – ${displayValue(
+      properties.km_downstream,
+      language
+    )}`;
   const representationNote = properties.disclaimer || properties.observations;
 
   return `
     <div class="fast-popup-content">
-      <strong>${displayValue(pcCode)} · ${displayValue(properties.name)}</strong><br />
-      <span>Km interval: ${displayValue(kmInterval)}</span><br />
-      <span>Tip reprezentare: ${displayValue(properties.representation_type)}</span><br />
-      <span>Lucrări principale: ${displayValue(properties.works_summary)}</span><br />
-      <span>Monitorizare overview: ${displayValue(properties.monitoring_overview)}</span><br />
-      <span>Observație: ${displayValue(representationNote)}</span><br />
-      <span class="fast-popup-detail-note">Detalii mai jos</span>
+      <strong>${displayValue(pcCode, language)} · ${displayValue(
+        properties.name,
+        language
+      )}</strong><br />
+      <span>${t("kmInterval", language)}: ${displayValue(kmInterval, language)}</span><br />
+      <span>${t("representationType", language)}: ${displayValue(
+        getLocalizedValue(properties, "representation_type", language),
+        language
+      )}</span><br />
+      <span>${t("mainWorks", language)}: ${displayValue(
+        getLocalizedValue(properties, "works_summary", language),
+        language
+      )}</span><br />
+      <span>${t("monitoringOverview", language)}: ${displayValue(
+        getLocalizedValue(properties, "monitoring_overview", language),
+        language
+      )}</span><br />
+      <span>${t("observation", language)}: ${displayValue(
+        translateFastValue(representationNote, language),
+        language
+      )}</span><br />
+      <span class="fast-popup-detail-note">${t("detailsBelow", language)}</span>
     </div>
   `;
 }
 
-export function buildPcPolygonPopup(feature) {
+export function buildPcPolygonPopup(feature, language = "en") {
   const properties = feature?.properties || {};
   const sourceFiles = Array.isArray(properties.source_files)
     ? properties.source_files.join(", ")
@@ -46,15 +66,18 @@ export function buildPcPolygonPopup(feature) {
 
   return `
     <div class="fast-popup-content">
-      <strong>Source polygon</strong><br />
-      <span>Nume sursă: ${displayValue(properties.name || sourceNames)}</span><br />
-      <span>Fișiere sursă: ${displayValue(sourceFiles)}</span><br />
-      <span>Observație: sursa disponibilă nu conține toate metadatele FAST pentru acest poligon.</span>
+      <strong>${t("sourcePolygon", language)}</strong><br />
+      <span>${t("sourceName", language)}: ${displayValue(
+        properties.name || sourceNames,
+        language
+      )}</span><br />
+      <span>${t("sourceFiles", language)}: ${displayValue(sourceFiles, language)}</span><br />
+      <span>${t("observation", language)}: ${t("sourcePolygonNote", language)}</span>
     </div>
   `;
 }
 
-export function buildKmPopup(feature) {
+export function buildKmPopup(feature, language = "en") {
   const properties = feature?.properties || {};
   const distanceValue = properties.wtwdis ?? properties.WTWDIS ?? "-";
   const catdis = properties.catdis ?? properties.CATDIS ?? "-";
@@ -76,58 +99,100 @@ export function buildKmPopup(feature) {
     <div class="fast-popup-content">
       <strong>${
         isHectometric
-          ? `Marcaj 100 m AFDJ +${escapeHtml(distanceValue)}00 m`
+          ? `${t("hectometricMarker", language)} +${escapeHtml(distanceValue)}00 m`
           : `${distancePrefix} ${escapeHtml(distanceValue)}`
       }</strong><br />
       <span>catdis: ${escapeHtml(catdis)}</span><br />
-      <span>Sursă: AFDJ</span>
+      <span>${t("source", language)}: AFDJ</span>
     </div>
   `;
 }
 
-export function buildSturgeonHabitatPopup(feature) {
+export function buildSturgeonHabitatPopup(feature, language = "en") {
   const properties = feature?.properties || {};
   const relatedFastPc = Array.isArray(properties.related_fast_pc)
     ? properties.related_fast_pc.join(", ")
     : properties.related_fast_pc;
-  const activeType = properties.label_ro || "Habitat sensibil";
+  const activeType = getLocalizedValue(properties, "label", language) || t("sensitiveHabitat", language);
   const sector = properties.mm_start !== undefined
-    ? `Mm ${displayValue(properties.mm_start)}–${displayValue(properties.mm_end)}`
-    : `Dunăre km ${displayValue(properties.rkm_start)}–${displayValue(properties.rkm_end)}`;
+    ? `Mm ${displayValue(properties.mm_start, language)}–${displayValue(
+        properties.mm_end,
+        language
+      )}`
+    : `${language === "en" ? "Danube" : "Dunăre"} km ${displayValue(
+        properties.rkm_start,
+        language
+      )}–${displayValue(
+        properties.rkm_end,
+        language
+      )}`;
   const bankOrBranch =
     properties.branch ||
-    properties.bank_side_ro ||
-    properties.bank_side ||
-    "Nedisponibil în sursa curentă";
+    getLocalizedValue(properties, "bank_side", language) ||
+    t("popupMissingValue", language);
   const name =
-    properties.name_ro ||
+    getLocalizedValue(properties, "name", language) ||
     properties.location_name ||
     properties.id ||
-    "Nedisponibil în sursa curentă";
+    t("popupMissingValue", language);
 
   return `
     <div class="fast-popup-content fast-habitat-popup-content">
-      <strong>${displayValue(name)}</strong><br />
-      <span>Tip: ${displayValue(activeType)}</span><br />
-      <span>Poziție originală: ${displayValue(properties.original_position)}</span><br />
-      <span>Sector: ${sector}</span><br />
-      <span>Mal / braț: ${displayValue(bankOrBranch)}</span><br />
-      <span>Substrat / indiciu ecologic: ${displayValue(properties.substrate_ro)}</span><br />
-      <span>Evidence: ${displayValue(properties.evidence_ro)}</span><br />
-      <span>Confidence: ${displayValue(properties.confidence_ro)}</span><br />
-      <span>Relație FAST 2: ${displayValue(relatedFastPc)}</span><br />
-      <span>Needs manual review: ${displayValue(
-        properties.needs_manual_review ? "da" : "nu"
+      <strong>${displayValue(name, language)}</strong><br />
+      <span>${t("type", language)}: ${displayValue(activeType, language)}</span><br />
+      <span>${t("originalPosition", language)}: ${displayValue(
+        properties.original_position,
+        language
       )}</span><br />
-      <span>Metodă geometrie: ${displayValue(properties.geometry_method)}</span><br />
-      <span>Prioritate popup: ${displayValue(properties.popup_priority)}</span>
+      <span>Sector: ${sector}</span><br />
+      <span>${t("bankBranch", language)}: ${displayValue(bankOrBranch, language)}</span><br />
+      <span>${t("substrateEcology", language)}: ${displayValue(
+        getLocalizedValue(properties, "substrate", language),
+        language
+      )}</span><br />
+      <span>${t("evidence", language)}: ${displayValue(
+        getLocalizedValue(properties, "evidence", language),
+        language
+      )}</span><br />
+      <span>${t("confidence", language)}: ${displayValue(
+        getLocalizedValue(properties, "confidence", language),
+        language
+      )}</span><br />
+      <span>${t("fastRelation", language)}: ${displayValue(relatedFastPc, language)}</span><br />
+      <span>${t("manualReviewRequired", language)}: ${displayValue(
+        properties.needs_manual_review ? t("yes", language) : t("no", language),
+        language
+      )}</span><br />
+      <span>${t("geometryMethod", language)}: ${displayValue(
+        properties.geometry_method,
+        language
+      )}</span><br />
+      <span>${t("popupPriority", language)}: ${displayValue(
+        getLocalizedValue(properties, "popup_priority", language),
+        language
+      )}</span>
       <div class="fast-habitat-popup-types">
-        <strong>Posibile habitate</strong>
-        <span class="${properties.habitat_type === "spawning_potential" ? "is-active" : ""}">Reproducere potențială</span>
-        <span class="${properties.habitat_type === "confirmed_spawning" ? "is-active" : ""}">Reproducere confirmată</span>
-        <span class="${properties.habitat_type === "feeding_yoy" ? "is-active" : ""}">Hrănire / juvenili</span>
-        <span class="${properties.habitat_type === "wintering_refuge" ? "is-active" : ""}">Iernare / refugiu</span>
-        <span class="${properties.habitat_type === "sensitive_protection" ? "is-active" : ""}">Zonă sensibilă / protecție</span>
+        <strong>${t("possibleHabitats", language)}</strong>
+        <span class="${properties.habitat_type === "spawning_potential" ? "is-active" : ""}">${t(
+          "potentialSpawning",
+          language
+        )}</span>
+        <span class="${properties.habitat_type === "confirmed_spawning" ? "is-active" : ""}">${t(
+          "confirmedSpawning",
+          language
+        )}</span>
+        <span class="${properties.habitat_type === "feeding_yoy" ? "is-active" : ""}">${t(
+          "feedingJuveniles",
+          language
+        )}</span>
+        <span class="${properties.habitat_type === "wintering_refuge" ? "is-active" : ""}">${t(
+          "winteringRefuge",
+          language
+        )}</span>
+        <span class="${properties.habitat_type === "sensitive_protection" ? "is-active" : ""}">${t(
+          "sensitiveProtectionArea",
+          language
+        )}</span>
       </div>
     </div>
   `;

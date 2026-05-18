@@ -1,6 +1,7 @@
 "use client";
 
 import FastLegend from "./FastLegend";
+import { t, translateFastValue } from "./fastI18n";
 
 function getKmRange(interval) {
   return `km ${interval.km_upstream}–${interval.km_downstream}`;
@@ -12,17 +13,18 @@ export default function FastSidebar({
   onSelectPc,
   isOpen,
   onToggleOpen,
+  language,
 }) {
   return (
     <aside className={`fast-sidebar${isOpen ? " is-open" : ""}`}>
       <button type="button" className="fast-sidebar-handle" onClick={onToggleOpen}>
-        {isOpen ? "Minimizează panoul" : "Detalii FAST"}
+        {isOpen ? t("minimizePanel", language) : t("fastDetails", language)}
       </button>
 
       <div className="fast-sidebar-scroll">
         <section className="fast-sidebar-block">
           <div className="fast-sidebar-heading">
-            <h2>Puncte critice</h2>
+            <h2>{t("criticalPoints", language)}</h2>
             <span>{pcIntervals.length || "–"}</span>
           </div>
 
@@ -42,7 +44,7 @@ export default function FastSidebar({
                   <small>{getKmRange(interval)}</small>
                   <span className="fast-pc-item__badges">
                     {interval.work_badges.map((badge) => (
-                      <em key={badge}>{badge}</em>
+                      <em key={badge}>{translateFastValue(badge, language)}</em>
                     ))}
                   </span>
                 </span>
@@ -51,7 +53,7 @@ export default function FastSidebar({
           </div>
         </section>
 
-        <FastLegend />
+        <FastLegend language={language} />
       </div>
     </aside>
   );

@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { t } from "./fastI18n";
 
 const BASEMAP_OPTIONS = [
-  { id: "map", label: "Hartă" },
-  { id: "satellite", label: "Satelit" },
+  { id: "map", labelKey: "map" },
+  { id: "satellite", labelKey: "satellite" },
 ];
 
 const OVERLAY_OPTIONS = [
@@ -12,40 +13,40 @@ const OVERLAY_OPTIONS = [
   { id: "pcKmSegments", label: "PC km segments", kind: "GIS" },
   { id: "pcPolygons", label: "PC polygons", kind: "GIS" },
   { id: "afdjKm", label: "Km AFDJ", kind: "GIS" },
-  { id: "works", label: "Lucrări principale", kind: "metadata" },
-  { id: "disposalZones", label: "Zone depozitare material dragat", kind: "metadata" },
-  { id: "monitoringOverview", label: "Monitorizare ihtiofaună overview", kind: "metadata" },
-  { id: "monitoringSturgeons", label: "Monitorizare sturioni", kind: "metadata" },
+  { id: "works", labelKey: "mainWorks", kind: "metadata" },
+  { id: "disposalZones", labelKey: "dredgedMaterialDisposalAreas", kind: "metadata" },
+  { id: "monitoringOverview", labelKey: "ichthyofaunaMonitoringOverview", kind: "metadata" },
+  { id: "monitoringSturgeons", labelKey: "sturgeonMonitoring", kind: "metadata" },
 ];
 
 const HABITAT_OPTIONS = [
   {
     id: "sturgeonSpawning",
-    label: "Reproducere potențială",
+    labelKey: "potentialSpawning",
     swatch: "spawning",
     countKey: "spawning_potential",
   },
   {
     id: "sturgeonConfirmedSpawning",
-    label: "Reproducere confirmată",
+    labelKey: "confirmedSpawning",
     swatch: "confirmed",
     countKey: "confirmed_spawning",
   },
   {
     id: "sturgeonFeeding",
-    label: "Hrănire / juvenili / nursery",
+    labelKey: "feedingJuvenilesNursery",
     swatch: "feeding",
     countKey: "feeding_yoy",
   },
   {
     id: "sturgeonWintering",
-    label: "Iernare / refugiu",
+    labelKey: "winteringRefuge",
     swatch: "wintering",
     countKey: "wintering_refuge",
   },
   {
     id: "sturgeonProtection",
-    label: "Zone sensibile / protecție",
+    labelKey: "sensitiveProtectionAreas",
     swatch: "protection",
     countKey: "sensitive_protection",
   },
@@ -63,6 +64,7 @@ export default function FastLayerControl({
   onHabitatControlOpen,
   onToggleLayer,
   onToggleAllHabitats,
+  language,
 }) {
   const [isMapControlOpen, setIsMapControlOpen] = useState(false);
   const [isHabitatControlOpen, setIsHabitatControlOpen] = useState(false);
@@ -193,7 +195,7 @@ export default function FastLayerControl({
                 className={basemap === option.id ? "is-active" : ""}
                 onClick={() => handleMapInteraction(() => onBasemapChange(option.id))}
               >
-                {option.label}
+                {t(option.labelKey, language)}
               </button>
             ))}
           </div>
@@ -201,7 +203,9 @@ export default function FastLayerControl({
             type="button"
             className="fast-layer-control__toggle"
             aria-expanded={isMapControlOpen}
-            aria-label={isMapControlOpen ? "Ascunde controalele" : "Arată controalele"}
+            aria-label={
+              isMapControlOpen ? t("hideControls", language) : t("showControls", language)
+            }
             onClick={() => {
               setIsHabitatControlOpen(false);
               setIsMapControlOpen((value) => {
@@ -226,11 +230,11 @@ export default function FastLayerControl({
             className="fast-layer-control__fit"
             onClick={() => handleMapInteraction(onFitToFastSector)}
           >
-            Fit to FAST sector
+            {t("fitFastSector", language)}
           </button>
 
           <div className="fast-layer-control__section">
-            <div className="fast-layer-control__title">Layere</div>
+            <div className="fast-layer-control__title">{t("layers", language)}</div>
             <div className="fast-layer-control__toggles">
               {OVERLAY_OPTIONS.map((option) => {
                 const isAvailable = availability[option.id];
@@ -249,9 +253,9 @@ export default function FastLayerControl({
                       disabled={!isAvailable}
                     />
                     <span>
-                      {option.label}
-                      <em>{option.kind}</em>
-                      {!isAvailable ? " · unavailable as GIS" : ""}
+                      {option.labelKey ? t(option.labelKey, language) : option.label}
+                      <em>{option.kind === "metadata" ? t("metadataKind", language) : t("mapKind", language)}</em>
+                      {!isAvailable ? ` · ${t("unavailableAsGis", language)}` : ""}
                     </span>
                   </label>
                 );
@@ -277,7 +281,7 @@ export default function FastLayerControl({
             openHabitatControl();
           }}
         >
-          Habitate sturioni
+          {t("sturgeonHabitats", language)}
         </button>
 
         {isHabitatControlOpen && (
@@ -291,16 +295,16 @@ export default function FastLayerControl({
               type="button"
               className="fast-habitat-control__close"
               onClick={() => setIsHabitatControlOpen(false)}
-              aria-label="Închide"
+              aria-label={t("close", language)}
             >
               ×
             </button>
 
             <div className="fast-habitat-control__summary">
               <strong>{habitatCounts.generatedTotal}</strong>
-              <span>zone afișabile pe hartă</span>
+              <span>{t("generatedOnMap", language)}</span>
               {habitatCounts.skippedTotal > 0 && (
-                <em>{habitatCounts.skippedTotal} în dataset fără geometrie de braț</em>
+                <em>{habitatCounts.skippedTotal} {t("missingBranchGeometry", language)}</em>
               )}
             </div>
 
@@ -312,7 +316,7 @@ export default function FastLayerControl({
                 onChange={() => handleHabitatInteraction(onToggleAllHabitats)}
               />
               <span>
-                Toate habitatele afișabile
+                {t("allHabitats", language)}
                 <em>{habitatCounts.generatedTotal}</em>
               </span>
             </label>
@@ -331,7 +335,7 @@ export default function FastLayerControl({
                   />
                   <span>
                     <i className={`fast-habitat-swatch is-${option.swatch}`} />
-                    {option.label}
+                    {t(option.labelKey, language)}
                     <em>{getCountLabel(option.countKey)}</em>
                   </span>
                 </label>
@@ -340,8 +344,7 @@ export default function FastLayerControl({
 
             {habitatCounts.skippedTotal > 0 && (
               <p className="fast-habitat-control__note">
-                Unele intrări nu sunt desenate fiindcă lipsesc repere AFDJ suficiente pentru o
-                geometrie corectă.
+                {t("skippedHabitatNote", language)}
               </p>
             )}
 
@@ -351,7 +354,7 @@ export default function FastLayerControl({
               disabled={!anyHabitatsActive}
               onClick={() => handleHabitatInteraction(onFitToHabitats)}
             >
-              Zoom la habitate
+              {t("zoomHabitats", language)}
             </button>
           </section>
         )}

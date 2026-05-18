@@ -10,6 +10,7 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import FastLayerControl from "./FastLayerControl";
+import { t } from "./fastI18n";
 import {
   buildKmPopup,
   buildPcPolygonPopup,
@@ -612,8 +613,8 @@ function hasMonitoringOverview(featureCollection) {
   );
 }
 
-function bindPcPopupInteractions(layer, feature, onSelectPc) {
-  layer.bindPopup(buildPcPopup(feature), { className: "fast-popup" });
+function bindPcPopupInteractions(layer, feature, onSelectPc, language) {
+  layer.bindPopup(buildPcPopup(feature, language), { className: "fast-popup" });
   layer.on("click", () => onSelectPc(feature?.properties?.pc_code));
 }
 
@@ -623,6 +624,7 @@ export default function FastMap({
   onSelectPc,
   isPcDetailOpen,
   onHabitatControlOpen,
+  language,
 }) {
   const [basemap, setBasemap] = useState("map");
   const [fitRequestId, setFitRequestId] = useState(0);
@@ -806,7 +808,8 @@ export default function FastMap({
           datasets.sturgeonHabitats?.features?.filter((feature) =>
             isHabitatVisible(feature, activeLayers)
           ) || [],
-          viewState.zoom
+          viewState.zoom,
+          language
         )
       ),
     }),
@@ -820,6 +823,7 @@ export default function FastMap({
       activeLayers.sturgeonWintering,
       datasets.pcKmSegments,
       datasets.sturgeonHabitats,
+      language,
       selectedPcCode,
       viewState.zoom,
       visibleWholeKmFeatures,
@@ -924,11 +928,11 @@ export default function FastMap({
 
         {activeLayers.pcPlanningPolygons && datasets.pcPlanningPolygons && (
           <GeoJSON
-            key={`pc-planning-polygons-${selectedPcCode || "none"}`}
+            key={`pc-planning-polygons-${selectedPcCode || "none"}-${language}`}
             data={datasets.pcPlanningPolygons}
             style={(feature) => getPcPlanningPolygonStyle(feature, selectedPcCode)}
             onEachFeature={(feature, layer) => {
-              bindPcPopupInteractions(layer, feature, onSelectPc);
+              bindPcPopupInteractions(layer, feature, onSelectPc, language);
               layer.on("mouseover", () => {
                 layer.setStyle({
                   color: "#22d3ee",
@@ -947,7 +951,7 @@ export default function FastMap({
 
         {visibleSturgeonHabitats.features.length > 0 && (
           <GeoJSON
-            key={`sturgeon-habitats-${getHabitatLayerStateKey(activeLayers)}-${selectedHabitatId || "none"}`}
+            key={`sturgeon-habitats-${getHabitatLayerStateKey(activeLayers)}-${selectedHabitatId || "none"}-${language}`}
             data={visibleSturgeonHabitats}
             style={(feature) => getSturgeonHabitatStyle(feature, selectedHabitatId)}
             pointToLayer={(feature, latlng) => {
@@ -958,7 +962,7 @@ export default function FastMap({
               });
             }}
             onEachFeature={(feature, layer) => {
-              layer.bindPopup(buildSturgeonHabitatPopup(feature), {
+              layer.bindPopup(buildSturgeonHabitatPopup(feature, language), {
                 className: "fast-popup fast-habitat-popup",
               });
               layer.on("click", () => {
@@ -971,7 +975,7 @@ export default function FastMap({
 
         {activeLayers.pcKmSegments && datasets.pcKmSegments && (
           <GeoJSON
-            key={`pc-segments-${selectedPcCode || "none"}`}
+            key={`pc-segments-${selectedPcCode || "none"}-${language}`}
             data={datasets.pcKmSegments}
             style={(feature) => getPcKmSegmentStyle(feature, selectedPcCode)}
             pointToLayer={(feature, latlng) => {
@@ -996,7 +1000,7 @@ export default function FastMap({
             }}
             onEachFeature={(feature, layer) => {
               const isSegment = feature?.properties?.geometry_role === "segment";
-              bindPcPopupInteractions(layer, feature, onSelectPc);
+              bindPcPopupInteractions(layer, feature, onSelectPc, language);
 
               if (isSegment) {
                 layer.on("mouseover", () => {
@@ -1040,7 +1044,7 @@ export default function FastMap({
 
         {featureSets.habitatLabels.features.length > 0 && (
           <GeoJSON
-            key={`habitat-labels-${viewState.zoom}-${getHabitatLayerStateKey(activeLayers)}`}
+            key={`habitat-labels-${viewState.zoom}-${getHabitatLayerStateKey(activeLayers)}-${language}`}
             data={featureSets.habitatLabels}
             pointToLayer={(feature, latlng) =>
               L.marker(latlng, {
@@ -1059,17 +1063,18 @@ export default function FastMap({
 
         {activeLayers.pcPolygons && datasets.pcPolygons && (
           <GeoJSON
+            key={`pc-polygons-${language}`}
             data={datasets.pcPolygons}
             style={getPcPolygonStyle}
             onEachFeature={(feature, layer) => {
-              layer.bindPopup(buildPcPolygonPopup(feature), { className: "fast-popup" });
+              layer.bindPopup(buildPcPolygonPopup(feature, language), { className: "fast-popup" });
             }}
           />
         )}
 
         {activeLayers.afdjKm && featureSets.wholeKmPoints.features.length > 0 && (
           <GeoJSON
-            key={`whole-km-points-${viewState.zoom}-${viewState.bounds?.toBBoxString() || "no-bounds"}`}
+            key={`whole-km-points-${viewState.zoom}-${viewState.bounds?.toBBoxString() || "no-bounds"}-${language}`}
             data={featureSets.wholeKmPoints}
             pointToLayer={(feature, latlng) =>
               L.circleMarker(latlng, {
@@ -1083,14 +1088,14 @@ export default function FastMap({
               })
             }
             onEachFeature={(feature, layer) => {
-              layer.bindPopup(buildKmPopup(feature), { className: "fast-popup" });
+              layer.bindPopup(buildKmPopup(feature, language), { className: "fast-popup" });
             }}
           />
         )}
 
         {activeLayers.afdjKm && featureSets.subKmPoints.features.length > 0 && (
           <GeoJSON
-            key={`sub-km-points-${viewState.zoom}-${viewState.bounds?.toBBoxString() || "no-bounds"}`}
+            key={`sub-km-points-${viewState.zoom}-${viewState.bounds?.toBBoxString() || "no-bounds"}-${language}`}
             data={featureSets.subKmPoints}
             pointToLayer={(feature, latlng) =>
               L.circleMarker(latlng, {
@@ -1104,7 +1109,7 @@ export default function FastMap({
               })
             }
             onEachFeature={(feature, layer) => {
-              layer.bindPopup(buildKmPopup(feature), { className: "fast-popup" });
+              layer.bindPopup(buildKmPopup(feature, language), { className: "fast-popup" });
             }}
           />
         )}
@@ -1154,6 +1159,7 @@ export default function FastMap({
         availability={availability}
         habitatCounts={habitatCounts}
         isPcDetailOpen={isPcDetailOpen}
+        language={language}
         onBasemapChange={setBasemap}
         onFitToFastSector={() => setFitRequestId((value) => value + 1)}
         onFitToHabitats={() => setHabitatFitRequestId((value) => value + 1)}
@@ -1208,21 +1214,21 @@ function getHabitatLabelCoordinate(feature) {
   return [total.lng / coordinates.length, total.lat / coordinates.length];
 }
 
-function getHabitatLabelParts(feature) {
+function getHabitatLabelParts(feature, language) {
   const habitatType = feature?.properties?.habitat_type;
   if (habitatType === "spawning_potential") {
-    return { shortLabel: "STU-R", extendedLabel: "Reproducere sturioni" };
+    return { shortLabel: "STU-R", extendedLabel: t("sturgeonReproduction", language) };
   }
   if (habitatType === "confirmed_spawning") {
-    return { shortLabel: "STU-RC", extendedLabel: "Reproducere confirmată" };
+    return { shortLabel: "STU-RC", extendedLabel: t("sturgeonConfirmedReproduction", language) };
   }
   if (habitatType === "feeding_yoy") {
-    return { shortLabel: "STU-H", extendedLabel: "Hrănire juvenili" };
+    return { shortLabel: "STU-H", extendedLabel: t("juvenileFeeding", language) };
   }
   if (habitatType === "sensitive_protection") {
-    return { shortLabel: "STU-P", extendedLabel: "Protecție sensibilă" };
+    return { shortLabel: "STU-P", extendedLabel: t("sensitiveProtection", language) };
   }
-  return { shortLabel: "STU-I", extendedLabel: "Iernare / refugiu" };
+  return { shortLabel: "STU-I", extendedLabel: t("winteringRefuge", language) };
 }
 
 function isHabitatVisible(feature, activeLayers) {
@@ -1238,14 +1244,14 @@ function getHabitatLayerStateKey(activeLayers) {
     .join("-");
 }
 
-function buildHabitatLabelFeatures(features = [], zoom) {
+function buildHabitatLabelFeatures(features = [], zoom, language) {
   if (zoom < 13) return [];
 
   return features
     .map((feature) => {
       const coordinate = getHabitatLabelCoordinate(feature);
       if (!coordinate) return null;
-      const { shortLabel, extendedLabel } = getHabitatLabelParts(feature);
+      const { shortLabel, extendedLabel } = getHabitatLabelParts(feature, language);
       return {
         type: "Feature",
         properties: {

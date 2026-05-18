@@ -4,16 +4,19 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import FastDetailCard from "./FastDetailCard";
+import { t } from "./fastI18n";
 import FastPcSlider from "./FastPcSlider";
 import FastSidebar from "./FastSidebar";
 
 const FastMap = dynamic(() => import("./FastMap"), {
   ssr: false,
-  loading: () => <div className="fast-map-loading">Se încarcă harta FAST...</div>,
+  loading: () => <div className="fast-map-loading">Loading FAST map...</div>,
 });
 
 export default function FastPreviewPage() {
   const [metadata, setMetadata] = useState(null);
+  const [language, setLanguage] = useState("en");
+  const [languageReady, setLanguageReady] = useState(false);
   const [selectedPcCode, setSelectedPcCode] = useState(null);
   const [selectionRequestId, setSelectionRequestId] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -46,6 +49,19 @@ export default function FastPreviewPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const storedLanguage = window.localStorage.getItem("fastLanguage");
+    if (storedLanguage === "ro" || storedLanguage === "en") {
+      setLanguage(storedLanguage);
+    }
+    setLanguageReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!languageReady) return;
+    window.localStorage.setItem("fastLanguage", language);
+  }, [language, languageReady]);
+
   const pcIntervals = metadata?.pc_intervals || [];
   const selectedInterval =
     pcIntervals.find((interval) => interval.pc_code === selectedPcCode) || null;
@@ -63,17 +79,38 @@ export default function FastPreviewPage() {
         <div>
           <p className="fast-kicker">FAST Danube</p>
           <h1>FAST Danube 2</h1>
-          <p>Monitorizarea impactului asupra mediului</p>
+          <p>{t("impactMonitoring", language)}</p>
         </div>
-        <Link href="/" className="fast-back-link">
-          Back to Cote
-        </Link>
+        <div className="fast-header-actions">
+          <Link href="/" className="fast-back-link">
+            {t("backToCote", language)}
+          </Link>
+          <div className="fast-language-switch" role="group" aria-label="Language">
+            <button
+              type="button"
+              className={language === "ro" ? "is-active" : ""}
+              onClick={() => setLanguage("ro")}
+              aria-pressed={language === "ro"}
+            >
+              <span aria-hidden="true">🇷🇴</span> RO
+            </button>
+            <button
+              type="button"
+              className={language === "en" ? "is-active" : ""}
+              onClick={() => setLanguage("en")}
+              aria-pressed={language === "en"}
+            >
+              <span aria-hidden="true">🇬🇧</span> EN
+            </button>
+          </div>
+        </div>
       </header>
 
       <FastPcSlider
         pcIntervals={pcIntervals}
         selectedPcCode={selectedPcCode}
         onSelectPc={handleSelectPc}
+        language={language}
       />
 
       <section className="fast-workspace">
@@ -83,6 +120,7 @@ export default function FastPreviewPage() {
           onSelectPc={handleSelectPc}
           isOpen={sidebarOpen}
           onToggleOpen={() => setSidebarOpen((value) => !value)}
+          language={language}
         />
 
         <div className="fast-map-panel">
@@ -94,12 +132,14 @@ export default function FastPreviewPage() {
             onHabitatControlOpen={() =>
               setDetailCollapseRequestId((value) => value + 1)
             }
+            language={language}
           />
           <FastDetailCard
             interval={selectedInterval}
             isOpen={detailOpen}
             onClose={() => setDetailOpen(false)}
             collapseRequestId={detailCollapseRequestId}
+            language={language}
           />
         </div>
       </section>

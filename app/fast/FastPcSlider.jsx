@@ -1,12 +1,19 @@
 "use client";
 
+import { t } from "./fastI18n";
+
 function getKmRange(interval) {
   return `km ${interval.km_upstream}–${interval.km_downstream}`;
 }
 
-export default function FastPcSlider({ pcIntervals, selectedPcCode, onSelectPc }) {
+export default function FastPcSlider({
+  pcIntervals,
+  selectedPcCode,
+  onSelectPc,
+  language,
+}) {
   return (
-    <nav className="fast-pc-slider" aria-label="Puncte critice FAST">
+    <nav className="fast-pc-slider" aria-label={t("pcSliderAria", language)}>
       {pcIntervals.map((interval) => (
         <button
           key={interval.pc_code}

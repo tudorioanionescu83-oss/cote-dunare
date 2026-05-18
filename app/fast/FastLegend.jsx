@@ -1,113 +1,112 @@
-export default function FastLegend() {
+import { t } from "./fastI18n";
+
+export default function FastLegend({ language }) {
   return (
     <section className="fast-sidebar-block">
       <details className="fast-legend-details" open>
-        <summary>Legendă</summary>
+        <summary>{t("legend", language)}</summary>
         <div className="fast-legend">
           <div className="fast-legend-group">
-            <span className="fast-legend-chip">GIS layers</span>
+            <span className="fast-legend-chip">{t("gisLayers", language)}</span>
           </div>
           <div className="fast-legend-row">
             <span className="fast-swatch fast-swatch-fairway" />
             <span>
-              <strong>Șenal navigabil</strong> — orientare vizuală, reutilizat din layerul
-              platformei.
+              <strong>{t("navigableFairway", language)}</strong> — {t("fairwayLegend", language)}
             </span>
           </div>
           <div className="fast-legend-row">
             <span className="fast-swatch fast-swatch-pc-planning" />
             <span>
-              <strong>PC planning polygons</strong> — poligoane de orientare generate din puncte
-              AFDJ detaliate de pe maluri/șenal; nu sunt poligoane tehnice finale.
+              <strong>PC planning polygons</strong> — {t("planningPolygonsLegend", language)}
             </span>
           </div>
           <div className="fast-legend-row">
             <span className="fast-swatch fast-swatch-pc-segment" />
             <span>
-              <strong>PC km segments</strong> — reprezentare pe interval kilometric generată din km
-              AFDJ; nu este poligon tehnic de execuție.
+              <strong>PC km segments</strong> — {t("kmSegmentsLegend", language)}
             </span>
           </div>
           <div className="fast-legend-row">
             <span className="fast-swatch fast-swatch-pc-polygon" />
             <span>
-              <strong>PC polygons</strong> — geometrii sursă KMZ disponibile; nu acoperă neapărat
-              toate cele 12 puncte critice.
+              <strong>PC polygons</strong> — {t("pcPolygonsLegend", language)}
             </span>
           </div>
           <div className="fast-legend-row">
             <span className="fast-swatch fast-swatch-km" />
             <span>
-              <strong>Km AFDJ</strong> — kilometraj fluvial folosit pentru orientare.
+              <strong>{t("afdjKm", language)}</strong> — {t("afdjKmLegend", language)}
             </span>
           </div>
           <div className="fast-legend-row">
             <span className="fast-swatch fast-swatch-subkm" />
             <span>
-              <strong>100 m</strong> — marcaje intermediare din datele AFDJ existente, vizibile doar
-              la zoom mare.
+              <strong>100 m</strong> — {t("hundredMetersLegend", language)}
             </span>
           </div>
 
           <div className="fast-legend-group">
-            <span className="fast-legend-chip is-habitats">Habitate sturioni</span>
+            <span className="fast-legend-chip is-habitats">
+              {t("sturgeonHabitats", language)}
+            </span>
           </div>
           <div className="fast-legend-row">
             <span className="fast-swatch fast-swatch-sturgeon-spawning" />
-            <span>portocaliu = reproducere potențială</span>
+            <span>{t("orangePotential", language)}</span>
           </div>
           <div className="fast-legend-row">
             <span className="fast-swatch fast-swatch-sturgeon-confirmed" />
-            <span>roșu închis = reproducere confirmată</span>
+            <span>{t("darkRedConfirmed", language)}</span>
           </div>
           <div className="fast-legend-row">
             <span className="fast-swatch fast-swatch-sturgeon-feeding" />
-            <span>verde = hrănire / juvenili / nursery</span>
+            <span>{t("greenFeeding", language)}</span>
           </div>
           <div className="fast-legend-row">
             <span className="fast-swatch fast-swatch-sturgeon-wintering" />
-            <span>albastru = iernare / refugiu</span>
+            <span>{t("blueWintering", language)}</span>
           </div>
           <div className="fast-legend-row">
             <span className="fast-swatch fast-swatch-sturgeon-protection" />
-            <span>mov = zonă sensibilă / protecție</span>
+            <span>{t("purpleProtection", language)}</span>
           </div>
           <p className="fast-legend-note">
-            <span>Surse date: AFDJ, APPD, Honț et al. (2022), Vassilev, M. (2003).</span>
-            <strong>Powered by Tudor I</strong>
+            <span>{t("dataSourcesShort", language)}</span>
+            <strong>{t("poweredBy", language)}</strong>
+            <span>tudor.ionescu@sturgeons.eu</span>
           </p>
 
           <div className="fast-legend-group">
-            <span className="fast-legend-chip is-phases">Faze monitorizare</span>
+            <span className="fast-legend-chip is-phases">
+              {t("monitoringPhases", language)}
+            </span>
           </div>
           <div className="fast-legend-phases">
             <span>
-              <strong>PIM</strong> monitorizare înainte de intervenție / baseline
+              <strong>PIM</strong> {t("pimLegend", language)}
             </span>
             <span>
-              <strong>SM</strong> monitorizare în timpul execuției
+              <strong>SM</strong> {t("smLegend", language)}
             </span>
             <span>
-              <strong>STCM</strong> monitorizare post-intervenție pe termen scurt
+              <strong>STCM</strong> {t("stcmLegend", language)}
             </span>
             <span>
-              <strong>LTCM</strong> monitorizare post-intervenție pe termen lung
+              <strong>LTCM</strong> {t("ltcmLegend", language)}
             </span>
           </div>
 
           <details className="fast-legend-sources">
-            <summary>Surse</summary>
-            <span>AFDJ – kilometraj, șenal și referințe sector FAST Danube 2</span>
+            <summary>{t("sources", language)}</summary>
+            <span>{t("afdjSource", language)}</span>
             <span>
               Honț et al. 2022 / DDNI – Preliminary migratory fish habitats assessment along the
               Danube River sector km 863–375
             </span>
-            <span>Caiet de sarcini FAST Danube 2 – lucrări și monitorizare impact asupra mediului</span>
-            <span>
-              Zone extinse Dunărea Inferioară sub km 375 – set intern de lucru pentru
-              evaluare/monitorizare sturioni
-            </span>
-            <span>Lower Danube dataset: Rasova, Isaccea, Borcea și Bala.</span>
+            <span>{t("termsOfReferenceSource", language)}</span>
+            <span>{t("lowerDanubeSource", language)}</span>
+            <span>{t("lowerDanubeDataset", language)}</span>
           </details>
         </div>
       </details>
