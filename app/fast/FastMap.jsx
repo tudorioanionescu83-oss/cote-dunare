@@ -455,6 +455,22 @@ function FastViewState({ onChange }) {
   return null;
 }
 
+function FastMapResize({ layoutIsSplit }) {
+  const map = useMap();
+
+  useEffect(() => {
+    // Leaflet must recalculate its viewport after the CSS grid changes width.
+    const frame = window.requestAnimationFrame(() => map.invalidateSize({ pan: false }));
+    const refresh = window.setTimeout(() => map.invalidateSize({ pan: false }), 160);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(refresh);
+    };
+  }, [map, layoutIsSplit]);
+
+  return null;
+}
+
 function FastPcFocus({ selectedFeature, selectionRequestId }) {
   const map = useMap();
 
@@ -678,6 +694,7 @@ export default function FastMap({
   popupCloseRequestId,
   onSelectPc,
   isPcDetailOpen,
+  layoutIsSplit,
   onHabitatControlOpen,
   language,
 }) {
@@ -970,6 +987,7 @@ export default function FastMap({
           datasets={[visibleSturgeonHabitats]}
           fitRequestId={habitatFitRequestId}
         />
+        <FastMapResize layoutIsSplit={layoutIsSplit} />
         <FastViewState onChange={setViewState} />
         <FastPcFocus
           selectedFeature={selectedFeature}
