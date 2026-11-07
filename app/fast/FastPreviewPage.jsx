@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import FastDetailCard from "./FastDetailCard";
 import { t } from "./fastI18n";
-import FastPcSlider from "./FastPcSlider";
 import FastSidebar from "./FastSidebar";
 
 const FastMap = dynamic(() => import("./FastMap"), {
@@ -114,13 +113,6 @@ export default function FastPreviewPage() {
           </div>
         </div>
       </header>
-
-      <FastPcSlider
-        pcIntervals={pcIntervals}
-        selectedPcCode={selectedPcCode}
-        onSelectPc={handleSelectPc}
-        language={language}
-      />
 
       <section className="fast-workspace">
         <FastSidebar
