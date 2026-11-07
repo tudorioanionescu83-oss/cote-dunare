@@ -128,6 +128,7 @@ export default function FastPreviewPage() {
             interval={selectedInterval}
             isOpen={detailOpen}
             onClose={() => setDetailOpen(false)}
+            onLanguageChange={handleLanguageChange}
             collapseRequestId={detailCollapseRequestId}
             language={language}
           />
