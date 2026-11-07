@@ -82,7 +82,7 @@ export default function FastPreviewPage() {
   }
 
   return (
-    <main className="fast-page">
+    <main className={`fast-page${detailOpen ? " has-detail" : ""}`}>
       <header className="fast-header">
         <div>
           <p className="fast-kicker">FAST Danube</p>
@@ -114,7 +114,7 @@ export default function FastPreviewPage() {
         </div>
       </header>
 
-      <section className="fast-workspace">
+      <section className={`fast-workspace${detailOpen ? " has-detail" : ""}`}>
         <FastSidebar
           pcIntervals={pcIntervals}
           selectedPcCode={selectedPcCode}
@@ -124,6 +124,14 @@ export default function FastPreviewPage() {
           language={language}
         />
 
+          <FastDetailCard
+            interval={selectedInterval}
+            isOpen={detailOpen}
+            onClose={() => setDetailOpen(false)}
+            collapseRequestId={detailCollapseRequestId}
+            language={language}
+          />
+
         <div className="fast-map-panel">
           <FastMap
             selectedPcCode={selectedPcCode}
@@ -131,16 +139,10 @@ export default function FastPreviewPage() {
             popupCloseRequestId={popupCloseRequestId}
             onSelectPc={(pcCode) => handleSelectPc(pcCode, { closePopup: false })}
             isPcDetailOpen={detailOpen}
+            layoutIsSplit={detailOpen}
             onHabitatControlOpen={() =>
               setDetailCollapseRequestId((value) => value + 1)
             }
-            language={language}
-          />
-          <FastDetailCard
-            interval={selectedInterval}
-            isOpen={detailOpen}
-            onClose={() => setDetailOpen(false)}
-            collapseRequestId={detailCollapseRequestId}
             language={language}
           />
         </div>
