@@ -79,6 +79,7 @@ export default function FastDetailCard({
   interval,
   isOpen,
   onClose,
+  onLanguageChange,
   collapseRequestId,
   language,
 }) {
@@ -182,6 +183,25 @@ export default function FastDetailCard({
       >
         ×
       </button>
+
+      <div className="fast-detail-language-switch fast-language-switch" role="group" aria-label="Language">
+        <button
+          type="button"
+          className={language === "ro" ? "is-active" : ""}
+          onClick={() => onLanguageChange?.("ro")}
+          aria-pressed={language === "ro"}
+        >
+          <span aria-hidden="true">🇷🇴</span> RO
+        </button>
+        <button
+          type="button"
+          className={language === "en" ? "is-active" : ""}
+          onClick={() => onLanguageChange?.("en")}
+          aria-pressed={language === "en"}
+        >
+          <span aria-hidden="true">🇬🇧</span> EN
+        </button>
+      </div>
 
       <header className="fast-detail-card__header">
         <div>
