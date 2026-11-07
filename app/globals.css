@@ -2000,3 +2000,67 @@ input:focus, select:focus{
   opacity: 1 !important;
   pointer-events: auto !important;
 }
+
+/* FAST desktop layout: one compact vertical PC list and a readable left-side detail drawer. */
+@media (min-width: 901px) {
+  .fast-page {
+    gap: 12px;
+  }
+  .fast-workspace {
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 12px;
+    min-height: calc(100dvh - 100px);
+  }
+  .fast-sidebar {
+    min-width: 0;
+  }
+  .fast-sidebar-scroll {
+    gap: 10px;
+  }
+  .fast-sidebar-block {
+    padding: 10px;
+  }
+  .fast-pc-list {
+    gap: 5px;
+  }
+  .fast-pc-item {
+    gap: 6px;
+    padding: 7px;
+    border-radius: 10px;
+  }
+  .fast-pc-item__body strong {
+    font-size: 12px;
+  }
+  .fast-pc-item__badges {
+    display: none;
+  }
+  .fast-detail-card.is-open {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 40vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0 18px 18px 0;
+    z-index: 1400;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.98);
+  }
+  .fast-detail-card__header {
+    flex: 0 0 auto;
+    padding: 22px 22px 14px;
+  }
+  .fast-detail-card__header h2 {
+    font-size: 23px;
+  }
+  .fast-detail-card__tabs {
+    flex: 0 0 auto;
+    padding: 12px 20px 0;
+  }
+  .fast-detail-card__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 18px 22px 28px;
+  }
+}
