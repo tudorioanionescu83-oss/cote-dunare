@@ -388,9 +388,19 @@ function getFastSectorPadding(map) {
 function getPcFocusPadding(map) {
   const isMobile = window.matchMedia("(max-width: 900px)").matches;
   if (isMobile) {
+    const mapHeight = map.getSize().y;
+    // The selected site must be centered in the visible map ABOVE the reading sheet.
+    const sheet = document.querySelector(".fast-detail-card.is-open");
+    const sheetHeight = sheet?.getBoundingClientRect().height || 0;
+    const bottomSpace = sheet
+      ? Math.min(
+          Math.max(Math.round(mapHeight * 0.44), sheetHeight + 18),
+          Math.max(120, mapHeight - 180)
+        )
+      : 20;
     return {
-      paddingTopLeft: [16, 16],
-      paddingBottomRight: [16, 72],
+      paddingTopLeft: [18, 95],
+      paddingBottomRight: [18, bottomSpace],
     };
   }
 
@@ -480,11 +490,16 @@ function FastPcFocus({ selectedFeature, selectionRequestId }) {
     const bounds = L.geoJSON(selectedFeature).getBounds();
     if (!bounds.isValid()) return;
 
-    map.flyToBounds(bounds.pad(0.38), {
-      maxZoom: 13,
-      duration: 0.8,
-      ...getPcFocusPadding(map),
+    // Wait for the map to recalculate size after the mobile reading view opens.
+    const frame = window.requestAnimationFrame(() => {
+      map.stop();
+      map.flyToBounds(bounds.pad(0.38), {
+        maxZoom: 13,
+        duration: 0.8,
+        ...getPcFocusPadding(map),
+      });
     });
+    return () => window.cancelAnimationFrame(frame);
   }, [map, selectedFeature, selectionRequestId]);
 
   return null;
@@ -579,20 +594,21 @@ function getDisposalStyle() {
   };
 }
 
-function FastRequestedFitBounds({ datasets, fitRequestId }) {
+function FastRequestedFitBounds({ dataset, fitRequestId }) {
   const map = useMap();
+  const appliedRequestId = useRef(0);
 
   useEffect(() => {
-    if (fitRequestId === 0) return;
-    const featureCollections = datasets.filter(isFeatureCollection);
-    if (!featureCollections.length) return;
-
-    const group = L.featureGroup(featureCollections.map((dataset) => L.geoJSON(dataset)));
-    const bounds = group.getBounds();
+    // Only fit once per explicit request. A map zoom triggers a React re-render;
+    // fitting again on that render used to trap the user at the auto-zoom level.
+    if (fitRequestId === 0 || appliedRequestId.current === fitRequestId) return;
+    if (!isFeatureCollection(dataset) || !dataset.features?.length) return;
+    const bounds = L.geoJSON(dataset).getBounds();
     if (!bounds.isValid()) return;
 
+    appliedRequestId.current = fitRequestId;
     map.fitBounds(bounds.pad(0.14), { maxZoom: 12 });
-  }, [datasets, fitRequestId, map]);
+  }, [dataset, fitRequestId, map]);
 
   return null;
 }
@@ -984,7 +1000,7 @@ export default function FastMap({
 
         <FastFitBounds datasets={fitDatasets} fitRequestId={fitRequestId} />
         <FastRequestedFitBounds
-          datasets={[visibleSturgeonHabitats]}
+          dataset={visibleSturgeonHabitats}
           fitRequestId={habitatFitRequestId}
         />
         <FastMapResize layoutIsSplit={layoutIsSplit} />

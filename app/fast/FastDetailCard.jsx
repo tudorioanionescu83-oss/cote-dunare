@@ -84,20 +84,21 @@ export default function FastDetailCard({
   language,
 }) {
   const [activeTab, setActiveTab] = useState("works");
-  const [detailSheetState, setDetailSheetState] = useState("expanded");
+  const [detailSheetState, setDetailSheetState] = useState("half");
   const dragStartYRef = useRef(null);
+  const suppressNextHandleClickRef = useRef(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
     setActiveTab("works");
     if (isOpen) {
-      setDetailSheetState(isMobile ? "collapsed" : "expanded");
+      setDetailSheetState(isMobile ? "half" : "expanded");
     }
   }, [interval?.pc_code, isMobile, isOpen]);
 
   useEffect(() => {
     if (isMobile && isOpen && collapseRequestId > 0) {
-      setDetailSheetState("collapsed");
+      setDetailSheetState("half");
     }
   }, [collapseRequestId, isMobile, isOpen]);
 
@@ -113,6 +114,7 @@ export default function FastDetailCard({
 
   function handlePointerDown(event) {
     if (!isMobile) return;
+    suppressNextHandleClickRef.current = false;
     dragStartYRef.current = event.clientY;
     event.currentTarget.setPointerCapture?.(event.pointerId);
   }
@@ -121,28 +123,21 @@ export default function FastDetailCard({
     if (!isMobile || dragStartYRef.current === null) return;
     const delta = event.clientY - dragStartYRef.current;
     dragStartYRef.current = null;
+    if (Math.abs(delta) < 48) return;
 
-    if (delta > 70) {
-      setDetailSheetState((current) =>
-        current === "expanded" ? "half" : "collapsed"
-      );
-      return;
-    }
-
-    if (delta < -70) {
-      setDetailSheetState((current) =>
-        current === "collapsed" ? "half" : "expanded"
-      );
-    }
+    // Swipe up to expand; swipe down to the half-height reading position.
+    suppressNextHandleClickRef.current = true;
+    setDetailSheetState(delta < 0 ? "expanded" : "half");
   }
 
   function cycleSheetState() {
     if (!isMobile) return;
-    setDetailSheetState((current) => {
-      if (current === "collapsed") return "half";
-      if (current === "half") return "expanded";
-      return "collapsed";
-    });
+    // Pointer-up on the drag handle can also dispatch click: don't undo the swipe.
+    if (suppressNextHandleClickRef.current) {
+      suppressNextHandleClickRef.current = false;
+      return;
+    }
+    setDetailSheetState((current) => current === "half" ? "expanded" : "half");
   }
 
   if (!interval) return null;
@@ -168,7 +163,7 @@ export default function FastDetailCard({
             className="fast-detail-card__sheet-action"
             onClick={cycleSheetState}
           >
-            {detailSheetState === "collapsed"
+            {detailSheetState === "half"
               ? t("expandDetails", language)
               : t("minimize", language)}
           </button>
@@ -210,7 +205,7 @@ export default function FastDetailCard({
           <span>{getKmRange(interval)}</span>
         </div>
         <div className="fast-detail-card__badges">
-          {interval.work_badges.slice(0, isMobile && detailSheetState === "collapsed" ? 3 : undefined).map((badge) => (
+          {interval.work_badges.map((badge) => (
             <em key={badge}>{translateFastValue(badge, language)}</em>
           ))}
         </div>

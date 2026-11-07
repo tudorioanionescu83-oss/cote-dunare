@@ -2179,3 +2179,224 @@ input:focus, select:focus{
     padding-top: 54px;
   }
 }
+
+/* FAST mobile: selectable critical points, two-position reading sheet and visible map. */
+.fast-mobile-pc-trigger,
+.fast-mobile-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .fast-mobile-pc-trigger {
+    display: inline-flex;
+    position: absolute;
+    z-index: 1202;
+    top: 72px;
+    left: 12px;
+    align-items: center;
+    gap: 7px;
+    max-width: calc(100% - 24px);
+    border: 1px solid rgba(2, 132, 199, .24);
+    border-radius: 999px;
+    background: rgba(255,255,255,.97);
+    color: #075985;
+    box-shadow: 0 8px 22px rgba(0,45,70,.18);
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+  .fast-mobile-pc-trigger__count {
+    background: #e0f2fe;
+    color: #075985;
+    border-radius: 999px;
+    padding: 2px 6px;
+  }
+  .fast-map .leaflet-top.leaflet-left .leaflet-control-zoom {
+    margin-top: 134px;
+  }
+  .fast-mobile-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    background: rgba(8,47,73,.28);
+    border: 0;
+    cursor: pointer;
+  }
+  .fast-sidebar {
+    position: fixed;
+    z-index: 1600;
+    inset: 0 auto 0 0;
+    width: min(86vw, 340px);
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0 18px 18px 0;
+    background: rgba(255,255,255,.98);
+    transform: translateX(-105%);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform .22s ease, opacity .22s ease, visibility .22s ease;
+  }
+  .fast-sidebar.is-open {
+    transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .fast-sidebar-handle {
+    display: flex;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    min-height: 54px;
+    text-align: left;
+  }
+  .fast-sidebar-scroll {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    max-height: calc(100dvh - 54px);
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  .fast-sidebar .fast-pc-item {
+    min-height: 54px;
+    padding: 10px;
+    cursor: pointer;
+  }
+
+  /* Selecting a PC gives the map the full viewport behind the reading sheet. */
+  .fast-page.has-detail {
+    display: block;
+    padding: 0;
+    margin: 0;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .fast-page.has-detail > .fast-header {
+    display: none;
+  }
+  .fast-workspace.has-detail {
+    display: block;
+    width: 100%;
+    height: 100dvh;
+    min-height: 0;
+  }
+  .fast-workspace.has-detail > .fast-map-panel,
+  .fast-workspace.has-detail .fast-map-root,
+  .fast-workspace.has-detail .fast-map,
+  .fast-workspace.has-detail .fast-map-loading {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+  .fast-workspace.has-detail > .fast-map-panel {
+    overflow: hidden;
+  }
+
+  .fast-detail-card.is-open {
+    display: flex;
+    flex-direction: column;
+    left: 8px;
+    right: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    width: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: hidden;
+    background: rgba(255,255,255,.97);
+    z-index: 1300;
+    border-radius: 20px 20px 16px 16px;
+  }
+  .fast-detail-card[data-sheet-state="half"] {
+    height: min(44dvh, 430px);
+    max-height: none;
+  }
+  .fast-detail-card[data-sheet-state="expanded"] {
+    height: min(76dvh, 700px);
+    max-height: none;
+  }
+  .fast-detail-card__handle {
+    flex: 0 0 auto;
+    height: 21px;
+    touch-action: none;
+    cursor: ns-resize;
+    margin-top: 1px;
+  }
+  .fast-detail-card__sheet-action {
+    position: absolute;
+    top: 25px;
+    left: 12px;
+    margin: 0;
+    z-index: 3;
+    padding: 6px 9px;
+  }
+  .fast-detail-card__close {
+    top: 25px;
+    right: 10px;
+  }
+  .fast-detail-card .fast-detail-language-switch {
+    display: inline-flex;
+    position: absolute;
+    top: 25px;
+    right: 50px;
+    z-index: 3;
+    padding: 2px;
+    gap: 2px;
+    box-shadow: none;
+  }
+  .fast-detail-card .fast-detail-language-switch button {
+    font-size: 10px;
+    padding: 5px 6px;
+  }
+  .fast-detail-card__header {
+    flex: 0 0 auto;
+    gap: 5px;
+    padding: 53px 14px 9px;
+  }
+  .fast-detail-card__header h2 {
+    font-size: 18px;
+  }
+  .fast-detail-card__badges {
+    gap: 4px;
+  }
+  .fast-detail-card__badges em {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+  .fast-detail-card .fast-detail-card__expanded {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .fast-detail-card .fast-detail-card__tabs {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    padding: 7px 10px 0;
+    gap: 4px;
+  }
+  .fast-detail-card .fast-detail-card__tabs button {
+    min-width: 0;
+    padding: 7px 2px;
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fast-detail-card .fast-detail-card__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    user-select: text;
+    padding: 11px 14px 20px;
+  }
+}
