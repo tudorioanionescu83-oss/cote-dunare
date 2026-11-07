@@ -62,6 +62,7 @@ export default function FastLayerControl({
   onFitToFastSector,
   onFitToHabitats,
   onHabitatControlOpen,
+  onHabitatControlShow,
   onHabitatControlToggle,
   onToggleLayer,
   onToggleAllHabitats,
@@ -168,6 +169,7 @@ export default function FastLayerControl({
     setIsHabitatControlOpen(true);
     onHabitatControlToggle?.();
     onHabitatControlOpen?.();
+    onHabitatControlShow?.();
     scheduleHabitatClose();
   }
 
