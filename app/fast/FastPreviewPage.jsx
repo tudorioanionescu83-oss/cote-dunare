@@ -134,6 +134,25 @@ export default function FastPreviewPage() {
           />
 
         <div className="fast-map-panel">
+          <button
+            type="button"
+            className="fast-mobile-pc-trigger"
+            aria-controls="fast-pc-drawer"
+            aria-expanded={sidebarOpen}
+            onClick={() => setSidebarOpen((value) => !value)}
+          >
+            <span aria-hidden="true">☰</span>
+            {t("criticalPoints", language)}
+            <span className="fast-mobile-pc-trigger__count">{pcIntervals.length}</span>
+          </button>
+          {sidebarOpen && (
+            <button
+              type="button"
+              className="fast-mobile-sidebar-backdrop"
+              aria-label={t("close", language)}
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
           <FastMap
             selectedPcCode={selectedPcCode}
             selectionRequestId={selectionRequestId}
