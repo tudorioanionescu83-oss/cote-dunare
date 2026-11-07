@@ -1280,6 +1280,17 @@ export default function FastMap({
         }}
         onHabitatControlOpen={onHabitatControlOpen}
         onHabitatControlToggle={requestPopupClose}
+        onHabitatControlShow={() => {
+          requestPopupClose();
+          // First opening: display available habitats so there is something to fit.
+          // Subsequent openings preserve the user's selected habitat filters.
+          setActiveLayers((current) => {
+            const habitatIds = Object.keys(HABITAT_SELECTIONS).filter((id) => availability[id]);
+            if (habitatIds.some((id) => current[id])) return current;
+            return habitatIds.reduce((next, id) => ({ ...next, [id]: true }), current);
+          });
+          setHabitatFitRequestId((value) => value + 1);
+        }}
         onToggleLayer={(layerId) =>
           {
             requestPopupClose();
