@@ -16,9 +16,9 @@ export default function FastSidebar({
   language,
 }) {
   return (
-    <aside className={`fast-sidebar${isOpen ? " is-open" : ""}`}>
-      <button type="button" className="fast-sidebar-handle" onClick={onToggleOpen}>
-        {isOpen ? t("minimizePanel", language) : t("fastDetails", language)}
+    <aside id="fast-pc-drawer" className={`fast-sidebar${isOpen ? " is-open" : ""}`} aria-label={t("criticalPoints", language)}>
+      <button type="button" className="fast-sidebar-handle" onClick={onToggleOpen} aria-label={t("close", language)}>
+        <span aria-hidden="true">✕</span> {t("criticalPoints", language)}
       </button>
 
       <div className="fast-sidebar-scroll">
