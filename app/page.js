@@ -314,11 +314,57 @@ export default function Page() {
   }, [isMarineStation, selectedStationObj?.id]);
 
   return (
+    <>
+      <a
+        className="efish-migration-banner"
+        href="https://www.efish.bio/"
+        aria-label="Cotele Dunării, acum pe eFish.bio. Deschide platforma eFish."
+      >
+        <span className="efish-migration-copy">
+          <span className="efish-migration-kicker">PLATFORMA A EVOLUAT</span>
+          <strong>Cotele Dunării, acum pe <span>eFish.bio!</span></strong>
+          <span className="efish-migration-description">
+            Niveluri, debite, temperatura apei, prognoze și multe alte informații despre mediul acvatic.
+          </span>
+        </span>
+        <span className="efish-migration-cta">Intră pe eFish.bio <span aria-hidden="true">↗</span></span>
+      </a>
     <div className="page-layout">
       {/* Widget Donație */}
       <DonationWidget />
       
       <style jsx global>{`
+        .efish-migration-banner {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: space-between;
+          gap: 20px;
+          box-sizing: border-box;
+          margin: 12px clamp(12px, 2.5vw, 24px) 0;
+          padding: clamp(24px, 4vw, 44px);
+          border-radius: 20px;
+          color: #ffffff;
+          background: radial-gradient(ellipse at 95% 0%, rgba(20, 184, 166, .34), transparent 60%), linear-gradient(115deg, #082f49, #075985 58%, #0f766e);
+          border: 1px solid rgba(20, 184, 166, .4);
+          box-shadow: 0 10px 30px rgba(8, 47, 73, .17);
+          text-decoration: none;
+        }
+        .efish-migration-banner:hover { color: #ffffff; text-decoration: none; }
+        .efish-migration-banner:focus-visible { outline: 3px solid #0f766e; outline-offset: 4px; }
+        .efish-migration-copy { display: flex; flex: 1 1 350px; min-width: 0; flex-direction: column; gap: 10px; }
+        .efish-migration-kicker { font-size: 12px; font-weight: 800; letter-spacing: .14em; color: #a7f3d0; }
+        .efish-migration-copy strong { font-size: clamp(24px, 3.3vw, 44px); font-weight: 850; line-height: 1.12; }
+        .efish-migration-copy strong span { color: #99f6e4; }
+        .efish-migration-description { color: #e0f2fe; font-size: clamp(14px, 1.5vw, 17px); line-height: 1.5; }
+        .efish-migration-cta { display: inline-flex; align-items: center; justify-content: center; gap: 10px; border-radius: 12px; padding: 16px 22px; background: #ffffff; color: #075985; font-size: 16px; font-weight: 800; }
+        .efish-migration-banner:hover .efish-migration-cta { background: #ccfbf1; }
+        @media (max-width: 600px) {
+          .efish-migration-banner { gap: 16px; padding: 24px 20px; }
+          .efish-migration-copy { flex-basis: 100%; }
+          .efish-migration-cta { width: 100%; }
+        }
+
         /* PREVINE OVERFLOW ORIZONTAL */
         html, body {
           overflow-x: hidden;
@@ -994,5 +1040,6 @@ export default function Page() {
         </div>
       </main>
     </div>
+    </>
   );
 }
